@@ -21,7 +21,7 @@ Q_OBJECT
 public:
     DBdialog();
 private:
-    ChessDatabase myChessDB = ChessDatabase("localhost", "root", "floppy", "schach");
+    ChessDatabase myChessDB = ChessDatabase("localhost", "username", "password", "mychessdb");
 
     vector<int> eventIDs;
     vector<int> gameIDs;

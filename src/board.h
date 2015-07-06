@@ -46,7 +46,7 @@ class Board {
     /* Database */
     bool DBwrite = false;
 	bool connectwithDB();
-    ChessDatabase DB = ChessDatabase("localhost", "root", "floppy", "schach");
+    ChessDatabase DB = ChessDatabase("localhost", "username", "password", "mychessdb");
 
     /* Database Methods */
 	bool writePlayerToDB(string name, int elo);
