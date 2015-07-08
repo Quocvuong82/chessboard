@@ -1,7 +1,7 @@
 #include "dbdialog.h"
 
-DBdialog::DBdialog()
-{
+DBdialog::DBdialog(ChessDatabase chessDB){
+    myChessDB = chessDB;
     //setFixedSize(150,100);
     QVBoxLayout *vbox = new QVBoxLayout;
     QPushButton *button1 = new QPushButton("OK");
@@ -23,12 +23,6 @@ DBdialog::DBdialog()
     for(int i = 0; i < eventIDs.size(); i++) {
         combo1->addItem(QString::fromStdString(myChessDB.getEventByID(eventIDs[i])));
     }
-
-    /*int i = 0;
-    while(i < 500) {
-        item.push_back(new QListWidgetItem);
-        i++;
-    }*/
 
     comboGames = new QComboBox;
     comboGames->setSizeAdjustPolicy(QComboBox::AdjustToContents);

@@ -33,6 +33,10 @@ class Board {
 	int round;
 	string white = "Player White";
 	string black = "Player Black";
+    string handleW;
+    string handleB;
+    bool ficsScanW;
+    bool ficsScanB;
 	string result;
 	int whiteElo;
 	int blackElo;
@@ -49,7 +53,8 @@ class Board {
     ChessDatabase DB = ChessDatabase("localhost", "username", "password", "mychessdb");
 
     /* Database Methods */
-	bool writePlayerToDB(string name, int elo);
+    bool writePlayerToDB(string name, int elo);
+    bool writePlayerToDB(string name, int elo, string handle, bool ficsScan);
 	bool writeEventToDB(string event);
     bool addMetadataToDB();
 
@@ -98,6 +103,7 @@ public:
     int getPositionIDFromDB();
     Fen position;
     /* ---------------- */
+    void setGameDate(string date);
     char getActiveColor();
     string getPlayerW();
     string getPlayerB();
@@ -113,6 +119,7 @@ public:
 	Board(Fen pos);
 
     bool setPlayer(int color, string name, int elo);
+    bool setPlayer(int color, string name, int elo, string handle, bool ficsscan = false);
     bool setGameID(int gameID);
     bool setParent(int parent);
     bool setPosition(Fen pos);

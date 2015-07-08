@@ -19,9 +19,9 @@ class DBdialog : public QDialog
 {
 Q_OBJECT
 public:
-    DBdialog();
+    DBdialog(ChessDatabase chessDB);
 private:
-    ChessDatabase myChessDB = ChessDatabase("localhost", "username", "password", "mychessdb");
+    ChessDatabase myChessDB;
 
     vector<int> eventIDs;
     vector<int> gameIDs;

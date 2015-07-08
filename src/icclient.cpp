@@ -105,15 +105,22 @@ bool ICclient::isunread() {
     else return false;
 }
 
+bool ICclient::isunread2() {
+    if (buffer.size() > Rpos) return true;
+    else return false;
+}
+
 string ICclient::readLine(){
     /* Returns Server Outout Line By Line */
     //cout << "Rpos: " << Rpos << " pos: " << pos << endl;
     if (Rpos > buffer.size()) return "";
     size_t newline = string::npos;
-    while(newline == string::npos) {
+    newline = buffer.find("\n", Rpos);
+    /*while(newline == string::npos) {
         newline = buffer.find("\n", Rpos);
         usleep(1000);
-    }
+    }*/
+    if(newline == string::npos) return "";
 
     string s = buffer.substr(Rpos, newline - Rpos + 1);
     if(newline != string::npos) Rpos = newline + 1;
@@ -123,7 +130,7 @@ string ICclient::readLine(){
         n = s.find("\n", n + 1);
     }
     //cout << endl;
-    s.erase(0, 1); // remove newline character at the beginning
+    if(s[0] == '\n') s.erase(0, 1); // remove newline character at the beginning
     return s;
 }
 
@@ -163,10 +170,11 @@ string ICclient::readSocket() {
         b = read(sockfd, buf, sizeof buf);
         if(b > 0) {
             //cout << buf << " | ";
+            size_t bsize = buffer.size();
             buffer.append(buf);
             usleep(50);
             size_t newline;
-            newline = buffer.find("\n");
+            newline = buffer.find("\n", bsize);
             if(newline != string::npos) {
                 //emit newOutput();
                 newServerData = true;
@@ -189,6 +197,7 @@ bool ICclient::writeSocket(string message) {
     //cout << "wS: " << message << endl;
     regex expr("^(savegame)[ ][A-z]+[ ][0-9]+");
     regex expr2("^(savegames)[ ][A-z]+");
+    regex expr3("^(scan fics)");
     smatch m;
     if(regex_search(message, m, expr)) {
         size_t len; // length of handle
@@ -205,6 +214,8 @@ bool ICclient::writeSocket(string message) {
         string handle = message.substr(10, len);
         boost::thread gamesaver(&ICclient::saveGames, this, handle);
         //saveGames(handle);
+    } else if (regex_search(message, m, expr3)) {
+        boost::thread gamesaver(&ICclient::scanFics, this);
     } else {
         message.append("\n");
         int n;
@@ -220,7 +231,16 @@ bool ICclient::writeSocket(string message) {
     }
     return true;
 }
-bool ICclient::saveGames(string handle) {
+
+void ICclient::scanFics() {
+    myChessDB = ChessDatabase("localhost", "root", "floppy", "schach");
+    vector<string> handle = myChessDB.getPlayersToScan();
+    for(int i = 0; i < handle.size(); i++) {
+        saveGames(handle[i]);
+    }
+}
+
+int ICclient::saveGames(string handle) {
     cout << "savegames " << handle << endl;
     string answer;
 
@@ -233,21 +253,30 @@ bool ICclient::saveGames(string handle) {
     answer = readLine();
     regex expr("[0-9 ][0-9][:][ ][=\+\-]");
     smatch m;
-    while(!regex_search(answer, m, expr)) {
+
+    int attempt = 0;
+    while(!regex_search(answer, m, expr) && attempt < 10000) {
+        answer.clear();
         answer = readLine();
+        attempt++;
+        usleep(1000);
     }
+    if(!regex_search(answer, m, expr)) { cout << "no such handle " << handle << endl; return 0; }
+
+    cout << answer << endl;
     string gameIDstr = m.str().substr(0,2);
     if(gameIDstr[0] == ' ') gameIDstr.erase(0,1);
     int gameID = boost::lexical_cast<int>(gameIDstr);
     //cout << gameID << " bis " << gameID + 9 << endl;
-    int p = 0;
     for(int i = 0; i < 10; i++) {
-        cout << "saving Game " << gameID + i << " to database" << endl;
-        p += saveGameToDB(handle, gameID + i);
-        cout << p << " new Positions have been written to DB";
+        //clearBuffer();
+        if(gameID + i > 99) gameID = 0 - i;
+            saveGameToDB(handle, gameID + i);
     }
+    return p;
 
 }
+
 int ICclient::saveGameToDB(string handle, int gameID) {
     cout << "Saving Game " << gameID << " from " << handle << " to Database..." << endl;
     string message; string answer;
@@ -258,20 +287,33 @@ int ICclient::saveGameToDB(string handle, int gameID) {
     }
 
     /* Get Elo */
+    usleep(2000);
+    cout << Rpos << " " << buffer.size() << endl;
+    Rpos = buffer.size(); // skip previous server output
     message = "history " + handle + "\n";
     writeSocket(message);
 
-    size_t pos = string::npos;
-    while(pos == string::npos) {
+    size_t pos = string::npos; //size_t pos2 = 0;
+
+    int attempt = 0; answer.clear();
+    while((pos > 3 || pos == string::npos) && attempt < 1000) {
+        answer.clear();
         answer = readLine();
+        attempt++;
         usleep(1000);
         pos = answer.find(lexical_cast<string>(gameID) + ": ");
+        //pos2 = answer.find("goes forward");
     }
+    cout << Rpos << " " << buffer.size() << endl;
+    cout << answer << endl;
+    if(pos == string::npos) { cout << "No such game " << gameID << endl; return 0; }
 
+    cout << "get elo " << endl;
     // Get Elo from history
-    int whiteElo; int blackElo;
-    pos = answer.find(lexical_cast<string>(gameID) + ": ");
+    int whiteElo; int blackElo; string date;
+    //pos = answer.find(lexical_cast<string>(gameID) + ": ");
     if(gameID < 10) pos--; // Correct position for single digit numbers
+    //cout << answer << endl;
     if(pos != string::npos) {
         char color = answer[pos + 11]; // User 1's color in the match
         string elo;
@@ -293,6 +335,9 @@ int ICclient::saveGameToDB(string handle, int gameID) {
         }
         cout << "white Elo: " << whiteElo << endl;
         cout << "black Elo: " << blackElo << endl;
+        cout << pos << endl;
+        date = answer.substr(pos+53, 26);
+        cout << date << endl;
     }
 
     message = "examine " + handle + " " + lexical_cast<string>(gameID) + "\n";
@@ -301,44 +346,58 @@ int ICclient::saveGameToDB(string handle, int gameID) {
     regex style12(".*(<12> ).*$");
     string position;
     vector<string> fenstrings(13);
-    Board board;
+    Board* board;
     smatch m;
-    // Receives only the messages that match the filter style12
-    //thread receiver (printFilteredServerMessages, style12);
     int i = 0;
     string white; string black;
     int GameID = 0; int PosID = 1;
 
-    /* Skip initial position */
-    writeSocket("forward\n");
-
+    answer.clear();
+    newServerData = false;
     answer = readLine();
-    while(answer.find("<12>") == string::npos) {
+    while(answer.find("<12>") == string::npos && !newServerData) {
+          answer.clear();
           answer = readLine();
           usleep(500);
     }
 
+    /* Skip initial position */
+    writeSocket("forward\n");
+
+    answer.clear();
+    newServerData = false;
+    answer = readLine();
+    while(answer.find("<12>") == string::npos && !newServerData) {
+          answer.clear();
+          answer = readLine();
+          usleep(500);
+    }
     /*newServerData = false;
     while(!newServerData);
     answer = readLine();*/
-    newServerData = false;
     //cout << answer << endl;
 
     // Scan positions to DataBase
     int new_p = 0; // new positions counter
     do {
+        newServerData = false;
         writeSocket("forward\n");
-        while(!newServerData);
+        answer.clear();
         answer = readLine();
-        while(answer.find("<12>") == string::npos && answer.find("end of the game") == string::npos) {
+        while(answer.find("<12>") == string::npos && answer.find("end of the game") == string::npos && answer.size() < 159) {
+            answer.clear();
             answer = readLine();
+            //cout << answer << endl;
             usleep(100);
         }
         if(answer.find("end of the game") != string::npos) break;
 
         newServerData = false;
+        //cout << "substr find <12>" << endl;
+        //cout << position << endl;
         position = answer.substr(answer.find("<12>"));
         for (int j = 0; j < 8; j++) {
+            //cout << "fenstr" << j << endl;
             fenstrings[j] = position.substr((5 + 9 * j), 8);
             //cout << "f"<< j << " " << fenstrings[j] << endl;
         }
@@ -349,8 +408,11 @@ int ICclient::saveGameToDB(string handle, int gameID) {
         e = position.find(" ", b + 1);
         vector<string> values;
 
+        //cout << "get values from style12" << endl;
+        //cout << position << endl;
         /* Get values from style12-string */
         while(e != string::npos && x < 50) {
+            //cout << position.substr(b + 1,e - (b+1)) << endl;
             values.push_back(position.substr(b + 1,e - (b+1)));
             x++;
             b = e;
@@ -377,9 +439,10 @@ int ICclient::saveGameToDB(string handle, int gameID) {
         fenstrings[12] = values[26];
         //cout << fenstrings[12] << endl;
 
-        board = Board(Fen());
-        board.setPosition(Fen(fenstrings));
-        //board.print();
+        board = new Board(Fen());
+        board->setPosition(Fen(fenstrings));
+        board->setGameDate(date);
+        //board->print();
         size_t offset = 0;
         for(int x = 0; x < 17; x++) {
             offset += position.substr(offset).find(' ');
@@ -391,29 +454,36 @@ int ICclient::saveGameToDB(string handle, int gameID) {
         black = position.substr(offset + 1, position.substr(offset + 1).find(' '));
         if(i == 0) {
             cout << endl;
-            cout << "white: " <<  white << " (" << whiteElo << ")" << endl;
+            cout << "white: " <<  white << " (" << whiteElo << ") ";
             cout << "black: " <<  black << " (" << blackElo << ")" << endl;
         }
-        board.setPlayer(1, white, whiteElo);
-        board.setPlayer(0, black, blackElo);
+        if(white == handle)
+            board->setPlayer(1, white, whiteElo, white, true);
+        else
+            board->setPlayer(1, white, whiteElo, white);
+        if(black == handle)
+            board->setPlayer(0, black, blackElo, black, true);
+        else
+            board->setPlayer(0, black, blackElo, black);
+        if(i > 0) board->setGameID(GameID);
 
-        if(i > 0) board.setGameID(GameID);
-
-        board.setParent(PosID);
+        board->setParent(PosID);
 
         // Write to DataBase
-        if(board.writePositionToDB()) new_p++;
-        //cout << board.getPositionIDFromDB() << endl;
+        if(board->writePositionToDB()) new_p++;
+        //cout << board->getPositionIDFromDB() << endl;
         if(i == 0) {
-            board.writePlayersToDB();
-            board.writeGameToDB();
-            GameID = board.getGameID();
+            board->writePlayersToDB();
+            if(!board->writeGameToDB()) break;
+            GameID = board->getGameID();
         }
-        PosID = board.getPositionIDFromDB();
-        board.updateGame(PosID);
+        PosID = board->getPositionIDFromDB();
+        board->updateGame(PosID);
+        delete board;
         i++;
     } while (answer.find("<12>") != string::npos); // answer.find("end of the game") == string::npos
-    cout << new_p << " new Positions have been written to DB" << endl;
+    p += new_p;
+    cout << p << " new Positions have been written to DB" << endl;
 
     //board[i] = Board(Fen(fenstrings));
     //LOADFILTERED = false;
@@ -433,4 +503,9 @@ void ICclient::bufferManager() {
        }
        usleep(50000);
     }
+}
+
+void ICclient::clearBuffer() {
+    pos = 0; Rpos = 0;
+    buffer.clear();
 }

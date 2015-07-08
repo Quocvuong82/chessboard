@@ -65,7 +65,7 @@ private:
     //vector<Board*> board;
     vector<Game*> game;
     int activeBoard = 0;
-    ChessDatabase myChessDB = ChessDatabase("localhost", "username", "password", "mychessdb");
+    ChessDatabase myChessDB = ChessDatabase("localhost", "root", "floppy", "schach");
     bool chessserver;
     bool chessengine;
     bool localboard;
@@ -177,6 +177,7 @@ public slots:
     void quit();
     void setGameID();
     void undock();
+    void scanICS();
 };
 
 #endif // MYWINDOW

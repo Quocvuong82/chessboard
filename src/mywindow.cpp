@@ -6,7 +6,8 @@
 #include"enginethread.h"
 
 MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(parent, flags) {
-    /* Boolen Variables */
+
+    /* Boolean Variables */
     chessserver = false;
     getICGameList = false;
     chessengine = false;
@@ -20,7 +21,7 @@ MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(par
     this->setWindowTitle("Chessboard 0.4");
     this->resize(900, 400);
 
-    dialog = new DBdialog;
+    dialog = new DBdialog(myChessDB);
     dialog->setAttribute(Qt::WA_QuitOnClose);
     QObject::connect(dialog, SIGNAL(finished(int)), this, SLOT(checkInputDialog(int)));
     QObject::connect(dialog, SIGNAL(rejected()), this, SLOT(checkInputDialog()));
@@ -72,13 +73,15 @@ MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(par
     EngineButton = new QPushButton("Think");
     for(int i = 0; i < NrOfButtons; i++) {
         button.push_back(new QPushButton(QString("B").append(QString(QString::fromStdString(boost::lexical_cast<string>(i))))));
-        button[i]->setFixedSize(40,25);
+        if(i != 2) button[i]->setFixedSize(40,25);
     };
     EngineButton->setFixedSize(50,25);
     button[4]->setText("<");
     button[5]->setText(">");
     button[0]->setText("R ICS");
     button[1]->setText("games");
+    button[2]->setText("Bookm. P");
+    button[3]->setText("Scan ICS");
 
     /* Signal - Slot Connections */  
     QObject::connect(next, SIGNAL(clicked()), this, SLOT(nextPos()));
@@ -87,6 +90,7 @@ MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(par
     QObject::connect(EngineButton, SIGNAL(clicked()), this, SLOT(think()));
     QObject::connect(button[0], SIGNAL(clicked()), this, SLOT(readICServer()));
     QObject::connect(button[1], SIGNAL(clicked()), this, SLOT(ICSgameList()));
+    QObject::connect(button[3], SIGNAL(clicked()), this, SLOT(scanICS()));
     QObject::connect(button[4], SIGNAL(clicked()), this, SLOT(prevPos()));
     QObject::connect(button[5], SIGNAL(clicked()), this, SLOT(nextPos()));
 
@@ -128,8 +132,8 @@ MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(par
         playerLayout[i]->addWidget(time[i]);
         playerLayout[i]->addWidget(score[i]);
         playerFrame[i]->setLayout(playerLayout[i]);  
-
     }
+
     /* Style Player and Time Labels */
     player[0]->setColor("black");
     player[1]->setColor("white");
@@ -189,7 +193,7 @@ MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(par
 
     /* Get position data from Database and display it on the GUI board */
     for(int i = 0; i < Game::getNrOfGames(); i++) {
-        game[i]->board->getPositionFromDBByID(posID);
+        //game[i]->board->getPositionFromDBByID(posID);
         game[i]->board->show(); // Write position to squares (QLabels)
         posIDs.push_back(vector<int> ());
         posIndex.push_back(0);
@@ -200,6 +204,7 @@ MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(par
 
     engine.start();
     engine.stockfish();
+    engine.writeToEngine("setoption name Threads value 4");
 
     QObject::connect(&fics, SIGNAL(unread()), this, SLOT(readICServer()));
     output2->setMinimumHeight(50);
@@ -575,8 +580,6 @@ void MyWindow::parseICSOutput(string outstr) {
             if(thinkOnMove) think();
         }
 
-    } else if (g != string::npos) {
-        getICGameList = true;
     }
 
     //output->setText(output->toPlainText().append(QString::fromStdString(outstr)));
@@ -672,4 +675,8 @@ void MyWindow::undock() {
     //GameInfoLayout->removeWidget(gameinfo);
     gameinfo->setParent(0);
     gameinfo->show();
+}
+
+void MyWindow::scanICS() {
+    fics.scanFics();
 }

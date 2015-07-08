@@ -2,20 +2,24 @@
 #include <iostream>
 #include <boost/lexical_cast.hpp>
 
+ChessDatabase::ChessDatabase() : Database("localhost", "root", "", "mychessdb") {
+}
+
 ChessDatabase::ChessDatabase (string host, string user, string password, string database): Database(host, user, password, database) {}
 
 vector<int> ChessDatabase::getEventIDs() {
+    vector<int> eventIDs;
     string query = "SELECT event_id FROM event ORDER BY event_id desc";
     mysql_init(&mysql);
     if (!mysql_real_connect(&mysql,host.c_str(),user.c_str(),password.c_str(),database.c_str(),0,NULL,0))
     {
         cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
+        exit(1);
     }
     MYSQL_RES *res;
     mysql_real_query(&mysql, query.c_str(), query.length());
     res = mysql_use_result(&mysql);
     MYSQL_ROW row;
-    vector<int> eventIDs;
     while (row = mysql_fetch_row(res)) {
         eventIDs.push_back(boost::lexical_cast<int>(row[0]));
     }
@@ -143,6 +147,7 @@ string ChessDatabase::getEventByID(int id) {
     if (!mysql_real_connect(&mysql,host.c_str(),user.c_str(),password.c_str(),database.c_str(),0,NULL,0))
     {
         cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
+        return "";
     }
     MYSQL_RES *res;
     mysql_real_query(&mysql, query.c_str(), query.length());
@@ -198,3 +203,47 @@ vector<string> ChessDatabase::getPlayersByGameID(int id) {
     players.push_back(black);
     return players;
 }
+
+vector<string> ChessDatabase::getPlayersToScan() {
+    string query = "SELECT fics_handle FROM `player` WHERE player_id > 202 and `last_fics_scan` < Now() - 1555200";
+    mysql_init(&mysql);
+    if (!mysql_real_connect(&mysql,host.c_str(),user.c_str(),password.c_str(),database.c_str(),0,NULL,0))
+    {
+        cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
+    }
+    MYSQL_RES *res;
+    mysql_real_query(&mysql, query.c_str(), query.length());
+    res = mysql_use_result(&mysql);
+    MYSQL_ROW row;
+    vector<string> handle;
+    while(row = mysql_fetch_row(res)) {
+        handle.push_back(row[0]);
+    }
+    return handle;
+}
+
+/*void ChessDatabase::cleanUpDatabase() {
+    string query = "SELECT game_id, date FROM game WHERE date REGEXP '^[ ]' and game_id >1413";
+    mysql_init(&mysql);
+    if (!mysql_real_connect(&mysql,host.c_str(),user.c_str(),password.c_str(),database.c_str(),0,NULL,0))
+    {
+        cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
+    }
+    MYSQL_RES *res;
+    mysql_real_query(&mysql, query.c_str(), query.length());
+    res = mysql_use_result(&mysql);
+    MYSQL_ROW row;
+    vector<string> date;
+    vector<string> gameID;
+    while(row = mysql_fetch_row(res)) {
+        gameID.push_back(row[0]);
+        date.push_back(row[1]);
+    }
+    for(int i = 0; i < date.size(); i++) {
+        date[i].erase(0, 1);
+        date[i].append("5");
+        query = "UPDATE `schach`.`game` SET `date` = '" + date[i] + "' WHERE `game`.`game_id`=" + gameID[i];
+        mysql_real_query(&mysql, query.c_str(), query.length());
+    }
+    //query = "UPDATE `schach`.`game` SET `date` = '" + date[i] + "' WHERE `game`.`game_id`=" + gameID[i];
+}*/
