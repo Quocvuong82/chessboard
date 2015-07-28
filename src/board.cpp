@@ -13,6 +13,7 @@
 #include <QLabel>
 #include <QString>
 #include <QGridLayout>
+#include "QPainter"
 
 using namespace std;
 
@@ -222,6 +223,56 @@ void Board::initSquares(){
     bishop_w_d = QPixmap("./textures/bishop_white_d.png");
     bishop_b_l = QPixmap("./textures/bishop_black_l.png");
     bishop_b_d = QPixmap("./textures/bishop_black_d.png");
+
+    int scale = 64;
+
+    for(int i = 0; i < 12; i++) {
+        pieces[i] = QPixmap::fromImage(QImage(scale,scale, QImage::Format_ARGB32));
+        pieces[i].fill(Qt::transparent);
+        pieces[i].scaled(scale,scale);
+    }
+
+    pawn_w_l.fromImage(QImage(scale,scale, QImage::Format_ARGB32));
+    pawn_w_d.fromImage(QImage(scale,scale, QImage::Format_ARGB32));
+    pawn_w_l.fill(Qt::transparent);
+    pawn_w_d.fill(Qt::transparent);
+    pawn_w_l.scaled(scale,scale);
+    pawn_w_d.scaled(scale,scale);
+
+    pawn_b_l.fromImage(QImage(scale,scale, QImage::Format_ARGB32));
+    pawn_b_d.fromImage(QImage(scale,scale, QImage::Format_ARGB32));
+    pawn_b_l.fill(Qt::transparent);
+    pawn_b_d.fill(Qt::transparent);
+    pawn_b_l.scaled(scale,scale);
+    pawn_b_d.scaled(scale,scale);
+
+    vector<QPainter*> painter;
+    pawn_w = new QSvgWidget;
+    pawn_w->load(QString ("./textures/WhitePawn.svg"));
+    pawn_w->resize(scale,scale);
+
+    for(int i = 0; i < 12; i++) {
+        piecesSVG[i] = new QSvgWidget;
+    }
+    piecesSVG[0]->load(QString ("./textures/WhitePawn.svg"));
+    piecesSVG[1]->load(QString ("./textures/WhiteRook.svg"));
+    piecesSVG[2]->load(QString ("./textures/WhiteKnight.svg"));
+    piecesSVG[3]->load(QString ("./textures/WhiteBishop.svg"));
+    piecesSVG[4]->load(QString ("./textures/WhiteQueen.svg"));
+    piecesSVG[5]->load(QString ("./textures/WhiteKing.svg"));
+    piecesSVG[6]->load(QString ("./textures/BlackPawn.svg"));
+    piecesSVG[7]->load(QString ("./textures/BlackRook.svg"));
+    piecesSVG[8]->load(QString ("./textures/BlackKnight.svg"));
+    piecesSVG[9]->load(QString ("./textures/BlackBishop.svg"));
+    piecesSVG[10]->load(QString ("./textures/BlackQueen.svg"));
+    piecesSVG[11]->load(QString ("./textures/BlackKing.svg"));
+
+    for(int i = 0; i < 12; i++) {
+        piecesSVG[i]->resize(scale,scale);
+        painter.push_back(new QPainter(&pieces[i]));
+        piecesSVG[i]->render(painter[i], QPoint(), QRegion(), QWidget::DrawChildren);
+    }
+
     int i;
     for (int y = 0; y < 8; y++) {
        for (int x = 0; x < 8; x++) {
@@ -229,6 +280,7 @@ void Board::initSquares(){
            squares.append(new QSquare);
            if((y + x) % 2 == 0) squares[i]->setPixmap(square_d); else
                squares[i]->setPixmap(square_l);
+               squares[i]->setFixedSize(scale,scale);
        }
     }
 }
@@ -245,61 +297,43 @@ void Board::writePositionTosquares() {
      for (int y = 0; y < 8; y++) {
         for (int x = 0; x < 8; x++) {
             i = y * 8 + x;
-            //cout << "y: " << y << "x: " << x << endl;
-            if(fenstr[i] == '0' || fenstr[i] == '-') {
-                if((y + x) % 2 == 0) squares[i]->setPixmap(square_d); else
-                    squares[i]->setPixmap(square_l);
-            } else {
-                switch(fenstr[i].unicode()) {
-                case static_cast<int>('P'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(pawn_w_d); else
-                    squares[i]->setPixmap(pawn_w_l);
-                    break;
-                case static_cast<int>('R'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(rook_w_d); else
-                    squares[i]->setPixmap(rook_w_l);
-                    break;
-                case static_cast<int>('N'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(knight_w_d); else
-                    squares[i]->setPixmap(knight_w_l);
-                    break;
-                case static_cast<int>('B'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(bishop_w_d); else
-                    squares[i]->setPixmap(bishop_w_l);
-                    break;
-                case static_cast<int>('Q'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(queen_w_d); else
-                    squares[i]->setPixmap(queen_w_l);
-                    break;
-                case static_cast<int>('K'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(king_w_d); else
-                    squares[i]->setPixmap(king_w_l);
-                    break;
-                case static_cast<int>('p'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(pawn_b_d); else
-                    squares[i]->setPixmap(pawn_b_l);
-                    break;
-                case static_cast<int>('r'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(rook_b_d); else
-                    squares[i]->setPixmap(rook_b_l);
-                    break;
-                case static_cast<int>('n'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(knight_b_d); else
-                    squares[i]->setPixmap(knight_b_l);
-                    break;
-                case static_cast<int>('b'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(bishop_b_d); else
-                    squares[i]->setPixmap(bishop_b_l);
-                    break;
-                case static_cast<int>('q'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(queen_b_d); else
-                    squares[i]->setPixmap(queen_b_l);
-                    break;
-                case static_cast<int>('k'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(king_b_d); else
-                    squares[i]->setPixmap(king_b_l);
-                    break;
-                }
+            switch(fenstr[i].unicode()) {
+            case static_cast<int>('P'):
+                squares[i]->setPixmap(pieces[0]);
+                break;
+            case static_cast<int>('R'):
+                squares[i]->setPixmap(pieces[1]);
+                break;
+            case static_cast<int>('N'):
+                squares[i]->setPixmap(pieces[2]);
+                break;
+            case static_cast<int>('B'):
+                squares[i]->setPixmap(pieces[3]);
+                break;
+            case static_cast<int>('Q'):
+                squares[i]->setPixmap(pieces[4]);
+                break;
+            case static_cast<int>('K'):
+                squares[i]->setPixmap(pieces[5]);
+                break;
+            case static_cast<int>('p'):;
+                squares[i]->setPixmap(pieces[6]);
+                break;
+            case static_cast<int>('r'):
+                squares[i]->setPixmap(pieces[7]);
+                break;
+            case static_cast<int>('n'):;
+                squares[i]->setPixmap(pieces[8]);
+                break;
+            case static_cast<int>('b'):
+                squares[i]->setPixmap(pieces[9]);
+                break;
+            case static_cast<int>('q'):
+                squares[i]->setPixmap(pieces[10]);
+                break;
+            case static_cast<int>('k'):
+                squares[i]->setPixmap(pieces[11]);
+                break;
             }
             //squares[i]->setText(QString (fenstr[i]));
         }

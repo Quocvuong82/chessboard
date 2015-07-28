@@ -14,6 +14,7 @@
 #include <QLabel>
 #include <QVector>
 #include <QGridLayout>
+#include <QSvgWidget>
 #include "qsquare.h"
 #include "chessdatabase.h"
 
@@ -26,7 +27,7 @@ class Board {
     bool castleBQ;
     string enPassant = "-";
     int moveNr = 1;
-	int GameID;
+    //int GameID;
 	string event;
 	string site;
 	string date;
@@ -66,6 +67,10 @@ class Board {
 
     int getRecentGameIDFromDB();
     void initSquares();
+    QPixmap pieces[12];
+    QSvgWidget* piecesSVG[12];
+    QSvgWidget* pawn_w;
+    QSvgWidget* pawn_b;
     QPixmap square_d;
     QPixmap square_l;
     QPixmap pawn_w_l;
@@ -94,6 +99,7 @@ class Board {
     QPixmap bishop_b_d;
 
 public:
+    int GameID;
     QGridLayout *Grid;
     QVector<QSquare*> squares;
     //char getActiveColor();
@@ -123,6 +129,7 @@ public:
     bool setGameID(int gameID);
     bool setParent(int parent);
     bool setPosition(Fen pos);
+    //void setPosition(int posID);
     bool writePositionToDB();
     bool writePlayersToDB();
     bool writeGameToDB();

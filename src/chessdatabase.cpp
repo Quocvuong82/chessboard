@@ -219,6 +219,8 @@ vector<string> ChessDatabase::getPlayersToScan() {
     while(row = mysql_fetch_row(res)) {
         handle.push_back(row[0]);
     }
+    mysql_free_result(res);
+    mysql_close(&mysql);
     return handle;
 }
 
@@ -247,3 +249,23 @@ vector<string> ChessDatabase::getPlayersToScan() {
     }
     //query = "UPDATE `schach`.`game` SET `date` = '" + date[i] + "' WHERE `game`.`game_id`=" + gameID[i];
 }*/
+
+vector<int> ChessDatabase::getPosIDsByParent(int parent) {
+    string query = "SELECT position_id FROM position WHERE parent=" + boost::lexical_cast<string>(parent);
+    mysql_init(&mysql);
+    if (!mysql_real_connect(&mysql,host.c_str(),user.c_str(),password.c_str(),database.c_str(),0,NULL,0))
+    {
+        cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
+    }
+    MYSQL_RES *res;
+    mysql_real_query(&mysql, query.c_str(), query.length());
+    res = mysql_use_result(&mysql);
+    MYSQL_ROW row;
+    vector<int> posIDs;
+    while(row = mysql_fetch_row(res)) {
+        posIDs.push_back(boost::lexical_cast<int>(row[0]));
+    }
+    mysql_free_result(res);
+    mysql_close(&mysql);
+    return posIDs;
+}
