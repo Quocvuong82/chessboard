@@ -6,7 +6,8 @@
 #include"enginethread.h"
 
 MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(parent, flags) {
-    /* Boolen Variables */
+
+    /* Boolean Variables */
     chessserver = false;
     getICGameList = false;
     chessengine = false;
@@ -17,10 +18,10 @@ MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(par
     moved = false;
 
 
-    this->setWindowTitle("Chessboard 0.4");
+    this->setWindowTitle("Chessboard 0.5");
     this->resize(900, 400);
 
-    dialog = new DBdialog;
+    dialog = new DBdialog(myChessDB);
     dialog->setAttribute(Qt::WA_QuitOnClose);
     QObject::connect(dialog, SIGNAL(finished(int)), this, SLOT(checkInputDialog(int)));
     QObject::connect(dialog, SIGNAL(rejected()), this, SLOT(checkInputDialog()));
@@ -60,6 +61,7 @@ MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(par
         game.push_back(new Game());
         for(int j = 0; j < game[i]->board->squares.size(); j++) {
             QObject::connect(game[i]->board->squares[j], SIGNAL(clicked(int)), this, SLOT(SquareClicked(int)));
+            QObject::connect(game[i]->board->squares[j], SIGNAL(dropped(int, int)), this, SLOT(SquareDropped(int, int)));
         }
     }
 
@@ -72,13 +74,16 @@ MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(par
     EngineButton = new QPushButton("Think");
     for(int i = 0; i < NrOfButtons; i++) {
         button.push_back(new QPushButton(QString("B").append(QString(QString::fromStdString(boost::lexical_cast<string>(i))))));
-        button[i]->setFixedSize(40,25);
+        if(i != 2) button[i]->setFixedSize(40,25);
     };
     EngineButton->setFixedSize(50,25);
     button[4]->setText("<");
     button[5]->setText(">");
     button[0]->setText("R ICS");
     button[1]->setText("games");
+    button[2]->setText("Pos Tree");
+    button[3]->setText("Scan ICS");
+
 
     /* Signal - Slot Connections */  
     QObject::connect(next, SIGNAL(clicked()), this, SLOT(nextPos()));
@@ -87,6 +92,8 @@ MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(par
     QObject::connect(EngineButton, SIGNAL(clicked()), this, SLOT(think()));
     QObject::connect(button[0], SIGNAL(clicked()), this, SLOT(readICServer()));
     QObject::connect(button[1], SIGNAL(clicked()), this, SLOT(ICSgameList()));
+    QObject::connect(button[2], SIGNAL(clicked()), this, SLOT(showPositionTree()));
+    QObject::connect(button[3], SIGNAL(clicked()), this, SLOT(scanICS()));
     QObject::connect(button[4], SIGNAL(clicked()), this, SLOT(prevPos()));
     QObject::connect(button[5], SIGNAL(clicked()), this, SLOT(nextPos()));
 
@@ -128,8 +135,8 @@ MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(par
         playerLayout[i]->addWidget(time[i]);
         playerLayout[i]->addWidget(score[i]);
         playerFrame[i]->setLayout(playerLayout[i]);  
-
     }
+
     /* Style Player and Time Labels */
     player[0]->setColor("black");
     player[1]->setColor("white");
@@ -189,7 +196,7 @@ MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(par
 
     /* Get position data from Database and display it on the GUI board */
     for(int i = 0; i < Game::getNrOfGames(); i++) {
-        game[i]->board->getPositionFromDBByID(posID);
+        //game[i]->board->getPositionFromDBByID(posID);
         game[i]->board->show(); // Write position to squares (QLabels)
         posIDs.push_back(vector<int> ());
         posIndex.push_back(0);
@@ -200,6 +207,7 @@ MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(par
 
     engine.start();
     engine.stockfish();
+    engine.writeToEngine("setoption name Threads value 4");
 
     QObject::connect(&fics, SIGNAL(unread()), this, SLOT(readICServer()));
     output2->setMinimumHeight(50);
@@ -379,6 +387,7 @@ void MyWindow::readInput() {
         /* Aktivate oppent (chess engine) */
         if((engineB && game[activeBoard]->getActiveColor() == 'b') || (engineW && game[activeBoard]->getActiveColor() == 'w')) think();
     }
+    input->clear();
 }
 
 /* Internet Chess Server Slots                                                */
@@ -575,8 +584,6 @@ void MyWindow::parseICSOutput(string outstr) {
             if(thinkOnMove) think();
         }
 
-    } else if (g != string::npos) {
-        getICGameList = true;
     }
 
     //output->setText(output->toPlainText().append(QString::fromStdString(outstr)));
@@ -638,7 +645,38 @@ void MyWindow::newGame() {
 }
 
 void MyWindow::SquareClicked(int id) {
-    cout << "Square " << id << " clicked " << endl;
+    /*int y = id / 8 + 1;
+    int x = id % 8;
+    string cmd;
+    cmd.push_back(static_cast<char>(x + 97));
+    cmd.push_back(static_cast<char>(y + 48));
+    cout << "Square " << cmd << " clicked " << endl;
+    if(clickcmd) {
+        QString txt = input->text();
+        input->setText(txt.append(QString::fromStdString(cmd)));
+        clickcmd = false;
+        readInput();
+    } else {
+        input->setText(QString::fromStdString(cmd));
+        clickcmd = true;
+    }*/
+}
+
+void MyWindow::SquareDropped(int target, int source) {
+    int y = source / 8 + 1;
+    int x = source % 8;
+    string cmd;
+    cmd.push_back(static_cast<char>(x + 97));
+    cmd.push_back(static_cast<char>(y + 48));
+    y = target / 8 + 1;
+    x = target % 8;
+    cmd.push_back(static_cast<char>(x + 97));
+    cmd.push_back(static_cast<char>(y + 48));
+    //Board b; b.move(); b.sh
+    game[activeBoard]->board->move(cmd);
+    game[activeBoard]->board->show();
+    input->setText(QString::fromStdString(cmd));
+    //readInput();
 }
 
 void MyWindow::quit() {
@@ -672,4 +710,61 @@ void MyWindow::undock() {
     //GameInfoLayout->removeWidget(gameinfo);
     gameinfo->setParent(0);
     gameinfo->show();
+}
+
+void MyWindow::scanICS() {
+    fics.scanFics();
+}
+
+void MyWindow::showPositionTree() {
+    posTree = new QTreeWidget;
+    posTree->setColumnCount(1);
+    posTree->setMinimumSize(350, 600);
+    vector<QTreeWidgetItem *> item;
+    vector<int> posIDs = myChessDB.getPosIDsByParent(1);
+
+    /* Level 0 */
+    item.push_back(new QTreeWidgetItem());
+    item[0]->setText(0, "1"); // Initial Position
+    posTree->insertTopLevelItem(0, item[0]);
+    QObject::connect(posTree, SIGNAL(itemExpanded(QTreeWidgetItem*)), this, SLOT(itemExpanded(QTreeWidgetItem*)));
+    QObject::connect(posTree, SIGNAL(itemClicked(QTreeWidgetItem*, int)), this, SLOT(showPosition(QTreeWidgetItem*)));
+    QTreeWidgetItem* initItem = item[0];
+
+    /* Level 1 */
+    for(int i = 0; i < posIDs.size(); i++) {
+        QTreeWidgetItem* item = new QTreeWidgetItem(initItem);
+        item->setText(0, QString::fromStdString(boost::lexical_cast<string>(posIDs[i])));
+    }
+    posTree->show();
+}
+
+void MyWindow::itemExpanded(QTreeWidgetItem* item) {
+    for(int j = 0; j < item->childCount(); j++) {
+        vector<int> posIDs = myChessDB.getPosIDsByParent(item->child(j)->text(0).toInt());
+        for(int i = 0; i < posIDs.size(); i++) {
+            QTreeWidgetItem* newitem = new QTreeWidgetItem(item->child(j));
+            newitem->setText(0, QString::fromStdString(boost::lexical_cast<string>(posIDs[i])));
+        }
+    }
+}
+
+void MyWindow::showPosition(QTreeWidgetItem* item) {
+    int posID = item->text(0).toInt();
+    game[activeBoard]->board->getPositionFromDBByID(posID);
+    game[activeBoard]->board->show();
+}
+
+void MyWindow::mousePressEvent(QMouseEvent *event) {
+    if (event->button() == Qt::LeftButton) {
+        cout << "left mouse button pressed" << endl;
+        QDrag *drag = new QDrag(this);
+        QMimeData *mimeData = new QMimeData;
+
+        //mimeData->setText(commentEdit->toPlainText());
+        drag->setMimeData(mimeData);
+        //drag->setPixmap(iconPixmap);
+
+        Qt::DropAction dropAction = drag->exec();
+    }
 }

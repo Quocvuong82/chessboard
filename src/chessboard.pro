@@ -15,6 +15,7 @@ SOURCES += \
     playerlabel.cpp \
     timelabel.cpp
 QT += core gui widgets
+QT += svg
 
 HEADERS += \
     board.h \

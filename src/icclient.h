@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <signal.h>
 #include <string.h>
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -16,6 +17,7 @@
 #include <boost/algorithm/string.hpp>
 #include "fen.h"
 #include "board.h"
+#include "chessdatabase.h"
 #include <fcntl.h>
 #include <QObject>
 #ifndef ICCLIENT
@@ -32,14 +34,18 @@ public:
     bool history();
     bool examine();
     int saveGameToDB(string handle, int gameID);
-    bool saveGames(string handle);
+    int saveGames(string handle);
+    void scanFics();
     string readFromServer();
     bool writeSocket(string message);
     int pos;
     bool isunread();
+    bool isunread2();
 private:
     bool connected = true;
     unsigned int latency = 10000;
+    ChessDatabase myChessDB;
+    int p = 0; // new positions added to database
     size_t Rpos; // Read-Position
     size_t Rbuffer;
     bool newServerData; // server wrote datastring to client
@@ -57,6 +63,7 @@ private:
     string getServerAnswer();
     void error(const char *msg);
     void bufferManager();
+    void clearBuffer();
 signals:
    void newOutput();
    void unread();

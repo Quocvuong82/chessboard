@@ -6,6 +6,7 @@
 
 class ChessDatabase : public Database {
 public:
+    ChessDatabase();
     ChessDatabase(string host, string user, string password, string database);
     vector<int> getEventIDs();
     vector<vector<int>> getGameIDsByEventID(int eventID);
@@ -14,9 +15,11 @@ public:
     string getEventByID(int id);
     string getPlayerByID(int playerID);
     vector<string> getPlayersByGameID(int gameID);
+    vector<string> getPlayersToScan(); // get players to scan for new games on FICS
+    vector<int> getPosIDsByParent(int parent);
+    //void cleanUpDatabase();
 private:
     vector<int> getPlayersByString(string str);
 };
 
 #endif // CHESSDATABASE
-

@@ -13,6 +13,7 @@
 #include <QLabel>
 #include <QString>
 #include <QGridLayout>
+#include "QPainter"
 
 using namespace std;
 
@@ -87,8 +88,8 @@ Board::Board() {
 Board::Board(Fen pos) {
 
     /* Create the 64 squares of the board */
-    QPixmap square_d = QPixmap("/home/alex/chessboard/textures/wood_d.png");
-    QPixmap square_l = QPixmap("/home/alex/chessboard/textures/wood_l.png");
+    QPixmap square_d = QPixmap("./textures/wood_d.png");
+    QPixmap square_l = QPixmap("./textures/wood_l.png");
 
     int i;
     initSquares();
@@ -196,32 +197,82 @@ string Board::getFenstring() {
 }
 
 void Board::initSquares(){
-    square_d = QPixmap("/home/alex/chessboard/textures/wood_d.png");
-    square_l = QPixmap("/home/alex/chessboard/textures/wood_l.png");
-    pawn_w_l = QPixmap("/home/alex/chessboard/textures/pawn_white_l.png");
-    pawn_w_d = QPixmap("/home/alex/chessboard/textures/pawn_white_d.png");
-    pawn_b_l = QPixmap("/home/alex/chessboard/textures/pawn_black_l.png");
-    pawn_b_d = QPixmap("/home/alex/chessboard/textures/pawn_black_d.png");
-    rook_w_l = QPixmap("/home/alex/chessboard/textures/rook_white_l.png");
-    rook_w_d = QPixmap("/home/alex/chessboard/textures/rook_white_d.png");
-    knight_w_l = QPixmap("/home/alex/chessboard/textures/knight_white_l.png");
-    knight_w_d = QPixmap("/home/alex/chessboard/textures/knight_white_d.png");
-    rook_b_l = QPixmap("/home/alex/chessboard/textures/rook_black_l.png");
-    rook_b_d = QPixmap("/home/alex/chessboard/textures/rook_black_d.png");
-    knight_b_l = QPixmap("/home/alex/chessboard/textures/knight_black_l.png");
-    knight_b_d = QPixmap("/home/alex/chessboard/textures/knight_black_d.png");
-    queen_w_l = QPixmap("/home/alex/chessboard/textures/queen_white_l.png");
-    queen_w_d = QPixmap("/home/alex/chessboard/textures/queen_white_d.png");
-    queen_b_l = QPixmap("/home/alex/chessboard/textures/queen_black_l.png");
-    queen_b_d = QPixmap("/home/alex/chessboard/textures/queen_black_d.png");
-    king_w_l = QPixmap("/home/alex/chessboard/textures/king_white_l.png");
-    king_w_d = QPixmap("/home/alex/chessboard/textures/king_white_d.png");
-    king_b_l = QPixmap("/home/alex/chessboard/textures/king_black_l.png");
-    king_b_d = QPixmap("/home/alex/chessboard/textures/king_black_d.png");
-    bishop_w_l = QPixmap("/home/alex/chessboard/textures/bishop_white_l.png");
-    bishop_w_d = QPixmap("/home/alex/chessboard/textures/bishop_white_d.png");
-    bishop_b_l = QPixmap("/home/alex/chessboard/textures/bishop_black_l.png");
-    bishop_b_d = QPixmap("/home/alex/chessboard/textures/bishop_black_d.png");
+    square_d = QPixmap("./textures/wood_d.png");
+    square_l = QPixmap("./textures/wood_l.png");
+    pawn_w_l = QPixmap("./textures/pawn_white_l.png");
+    pawn_w_d = QPixmap("./textures/pawn_white_d.png");
+    pawn_b_l = QPixmap("./textures/pawn_black_l.png");
+    pawn_b_d = QPixmap("./textures/pawn_black_d.png");
+    rook_w_l = QPixmap("./textures/rook_white_l.png");
+    rook_w_d = QPixmap("./textures/rook_white_d.png");
+    knight_w_l = QPixmap("./textures/knight_white_l.png");
+    knight_w_d = QPixmap("./textures/knight_white_d.png");
+    rook_b_l = QPixmap("./textures/rook_black_l.png");
+    rook_b_d = QPixmap("./textures/rook_black_d.png");
+    knight_b_l = QPixmap("./textures/knight_black_l.png");
+    knight_b_d = QPixmap("./textures/knight_black_d.png");
+    queen_w_l = QPixmap("./textures/queen_white_l.png");
+    queen_w_d = QPixmap("./textures/queen_white_d.png");
+    queen_b_l = QPixmap("./textures/queen_black_l.png");
+    queen_b_d = QPixmap("./textures/queen_black_d.png");
+    king_w_l = QPixmap("./textures/king_white_l.png");
+    king_w_d = QPixmap("./textures/king_white_d.png");
+    king_b_l = QPixmap("./textures/king_black_l.png");
+    king_b_d = QPixmap("./textures/king_black_d.png");
+    bishop_w_l = QPixmap("./textures/bishop_white_l.png");
+    bishop_w_d = QPixmap("./textures/bishop_white_d.png");
+    bishop_b_l = QPixmap("./textures/bishop_black_l.png");
+    bishop_b_d = QPixmap("./textures/bishop_black_d.png");
+
+    int scale = 64;
+
+    for(int i = 0; i < 12; i++) {
+        pieces[i] = QPixmap::fromImage(QImage(scale,scale, QImage::Format_ARGB32));
+        pieces[i].fill(Qt::transparent);
+        pieces[i].scaled(scale,scale);
+    }
+
+    pawn_w_l.fromImage(QImage(scale,scale, QImage::Format_ARGB32));
+    pawn_w_d.fromImage(QImage(scale,scale, QImage::Format_ARGB32));
+    pawn_w_l.fill(Qt::transparent);
+    pawn_w_d.fill(Qt::transparent);
+    pawn_w_l.scaled(scale,scale);
+    pawn_w_d.scaled(scale,scale);
+
+    pawn_b_l.fromImage(QImage(scale,scale, QImage::Format_ARGB32));
+    pawn_b_d.fromImage(QImage(scale,scale, QImage::Format_ARGB32));
+    pawn_b_l.fill(Qt::transparent);
+    pawn_b_d.fill(Qt::transparent);
+    pawn_b_l.scaled(scale,scale);
+    pawn_b_d.scaled(scale,scale);
+
+    vector<QPainter*> painter;
+    pawn_w = new QSvgWidget;
+    pawn_w->load(QString ("./textures/WhitePawn.svg"));
+    pawn_w->resize(scale,scale);
+
+    for(int i = 0; i < 12; i++) {
+        piecesSVG[i] = new QSvgWidget;
+    }
+    piecesSVG[0]->load(QString ("./textures/WhitePawn.svg"));
+    piecesSVG[1]->load(QString ("./textures/WhiteRook.svg"));
+    piecesSVG[2]->load(QString ("./textures/WhiteKnight.svg"));
+    piecesSVG[3]->load(QString ("./textures/WhiteBishop.svg"));
+    piecesSVG[4]->load(QString ("./textures/WhiteQueen.svg"));
+    piecesSVG[5]->load(QString ("./textures/WhiteKing.svg"));
+    piecesSVG[6]->load(QString ("./textures/BlackPawn.svg"));
+    piecesSVG[7]->load(QString ("./textures/BlackRook.svg"));
+    piecesSVG[8]->load(QString ("./textures/BlackKnight.svg"));
+    piecesSVG[9]->load(QString ("./textures/BlackBishop.svg"));
+    piecesSVG[10]->load(QString ("./textures/BlackQueen.svg"));
+    piecesSVG[11]->load(QString ("./textures/BlackKing.svg"));
+
+    for(int i = 0; i < 12; i++) {
+        piecesSVG[i]->resize(scale,scale);
+        painter.push_back(new QPainter(&pieces[i]));
+        piecesSVG[i]->render(painter[i], QPoint(), QRegion(), QWidget::DrawChildren);
+    }
+
     int i;
     for (int y = 0; y < 8; y++) {
        for (int x = 0; x < 8; x++) {
@@ -229,6 +280,7 @@ void Board::initSquares(){
            squares.append(new QSquare);
            if((y + x) % 2 == 0) squares[i]->setPixmap(square_d); else
                squares[i]->setPixmap(square_l);
+               squares[i]->setFixedSize(scale,scale);
        }
     }
 }
@@ -245,61 +297,43 @@ void Board::writePositionTosquares() {
      for (int y = 0; y < 8; y++) {
         for (int x = 0; x < 8; x++) {
             i = y * 8 + x;
-            //cout << "y: " << y << "x: " << x << endl;
-            if(fenstr[i] == '0' || fenstr[i] == '-') {
-                if((y + x) % 2 == 0) squares[i]->setPixmap(square_d); else
-                    squares[i]->setPixmap(square_l);
-            } else {
-                switch(fenstr[i].unicode()) {
-                case static_cast<int>('P'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(pawn_w_d); else
-                    squares[i]->setPixmap(pawn_w_l);
-                    break;
-                case static_cast<int>('R'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(rook_w_d); else
-                    squares[i]->setPixmap(rook_w_l);
-                    break;
-                case static_cast<int>('N'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(knight_w_d); else
-                    squares[i]->setPixmap(knight_w_l);
-                    break;
-                case static_cast<int>('B'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(bishop_w_d); else
-                    squares[i]->setPixmap(bishop_w_l);
-                    break;
-                case static_cast<int>('Q'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(queen_w_d); else
-                    squares[i]->setPixmap(queen_w_l);
-                    break;
-                case static_cast<int>('K'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(king_w_d); else
-                    squares[i]->setPixmap(king_w_l);
-                    break;
-                case static_cast<int>('p'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(pawn_b_d); else
-                    squares[i]->setPixmap(pawn_b_l);
-                    break;
-                case static_cast<int>('r'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(rook_b_d); else
-                    squares[i]->setPixmap(rook_b_l);
-                    break;
-                case static_cast<int>('n'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(knight_b_d); else
-                    squares[i]->setPixmap(knight_b_l);
-                    break;
-                case static_cast<int>('b'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(bishop_b_d); else
-                    squares[i]->setPixmap(bishop_b_l);
-                    break;
-                case static_cast<int>('q'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(queen_b_d); else
-                    squares[i]->setPixmap(queen_b_l);
-                    break;
-                case static_cast<int>('k'):
-                    if((y + x) % 2 == 0) squares[i]->setPixmap(king_b_d); else
-                    squares[i]->setPixmap(king_b_l);
-                    break;
-                }
+            switch(fenstr[i].unicode()) {
+            case static_cast<int>('P'):
+                squares[i]->setPixmap(pieces[0]);
+                break;
+            case static_cast<int>('R'):
+                squares[i]->setPixmap(pieces[1]);
+                break;
+            case static_cast<int>('N'):
+                squares[i]->setPixmap(pieces[2]);
+                break;
+            case static_cast<int>('B'):
+                squares[i]->setPixmap(pieces[3]);
+                break;
+            case static_cast<int>('Q'):
+                squares[i]->setPixmap(pieces[4]);
+                break;
+            case static_cast<int>('K'):
+                squares[i]->setPixmap(pieces[5]);
+                break;
+            case static_cast<int>('p'):;
+                squares[i]->setPixmap(pieces[6]);
+                break;
+            case static_cast<int>('r'):
+                squares[i]->setPixmap(pieces[7]);
+                break;
+            case static_cast<int>('n'):;
+                squares[i]->setPixmap(pieces[8]);
+                break;
+            case static_cast<int>('b'):
+                squares[i]->setPixmap(pieces[9]);
+                break;
+            case static_cast<int>('q'):
+                squares[i]->setPixmap(pieces[10]);
+                break;
+            case static_cast<int>('k'):
+                squares[i]->setPixmap(pieces[11]);
+                break;
             }
             //squares[i]->setText(QString (fenstr[i]));
         }
@@ -483,15 +517,27 @@ int Board::getEventIDFromDB(string event) {
 }
 
 bool Board::writePlayerToDB(string name, int elo) {
+    return writePlayerToDB(name, elo, "", false);
+}
+
+bool Board::writePlayerToDB(string name, int elo, string handle, bool ficsScan) {
 	int playerID = 0;
-	cout << "write Player to DB " << endl;
+    //cout << "write Player to DB " << endl;
 	playerID = getPlayerIDFromDB(name);
+    string query;
 	if(playerID == 0) {
-		string query = "INSERT INTO player (player_id, name, fide_id, elo) VALUES (NULL, '" + name + "', '', " + boost::lexical_cast<string>(elo) + ")";
-		//cout << query << endl;
-        cout << "writing Player to DB " << endl;
+        query = "INSERT INTO player (player_id, name, fide_id, elo, fics_handle, last_fics_scan) VALUES (NULL, '" + name + "', '', '" + boost::lexical_cast<string>(elo) + "', '" + handle + "'";
+        if(ficsScan) query += ", Now()"; else query += ", '0000-00-00 00:00:00'";
+        query += ")";
+        //cout << query << endl;
+        cout << "writing Player " + name + " to DB " << endl;
 		mysql_real_query(&mysql, query.c_str(), query.length());
-	}
+    } else if (ficsScan) {
+        query = "UPDATE player SET last_fics_scan = Now() WHERE player_id =" + boost::lexical_cast<string>(playerID) + ";";
+        //cout << query << endl;
+        cout << "updating Player " << playerID << endl;
+        mysql_real_query(&mysql, query.c_str(), query.length());
+    }
 	return true;
 }
 
@@ -715,6 +761,15 @@ bool Board::setPlayer(int color, string name, int elo) {
     return true;
 }
 
+bool Board::setPlayer(int color, string name, int elo, string handle, bool ficsscan) {
+    if(color % 2) {
+        white = name; whiteElo = elo; handleW = handle; ficsScanW = ficsscan;
+    } else {
+        black = name; blackElo = elo; handleB = handle; ficsScanB = ficsscan;
+    }
+    return true;
+}
+
 bool Board::setGameID(int gameID) {
     GameID = gameID;
     return true;
@@ -731,13 +786,17 @@ bool Board::writePlayersToDB() {
         cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
         return false;
     }
-    writePlayerToDB(white, whiteElo);
-    writePlayerToDB(black, blackElo);
+    writePlayerToDB(white, whiteElo, handleW, ficsScanW);
+    writePlayerToDB(black, blackElo, handleB, ficsScanB);
     mysql_close(&mysql);
     return true;
 }
 
 bool Board::writeGameToDB() {
+    string query;
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    int gameID = 0;
     mysql_init(&mysql);
     if (!mysql_real_connect(&mysql,"localhost","root","floppy","schach",0,NULL,0))
     {
@@ -746,16 +805,40 @@ bool Board::writeGameToDB() {
     }
     int white_id = getPlayerIDFromDB(white); int black_id = getPlayerIDFromDB(black);
     int event_id = 49; // ICS Rated Chess Match
-    string query = "INSERT INTO game (game_id, moves, white_id, black_id, event_id, round, result, white_elo, black_elo, eco)";
-    query += "VALUES (NULL, '" + moves + "', '" + boost::lexical_cast<string>(white_id) +"', '" + boost::lexical_cast<string>(black_id) + "', '" + boost::lexical_cast<string>(event_id) + "', '" + boost::lexical_cast<string>(round) + "', '" + result + "', '" + boost::lexical_cast<string>(whiteElo) + "', '" + boost::lexical_cast<string>(blackElo) + "', '" + ECO + "')";
 
+    query = "SELECT game_id FROM game WHERE white_id=" + boost::lexical_cast<string>(white_id) + " and black_id=" + boost::lexical_cast<string>(black_id) + " and date='" + date + "'";
     //cout << query << endl;
-    //cout << "writing Game to DB " << endl;
-    mysql_real_query(&mysql, query.c_str(), query.length());
-    //GameID = getGameIDFromDB(moves); // Set the boards game id
-    GameID = getRecentGameIDFromDB(); // Set the boards game id
-    mysql_close(&mysql);
-    return true;
+    if(!mysql_real_query(&mysql, query.c_str(), query.length())) {
+
+        res = mysql_use_result(&mysql);
+
+        row = mysql_fetch_row(res);
+        if(row) {
+            gameID = boost::lexical_cast<int>(row[0]);
+            //posID = static_cast<int>(row[0]);
+            //cout << "PosID: " << posID << endl;
+        }
+        mysql_free_result(res);
+
+    }
+
+    if(gameID == 0) {
+        query = "INSERT INTO game (game_id, moves, white_id, black_id, event_id, round, result, white_elo, black_elo, eco, date)";
+        query += "VALUES (NULL, '" + moves + "', '" + boost::lexical_cast<string>(white_id) +"', '" + boost::lexical_cast<string>(black_id) + "', '" + boost::lexical_cast<string>(event_id) + "', '" + boost::lexical_cast<string>(round) + "', '" + result + "', '" + boost::lexical_cast<string>(whiteElo) + "', '" + boost::lexical_cast<string>(blackElo) + "', '" + ECO + "', '" + date + "')";
+
+        //cout << query << endl;
+        //cout << "writing Game to DB " << endl;
+
+        mysql_real_query(&mysql, query.c_str(), query.length());
+        //GameID = getGameIDFromDB(moves); // Set the boards game id
+        GameID = getRecentGameIDFromDB(); // Set the boards game id
+        mysql_close(&mysql);
+        return true;
+    } else {
+        cout << "Game already in DB (game_id: " << boost::lexical_cast<string>(gameID) << ")" << endl;
+        mysql_close(&mysql);
+    }
+    return false;
 }
 
 int Board::getRecentGameIDFromDB() {
@@ -792,4 +875,8 @@ int Board::getGameID() {
 void Board::setActiveColor(char c) {
     activeColor = 0;
     if(c == 'b') activeColor = 1;
+}
+
+void Board::setGameDate(string date) {
+    this->date = date;
 }
