@@ -18,6 +18,8 @@
 #include <QTabWidget>
 #include <QMainWindow>
 #include <QMessageBox>
+#include <QTreeWidget>
+#include <QObject>
 #include <fen.h>
 #include <board.h>
 #include <iostream>
@@ -147,8 +149,13 @@ private:
     ICclient fics; // = ICclient("freechess.org", 5000);
     string outstr;
 
+    QTreeWidget* posTree;
+
+    bool clickcmd = false;
+
 protected:
-  void keyPressEvent(QKeyEvent * e);
+  void keyPressEvent(QKeyEvent *e);
+  void mousePressEvent(QMouseEvent *event);
 public slots:
     // Slot for Control
     void nextPos();
@@ -178,6 +185,9 @@ public slots:
     void setGameID();
     void undock();
     void scanICS();
+    void showPositionTree();
+    void itemExpanded(QTreeWidgetItem*);
+    void showPosition(QTreeWidgetItem*);
 };
 
 #endif // MYWINDOW

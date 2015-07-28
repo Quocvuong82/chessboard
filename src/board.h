@@ -26,7 +26,7 @@ class Board {
     bool castleBQ;
     string enPassant = "-";
     int moveNr = 1;
-	int GameID;
+    //int GameID;
 	string event;
 	string site;
 	string date;
@@ -94,6 +94,7 @@ class Board {
     QPixmap bishop_b_d;
 
 public:
+    int GameID;
     QGridLayout *Grid;
     QVector<QSquare*> squares;
     //char getActiveColor();
@@ -123,6 +124,7 @@ public:
     bool setGameID(int gameID);
     bool setParent(int parent);
     bool setPosition(Fen pos);
+    //void setPosition(int posID);
     bool writePositionToDB();
     bool writePlayersToDB();
     bool writeGameToDB();

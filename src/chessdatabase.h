@@ -16,6 +16,7 @@ public:
     string getPlayerByID(int playerID);
     vector<string> getPlayersByGameID(int gameID);
     vector<string> getPlayersToScan(); // get players to scan for new games on FICS
+    vector<int> getPosIDsByParent(int parent);
     //void cleanUpDatabase();
 private:
     vector<int> getPlayersByString(string str);
