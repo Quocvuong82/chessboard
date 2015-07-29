@@ -8,7 +8,6 @@
 using namespace boost;
 using namespace std;
 int QSquare::ID = 0;
-
 QSquare::QSquare()
 {
     id = ID;
@@ -20,6 +19,7 @@ QSquare::QSquare()
 
 void QSquare::setPixmap(QPixmap p) {
     piece->setPixmap(p);
+    piece->show();
 }
 
 void QSquare::emitSignal() {
@@ -56,10 +56,12 @@ void QSquare::mouseMoveEvent(QMouseEvent *event)
     QDrag *drag = new QDrag(this);
     QMimeData *mimeData = new QMimeData;
 
-    //mimeData->setData("text/plain", );
-    mimeData->setText(QString::fromStdString(boost::lexical_cast<std::string>(id)));
-    drag->setMimeData(mimeData);
+    /* Mime-Data */
     QPixmap pixmap = *this->piece->pixmap();
+    mimeData->setText(QString::fromStdString(boost::lexical_cast<std::string>(id)));
+    mimeData->setImageData(QVariant(pixmap));
+    drag->setMimeData(mimeData);
+
     drag->setPixmap(pixmap);
     drag->setHotSpot(QPoint(drag->pixmap().width()/2,
                                 drag->pixmap().height()/2));
@@ -80,7 +82,10 @@ void QSquare::dropEvent(QDropEvent *event)
     mimeTypeCombo->clear();
     mimeTypeCombo->addItems(event->mimeData()->formats());*/
     event->acceptProposedAction();
-    int source = lexical_cast<int>(event->mimeData()->text().toStdString());
-    if(id != source) emit dropped(id, source);
+    int source = lexical_cast<int>(event->mimeData()->text().toStdString()) % 64;
+    int target = id % 64;
+    if(target != source) emit dropped(target, source);
+    //QVariant v = event->mimeData()->imageData();
+    piece->setPixmap(event->mimeData()->imageData().value<QPixmap>());
     piece->show();
 }

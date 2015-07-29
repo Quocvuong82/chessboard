@@ -293,6 +293,7 @@ void Board::writePositionTosquares() {
     //cout << "created QString fenstr" << endl;
     //cout << fenstr.toStdString() << endl;
     //for (int i = 0; i < 64; i++) {
+    cout << fenstr.toStdString();
     int i;
      for (int y = 0; y < 8; y++) {
         for (int x = 0; x < 8; x++) {
@@ -334,10 +335,17 @@ void Board::writePositionTosquares() {
             case static_cast<int>('k'):
                 squares[i]->setPixmap(pieces[11]);
                 break;
+            default:;
+                if(fenstr[i] == '0' || fenstr[i] == '-') {
+                    QPixmap empty = QPixmap::fromImage(QImage(64,64, QImage::Format_ARGB32));
+                    empty.fill(Qt::transparent);
+                    squares[i]->setPixmap(empty);
+                }
             }
             //squares[i]->setText(QString (fenstr[i]));
         }
     }
+     cout << endl;
     //cout << "wrote Position to Squares" << endl;
 
 }
@@ -576,6 +584,10 @@ void Board::printMoves() {
 void Board::move(string movecmd) {
 	Move move(position, movecmd, activeColor); // einen neuen Zug machen mit Ausgansposition, Zugbefehl und aktivem Spieler
 	position = move.getPosition(); // neue Position übernehmen
+    for(int i = 0; i < 8; i++) {
+        cout << position.getFen(i) << " ";
+    }
+    cout << endl;
     if(DBwrite) writePositionToDB();
 	parent = getPositionIDFromDB();
 	updateGame(parent);

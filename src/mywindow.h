@@ -69,6 +69,7 @@ private:
     int activeBoard = 0;
     ChessDatabase myChessDB = ChessDatabase("localhost", "root", "floppy", "schach");
     bool chessserver;
+    bool examining = false;
     bool chessengine;
     bool localboard;
     bool thinkOnMove;

@@ -271,7 +271,7 @@ void MyWindow::keyPressEvent(QKeyEvent *e)
 }
 
 void MyWindow::nextPos() {
-    if(chessserver && !localboard) {
+    if(chessserver && examining && !localboard) {
        fics.writeSocket("forward\n");
     } else {
         if(posIDs[activeBoard].size() > 0 && (posIndex[activeBoard] + 1) < posIDs[activeBoard].size()) {
@@ -283,7 +283,7 @@ void MyWindow::nextPos() {
 }
 
 void MyWindow::prevPos() {
-    if(chessserver && !localboard) {
+    if(chessserver && examining && !localboard) {
        fics.writeSocket("backward\n");
     } else {
         if(posIndex[activeBoard]>0) {
@@ -412,6 +412,7 @@ void MyWindow::sendInputToServer() {
 }
 
 void MyWindow::sendToServer(string msg) {
+    cout << "sending to server: '" << msg << "'" << endl;
     size_t o = msg.find("observe ");
     size_t ex = msg.find("examine ");
     //cout << "o: " << o << endl;
@@ -435,7 +436,7 @@ void MyWindow::sendToServer(string msg) {
         BoardTab->setTabText(activeBoard, QString::fromStdString("#" + boost::lexical_cast<string>(gameID)));
         cout << "set gameID to " << msg.substr(sp, sp2) << endl;
     }
-    fics.writeSocket(input->text().toStdString());//.append("\n"));
+    fics.writeSocket(msg);//.append("\n"));
     //fics.writeSocket("help\n");
 }
 
@@ -558,6 +559,8 @@ void MyWindow::parseICSOutput(string outstr) {
         cout << endl;
         */
         //cout << "gameID: " << values[16] << endl;
+        //cout << fenstrings[0] << " " << fenstrings[1] << fenstrings[2] << endl;
+        bool isSet = false;
         for(int i = 0; i < Game::getNrOfGames(); i++) {
             cout << game[i]->getGameID() << " " << values[16] << endl;
             if(game[i]->getGameID() == boost::lexical_cast<int>(values[16])) {
@@ -565,8 +568,19 @@ void MyWindow::parseICSOutput(string outstr) {
                 game[i]->board->setPosition(Fen(fenstrings));
                 game[i]->setActiveColor(values[9][0] + 32); // Uppercase to lower case
                 //game[i]->board->show();
+                isSet = true;
+                break;
             }
         }
+        if(!isSet) {
+            newGame();
+            game[activeBoard]->setGameID(boost::lexical_cast<int>(values[16]));
+            cout << "setting GameID to " << boost::lexical_cast<int>(values[16]) << endl;
+            cout << "set position" << endl;
+            game[activeBoard]->board->setPosition(Fen(fenstrings));
+            game[activeBoard]->setActiveColor(values[9][0] + 32); // Uppercase to lower case
+        }
+
         /* If the game id of the server message matches the game id of the active board... */
         /* Set time and player names */
         if(game[activeBoard]->getGameID() == boost::lexical_cast<int>(values[16])) {
@@ -629,6 +643,13 @@ void MyWindow::newGame() {
     cout << "new game " << endl;
     game.push_back(new Game());
     game[Game::getNrOfGames() - 1]->board->getPositionFromDBByID(1);
+
+    /* Connect Square-Signals to MainWindow-Slots */
+    for(int j = 0; j < game[Game::getNrOfGames() - 1]->board->squares.size(); j++) {
+        QObject::connect(game[Game::getNrOfGames() - 1]->board->squares[j], SIGNAL(clicked(int)), this, SLOT(SquareClicked(int)));
+        QObject::connect(game[Game::getNrOfGames() - 1]->board->squares[j], SIGNAL(dropped(int, int)), this, SLOT(SquareDropped(int, int)));
+    }
+
     game[Game::getNrOfGames() - 1]->board->show(); // Write position to squares (QLabels)
     posIDs.push_back(vector<int> ());
     posIndex.push_back(0);
@@ -673,10 +694,22 @@ void MyWindow::SquareDropped(int target, int source) {
     cmd.push_back(static_cast<char>(x + 97));
     cmd.push_back(static_cast<char>(y + 48));
     //Board b; b.move(); b.sh
-    game[activeBoard]->board->move(cmd);
-    game[activeBoard]->board->show();
-    input->setText(QString::fromStdString(cmd));
+    cout << "SquareDropped: " << cmd << endl;
+    //if(chessserver) game[activeBoard]->board->move(cmd);
+    //input->setText(QString::fromStdString(cmd));
     //readInput();
+    if(chessserver) {
+        output->setText(output->toPlainText().append(QString::fromStdString(cmd)));
+        output->verticalScrollBar()->setValue(output->verticalScrollBar()->maximum());
+        sendToServer(cmd);
+        game[activeBoard]->board->move(cmd);
+    } else {
+        /* Make a move */
+        game[activeBoard]->board->move(cmd);
+
+        /* Aktivate oppent (chess engine) */
+        if((engineB && game[activeBoard]->getActiveColor() == 'b') || (engineW && game[activeBoard]->getActiveColor() == 'w')) think();
+    }
 }
 
 void MyWindow::quit() {
