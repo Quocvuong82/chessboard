@@ -1,6 +1,7 @@
 #include "database.h"
 #include <string>
 #include <vector>
+#include "fen.h"
 #ifndef CHESSDATABASE
 #define CHESSDATABASE
 
@@ -17,6 +18,9 @@ public:
     vector<string> getPlayersByGameID(int gameID);
     vector<string> getPlayersToScan(); // get players to scan for new games on FICS
     vector<int> getPosIDsByParent(int parent);
+    double getEvaluation(int posID);
+    Fen getPositionFromDBByID(int GameID);
+    string getMoves(int GameID);
     //void cleanUpDatabase();
 private:
     vector<int> getPlayersByString(string str);

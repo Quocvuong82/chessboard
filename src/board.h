@@ -51,7 +51,7 @@ class Board {
     /* Database */
     bool DBwrite = false;
 	bool connectwithDB();
-    ChessDatabase DB = ChessDatabase("localhost", "username", "password", "mychessdb");
+    ChessDatabase DB = ChessDatabase("localhost", "root", "floppy", "schach");
 
     /* Database Methods */
     bool writePlayerToDB(string name, int elo);
@@ -98,6 +98,9 @@ class Board {
     QPixmap bishop_b_l;
     QPixmap bishop_b_d;
 
+    vector<Fen> positions;
+    vector<string> movehistory;
+    vector<string> getSplittedPGN(string pgn_raw);
 public:
     int GameID;
     QGridLayout *Grid;
@@ -108,7 +111,12 @@ public:
     bool getPositionFromDBByID(int id);
     int getPositionIDFromDB();
     Fen position;
+    int CurrentPosIndex = 0;
+    vector<string> getMoveHistory();
     /* ---------------- */
+    void nextPos();
+    void prevPos();
+
     void setGameDate(string date);
     char getActiveColor();
     string getPlayerW();
@@ -129,6 +137,8 @@ public:
     bool setGameID(int gameID);
     bool setParent(int parent);
     bool setPosition(Fen pos);
+    void setPosition(int index);
+    void loadGame(int GameID);
     //void setPosition(int posID);
     bool writePositionToDB();
     bool writePlayersToDB();

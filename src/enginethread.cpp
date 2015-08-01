@@ -53,7 +53,7 @@ bool EngineThread::stockfish() {
         //cout << read(0,msg, 10);
         /*cout << b << " Bytes read" << endl;
         cout << msg;*/
-
+        fcntl(CHILD_WRITE, F_SETPIPE_SZ, 1048576);
         execl("/bin/stockfish", (char*) "", NULL);
     }
     else				/* in the parent */
@@ -67,8 +67,8 @@ bool EngineThread::stockfish() {
 }
 
 void EngineThread::readPipe() {
-    setbuf(stdout, NULL);
-    setbuf(stdin, NULL);
+    //setbuf(stdout, NULL);
+    //setbuf(stdin, NULL);
 
 
 
@@ -79,17 +79,24 @@ void EngineThread::readPipe() {
     fcntl(PARENT_READ, F_SETFL, flags | O_NONBLOCK);
     int b = 1; int c;
     while(1) {
-        char buf[64];
+        char buf[8192];
         memset(buf, 0, sizeof buf);
-        b = read(PARENT_READ, buf, 64);
+        b = read(PARENT_READ, buf, sizeof buf);
         if(b > 0) {
             //cout << buf << " | ";
+            /*for(int i = 0; i < b; i++) {
+                buffer.append(static_cast<string>(&buf[i]));
+            }*/
             buffer.append(buf);
-            usleep(1000);
+            //buffer.erase(buffer.size()-1);
+            usleep(100000);
             size_t newline;
-            newline = buffer.find("\n");
-            if(newline != string::npos) emit newOutput();
+            //newline = buffer.find("\n");
+            //cout << buf;
         }
+        if(pos < buffer.size() - 1) emit newOutput();
+
+        //cout << " " << b << endl;
         //cout << " (" << b << " Bytes read)" << endl;
         if(b <= 0) usleep(10000);
     }
@@ -120,6 +127,7 @@ string EngineThread::readFromEngine() {
     //cout << "newline: " << newline << " pos: " << pos << endl;
     string s = buffer.substr(pos, newline - pos + 1);
     if(newline != string::npos) pos = newline + 1;
+    //cout << pos - (newline + 1) << " ";
     //pos = buffer.size();
     return s;
 }

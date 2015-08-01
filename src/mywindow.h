@@ -19,6 +19,7 @@
 #include <QMainWindow>
 #include <QMessageBox>
 #include <QTreeWidget>
+#include <QWebView>
 #include <QObject>
 #include <fen.h>
 #include <board.h>
@@ -62,7 +63,7 @@ class MyWindow : public QMainWindow {
     Q_OBJECT
 public:
     MyWindow(QMainWindow *parent = 0, Qt::WindowFlags flags = 0);
-    int writeToStockfish(string message);
+    //int writeToStockfish(string message);
 private:
     //vector<Board*> board;
     vector<Game*> game;
@@ -136,6 +137,7 @@ private:
     QTextEdit* output;
     QTextEdit* output2;
     QTextEdit* engineOutput;
+    QWebView* engineView;
 
     DBdialog* dialog;
 
@@ -146,7 +148,10 @@ private:
     string bestmove;
     vector<string> scores;
     vector<string> moves;
-
+    vector<string> currmoves;
+    vector<string> multipvs;
+    vector<int> currmovenr;
+    int currnr = 0;
     ICclient fics; // = ICclient("freechess.org", 5000);
     string outstr;
 
@@ -190,6 +195,7 @@ public slots:
     void showPositionTree();
     void itemExpanded(QTreeWidgetItem*);
     void showPosition(QTreeWidgetItem*);
+    void linkClicked(QUrl);
 };
 
 #endif // MYWINDOW

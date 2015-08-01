@@ -16,6 +16,7 @@ SOURCES += \
     timelabel.cpp
 QT += core gui widgets
 QT += svg
+QT += webkitwidgets
 
 HEADERS += \
     board.h \

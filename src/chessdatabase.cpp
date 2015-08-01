@@ -269,3 +269,73 @@ vector<int> ChessDatabase::getPosIDsByParent(int parent) {
     mysql_close(&mysql);
     return posIDs;
 }
+
+double ChessDatabase::getEvaluation(int posID) {
+    string query = "SELECT game_id FROM game WHERE positions LIKE '%," + boost::lexical_cast<string>(posID) + ",%' AND result = '0-1'";
+    mysql_init(&mysql);
+    if (!mysql_real_connect(&mysql,host.c_str(),user.c_str(),password.c_str(),database.c_str(),0,NULL,0))
+    {
+        cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
+    }
+    MYSQL_RES *res;
+    mysql_real_query(&mysql, query.c_str(), query.length());
+    res = mysql_store_result(&mysql);
+    int WhiteWon = static_cast<int>(mysql_num_rows(res));
+    mysql_free_result(res);
+
+    query = "SELECT game_id FROM game WHERE positions LIKE '%," + boost::lexical_cast<string>(posID) + ",%' AND result = '1-0'";
+    mysql_real_query(&mysql, query.c_str(), query.length());
+    res = mysql_store_result(&mysql);
+    int BlackWon = static_cast<int>(mysql_num_rows(res));
+    mysql_free_result(res);
+    mysql_close(&mysql);
+    //cout << WhiteWon << " / " << BlackWon << endl;
+    if(WhiteWon == BlackWon) return 0;
+    if(WhiteWon > BlackWon) return static_cast<double>(BlackWon)/static_cast<double>(WhiteWon); else
+    return -1 * (static_cast<double>(WhiteWon)/static_cast<double>(BlackWon));
+
+}
+
+Fen ChessDatabase::getPositionFromDBByID(int GameID) {
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    mysql_init(&mysql);
+    if (!mysql_real_connect(&mysql,host.c_str(),user.c_str(),password.c_str(),database.c_str(),0,NULL,0))
+    {
+        cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
+    }
+    string query = "SELECT fen1, fen2, fen3, fen4, fen5, fen6, fen7, fen8, active_color, castle, en_passant, parent, game_id FROM position WHERE position_id=" + boost::lexical_cast<string>(GameID) + ';';
+
+    //cout << query << endl;
+    mysql_real_query(&mysql, query.c_str(), query.length());
+    res = mysql_use_result(&mysql);
+    row = mysql_fetch_row(res);
+    vector<string> fenstrings(13);
+
+    for(int i = 0; i < 11; i++) {
+        fenstrings[i] = row[i];
+        //cout << fenstrings[i] << endl;
+    }
+    fenstrings[11] = "0";
+    fenstrings[12] = "1";
+
+    Fen fen(fenstrings);
+    return fen;
+}
+
+string ChessDatabase::getMoves(int GameID) {
+    string query = "SELECT moves FROM game WHERE game_id=" + boost::lexical_cast<string>(GameID);
+    mysql_init(&mysql);
+    if (!mysql_real_connect(&mysql,host.c_str(),user.c_str(),password.c_str(),database.c_str(),0,NULL,0))
+    {
+        cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
+    }
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    mysql_real_query(&mysql, query.c_str(), query.length());
+    res = mysql_use_result(&mysql);
+    row = mysql_fetch_row(res);
+    string moves = row[0];
+    mysql_free_result(res);
+    return moves;
+}

@@ -53,6 +53,7 @@ MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(par
     gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Next Move"), this, SLOT(nextPos()));
     gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Previous Move"), this, SLOT(prevPos()));
     gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Set Game ID"), this, SLOT(setGameID()));
+    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Duplicate Game"), this, SLOT());
 
     viewMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Undock Gameinfo"), this, SLOT(undock()));
 
@@ -156,7 +157,9 @@ MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(par
     output = new QTextEdit();
     output->setReadOnly(true);
     output2 = new QTextEdit();
-    output2->setReadOnly(true);
+    engineView = new QWebView();
+    QObject::connect(engineView, SIGNAL(linkClicked(QUrl)), this, SLOT(linkClicked(QUrl)));
+    //output2->setReadOnly(true);
     engineOutput = output2;
     engineOutput->show();
     engineOutput->setMinimumWidth(400);
@@ -208,6 +211,7 @@ MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(par
     engine.start();
     engine.stockfish();
     engine.writeToEngine("setoption name Threads value 4");
+    engine.writeToEngine("setoption name MultiPV value 5");
 
     QObject::connect(&fics, SIGNAL(unread()), this, SLOT(readICServer()));
     output2->setMinimumHeight(50);
@@ -243,7 +247,8 @@ void MyWindow::checkInputDialog(int gameID) {
     if (!dialog->result() == QDialog::Rejected) {
         localboard = true;
         posIndex[activeBoard] = 0;
-        posIDs[activeBoard] = myChessDB.getPosIDsByGameID(gameID);
+        //posIDs[activeBoard] = myChessDB.getPosIDsByGameID(gameID);
+        game[activeBoard]->board->loadGame(gameID);
         //posID = posIDs[0];
         vector<string> p = myChessDB.getPlayersByGameID(gameID);
         for(int i = 0; i < 2; i++) {
@@ -254,7 +259,7 @@ void MyWindow::checkInputDialog(int gameID) {
         player[0]->setText(players[activeBoard * 2]);
         player[1]->setText(players[activeBoard * 2 + 1]);
 
-        updateBoard();
+        //updateBoard();
     }
 }
 
@@ -274,10 +279,12 @@ void MyWindow::nextPos() {
     if(chessserver && examining && !localboard) {
        fics.writeSocket("forward\n");
     } else {
-        if(posIDs[activeBoard].size() > 0 && (posIndex[activeBoard] + 1) < posIDs[activeBoard].size()) {
+        game[activeBoard]->nextPos();
+        //game[activeBoard]->board->show();
+        /*if(posIDs[activeBoard].size() > 0 && (posIndex[activeBoard] + 1) < posIDs[activeBoard].size()) {
             posIndex[activeBoard]++;
             updateBoard();
-        }
+        }*/
     }
     if(thinkOnMove) think();
 }
@@ -286,10 +293,11 @@ void MyWindow::prevPos() {
     if(chessserver && examining && !localboard) {
        fics.writeSocket("backward\n");
     } else {
-        if(posIndex[activeBoard]>0) {
+        game[activeBoard]->prevPos();
+        /*if(posIndex[activeBoard]>0) {
             posIndex[activeBoard]--;
             updateBoard();
-        }
+        }*/
     }
     if(thinkOnMove) think();
 }
@@ -311,7 +319,7 @@ void MyWindow::think() {
     /* Create Command with Fen-String */
     string command;
     command = "position fen " + game[activeBoard]->board->getFenstring();
-    command.append("\ngo");
+    command.append("\ngo infinite");
     cout << command << endl;
 
     output2->clear(); // Clear the OutputBox
@@ -319,12 +327,15 @@ void MyWindow::think() {
     moves.clear();
     bestmove.clear();
     moved = false;
+    multipvs.clear();
     engine.writeToEngine(command); //writeToStockfish(command);
+    engineView->show();
 }
 
 void MyWindow::printEngineOutput() {
     string outstr = engine.readFromEngine();
-
+    if (outstr.size() < 0) return;
+    //cout << outstr.size() << " ";
 
     /* get bestmove */
     int p = outstr.find("bestmove ");
@@ -333,8 +344,58 @@ void MyWindow::printEngineOutput() {
         bestmove = outstr.substr(p + 9, e- p - 9);
     }
 
+    /* Collect MultiPV-Data (get possible moves) */
+    size_t pv = outstr.find(" pv ");
+    size_t multipv = outstr.find(" multipv ");
+    if(pv != string::npos && multipv != string::npos) {
+        size_t sp = outstr.find(" ", multipv + 10);
+        string multipvstr = outstr.substr(multipv + 9, sp - (multipv + 9));
+        //multipvstr.erase(multipvstr.size() - 1);
+        //cout << multipvstr << endl;
+        bool toggle = false;
+        if(boost::lexical_cast<int>(multipvstr) > currnr) {
+            //currmoves.push_back(outstr.substr(pv + 4));
+            currnr++;
+            string screen; screen.clear();
+            screen = engineOutput->toPlainText().toStdString();
+            bool newMultiPv = true;
+            for(int i = 0; i < multipvs.size(); i++) {
+                cout << multipvs[i] << " == " << outstr.substr(pv + 4, multipvs[i].size()) << endl;
+                if(multipvs[i] == outstr.substr(pv + 4, multipvs[i].size())) {
+                    multipvs[i] = outstr.substr(pv + 4, outstr.substr(pv + 4).size() - 1);
+                    newMultiPv = false;
+                }
+            }
+            if(newMultiPv) {
+                size_t nl = outstr.substr(pv + 4).find("\n");
+                string str = outstr.substr(pv + 4, nl);
+                if(nl != string::npos) {
+                    if(str.size() > 4)
+                        multipvs.push_back(outstr.substr(pv + 4, outstr.substr(pv + 4).size() - 1));
+                    else
+                        multipvs.push_back(outstr.substr(pv + 4, nl));
+                } else {
+                    cout << "no newline" << endl;
+                }
+            }
+            cout << outstr;
+            string output = ""; string html = "";
+            for(int i = 0; i < multipvs.size(); i++) {
+                output += multipvs[i];
+                html += "<a href=\"" + multipvs[i] + "\">" + multipvs[i] + "</a><br/>";
+            }
+            engineOutput->setText(QString::fromStdString(output));
+            engineView->setHtml(QString::fromStdString(html));
+            engineView->page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
+        } else {
+            currnr = 0;
+            if(toggle) { /*engineOutput->clear();*/ toggle = false; } else toggle = true;
+        }
+        //cout << currnr << endl;
+    }
+
     /* get score of the best move */
-    size_t sc = 0, pv;
+    size_t sc = 0;
     sc = outstr.find("score ");
     while(sc < outstr.length()) {
         pv = outstr.find(" pv ", sc + 1);
@@ -349,7 +410,7 @@ void MyWindow::printEngineOutput() {
             if((sc + 9 + l) < outstr.length()) {
                 //cout << outstr.substr(sc + 9, l) << endl;
                 scores.push_back(outstr.substr(sc + 9, l));
-                if(pv != string::npos) moves.push_back(outstr.substr(pv + 4, 4));
+                if(pv != string::npos) moves.push_back(outstr.substr(pv + 4,outstr.substr(pv + 4).size() - 1));
             }
         }
         sc = outstr.find("score ", sc + 1);
@@ -362,27 +423,35 @@ void MyWindow::printEngineOutput() {
     /* if we know which move is best, get it's score */
     if(bestmove.size() > 0) {
         for(int j = 0; j < scores.size() && j < moves.size(); j++) {
-            if(moves[j] == bestmove) score[i]->setText(QString::fromStdString(scores[j]));
+            if(moves[j].substr(0,4) == bestmove) score[i]->setText(QString::fromStdString(scores[j]));
         }
         /* we have a best move --> we can make this move (if engine is playing) */
         if((engineB && game[activeBoard]->getActiveColor() == 'b' && !moved) || (engineW && game[activeBoard]->getActiveColor() == 'w' && !moved)) {
             cout << "make move: " << bestmove << endl;
-            game[activeBoard]->board->move(bestmove);
+            game[activeBoard]->move(bestmove);
             moved = true;
         }
         if(moved && thinkOnMove) think();
     }
 
-
+    /*string txt = "";
+    for(int i = 0; i < currmoves.size(); i++) {
+        txt += currmoves[i];
+    }*/
+    //engineOutput->clear();
+    //engineOutput->setText(QString::fromStdString(txt));
+    //cout << outstr;
     /* print engine output to output box */
-    engineOutput->setText(engineOutput->toPlainText().append(QString::fromStdString(outstr)));
+    //engineOutput->setText(engineOutput->toPlainText().append(QString::fromStdString(outstr)));
     engineOutput->verticalScrollBar()->setValue(engineOutput->verticalScrollBar()->maximum());
 }
 
 void MyWindow::readInput() {
+    engine.writeToEngine(input->text().toStdString());
+    return;
     if(chessserver) sendInputToServer(); else {
         /* Make a move */
-        game[activeBoard]->board->move(input->text().toStdString());
+        game[activeBoard]->move(input->text().toStdString());
 
         /* Aktivate oppent (chess engine) */
         if((engineB && game[activeBoard]->getActiveColor() == 'b') || (engineW && game[activeBoard]->getActiveColor() == 'w')) think();
@@ -695,18 +764,18 @@ void MyWindow::SquareDropped(int target, int source) {
     cmd.push_back(static_cast<char>(y + 48));
     //Board b; b.move(); b.sh
     cout << "SquareDropped: " << cmd << endl;
-    //if(chessserver) game[activeBoard]->board->move(cmd);
+    //if(chessserver) game[activeBoard]->move(cmd);
     //input->setText(QString::fromStdString(cmd));
     //readInput();
     if(chessserver) {
         output->setText(output->toPlainText().append(QString::fromStdString(cmd)));
         output->verticalScrollBar()->setValue(output->verticalScrollBar()->maximum());
         sendToServer(cmd);
-        game[activeBoard]->board->move(cmd);
+        game[activeBoard]->move(cmd);
     } else {
         /* Make a move */
-        game[activeBoard]->board->move(cmd);
-
+        game[activeBoard]->move(cmd);
+        //game[activeBoard]->showMoveHistory();
         /* Aktivate oppent (chess engine) */
         if((engineB && game[activeBoard]->getActiveColor() == 'b') || (engineW && game[activeBoard]->getActiveColor() == 'w')) think();
     }
@@ -800,4 +869,16 @@ void MyWindow::mousePressEvent(QMouseEvent *event) {
 
         Qt::DropAction dropAction = drag->exec();
     }
+}
+
+void MyWindow::linkClicked(QUrl url) {
+    cout << url.toString().toStdString() << " clicked" << endl;
+    string moves = url.toString().toStdString();
+    int i = 0;
+    while(i + 4 <= moves.size()){
+        string move = moves.substr(i, 4);
+        game[activeBoard]->move(move);
+        i += 5;
+    }
+
 }

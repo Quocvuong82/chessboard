@@ -10,12 +10,14 @@
 #include "board.h"
 #include "move.h"
 #include <boost/lexical_cast.hpp>
+#include <boost/regex.hpp>
 #include <QLabel>
 #include <QString>
 #include <QGridLayout>
 #include "QPainter"
 
 using namespace std;
+using namespace boost;
 
 Board::Board() {
     /* Create the 64 squares of the board */
@@ -71,15 +73,18 @@ Board::Board() {
 			mysql_free_result(res);
 			Fen fen(fenstrings);
 			position = fen;
+            positions.push_back(position);
 		} else {
 			Fen fen;
 			position = fen;
+            positions.push_back(position);
 			parent = 1;
 			writePositionToDB();
 		}
 	} else {
 		Fen fen;
 		position = fen;
+        positions.push_back(position);
 		parent = 1;
 		writePositionToDB();
 	}
@@ -147,6 +152,7 @@ Board::Board(Fen pos) {
 
 	//connectwithDB();
     position = pos;
+    positions.push_back(position);
 	parent = 1;
     castleWK = true;
     castleWQ = true;
@@ -163,8 +169,13 @@ void Board::show() {
     writePositionTosquares();
 }
 
+vector<string> Board::getMoveHistory() {
+    return movehistory;
+}
+
 bool Board::setPosition(Fen pos) {
     position = pos;
+    positions.push_back(position);
 
     setActiveColor(pos.getActiveColor());
     string values = pos.getFen(9);
@@ -293,7 +304,7 @@ void Board::writePositionTosquares() {
     //cout << "created QString fenstr" << endl;
     //cout << fenstr.toStdString() << endl;
     //for (int i = 0; i < 64; i++) {
-    cout << fenstr.toStdString();
+    //cout << fenstr.toStdString();
     int i;
      for (int y = 0; y < 8; y++) {
         for (int x = 0; x < 8; x++) {
@@ -345,7 +356,7 @@ void Board::writePositionTosquares() {
             //squares[i]->setText(QString (fenstr[i]));
         }
     }
-     cout << endl;
+     //cout << endl;
     //cout << "wrote Position to Squares" << endl;
 
 }
@@ -580,10 +591,91 @@ void Board::printMoves() {
 	cout << moves << endl;
 }
 
+void Board::nextPos() {
+    if(CurrentPosIndex + 1 < positions.size()) CurrentPosIndex++;
+    position = positions[CurrentPosIndex];
+    //cout << movehistory[CurrentPosIndex - 1] << endl;
+}
+
+void Board::prevPos() {
+    if(CurrentPosIndex > 0) CurrentPosIndex--;
+    position = positions[CurrentPosIndex];
+    //cout << movehistory[CurrentPosIndex] << endl;
+}
+
+void Board::setPosition(int index) {
+    if(index < positions.size()) {
+        position = positions[index];
+        CurrentPosIndex = index;
+    }
+}
+
+void Board::loadGame(int GameID) {
+    vector<int> posIDs = DB.getPosIDsByGameID(GameID);
+    positions.clear();
+    CurrentPosIndex = 0;
+    for(int i = 1; i < posIDs.size(); i++) {
+        positions.push_back(DB.getPositionFromDBByID(posIDs[i]));
+    }
+    cout << GameID << endl;
+    cout << DB.getMoves(GameID) << endl;
+    vector<string> moves = getSplittedPGN(DB.getMoves(GameID));
+    vector<string> halfmoves;
+    for(int i = 0; i < moves.size(); i++) {
+        cout << moves[i] << endl;
+        size_t sp = moves[i].find(" ");
+        if(sp == string::npos) sp = moves[i].find("\n");
+        if(sp == 0) sp = moves[i].find("\n", 1);
+        halfmoves.push_back(moves[i].substr(0, sp));
+        halfmoves.push_back(moves[i].substr(sp + 1));
+    }
+    halfmoves.erase(halfmoves.begin()); // Remove inital empty move
+    movehistory = halfmoves;
+    movehistory.erase(movehistory.begin());
+    if(movehistory.size() > 5) cout << movehistory[5] << endl;
+}
+
+vector<string> Board::getSplittedPGN(string pgn_raw) {
+    if(pgn_raw.size() == 0) {
+        return vector<string>();
+    }
+    regex expr("[0-9]+[.]"); // z.B. "13. ", "14. ",...
+    regex newline("[\r][\n]");
+    smatch m; smatch n;
+
+    vector<string> pgn(100);
+    vector<string> pgn2(100);
+
+    int i = 1; int length;
+    regex_search(pgn_raw, m, expr);
+    pgn[i] = pgn_raw.substr(m.position() + m.length());
+    while(regex_search(pgn[i], m, expr)) {
+        length = m.position();
+        pgn2[i] = pgn[i].substr(0, length);
+        if(pgn2[i][0] == ' ') pgn2[i].erase(0,1); // Remove space-character at the beginning
+
+        /* Suche nach Whitespace-Characters */
+        if(regex_search(pgn2[i], n, newline)) {
+            pgn2[i].replace(n.position(), n.length(), " ");
+        }
+        i++;
+        pgn[i] = pgn[i - 1].substr(m.position() + m.length());
+        while(pgn[i][0] == ' ' || pgn[i][0] == '\n' || pgn[i][0] == '\r') pgn[i].erase(pgn[i].begin());
+    }
+    pgn2[i] = pgn[i];
+
+    pgn2.resize(i + 1);
+
+    return pgn2;
+}
+
 /* einen Zug machen */
 void Board::move(string movecmd) {
+    movehistory.push_back(movecmd);
 	Move move(position, movecmd, activeColor); // einen neuen Zug machen mit Ausgansposition, Zugbefehl und aktivem Spieler
 	position = move.getPosition(); // neue Position übernehmen
+    CurrentPosIndex = positions.size(); // Update Position Index to current position
+    positions.push_back(position); // add position to position list (move history)
     for(int i = 0; i < 8; i++) {
         cout << position.getFen(i) << " ";
     }
@@ -666,6 +758,7 @@ bool Board::getPositionFromDBByID(int id) {
 
 	Fen fen(fenstrings);
     position = fen;
+    positions.push_back(position);
     setActiveColor(position.getActiveColor());
     string values = position.getFen(9);
     if(values[0] == 'K') castleWK = true; else castleWK = false;
@@ -674,6 +767,7 @@ bool Board::getPositionFromDBByID(int id) {
     if(values[3] == 'q') castleBQ = true; else castleBQ = false;
     moveNr = 1;
     mysql_close(&mysql);
+    cout << "Eval.: " << DB.getEvaluation(id) << endl;
 	return true;
 }
 
