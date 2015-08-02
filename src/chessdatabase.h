@@ -19,7 +19,7 @@ public:
     vector<string> getPlayersToScan(); // get players to scan for new games on FICS
     vector<int> getPosIDsByParent(int parent);
     double getEvaluation(int posID);
-    Fen getPositionFromDBByID(int GameID);
+    Fen getPositionFromDBByID(int posID);
     string getMoves(int GameID);
     //void cleanUpDatabase();
 private:

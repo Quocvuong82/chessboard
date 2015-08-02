@@ -18,8 +18,8 @@ MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(par
     moved = false;
 
 
-    this->setWindowTitle("Chessboard 0.5");
-    this->resize(900, 400);
+    this->setWindowTitle("Chessboard 0.6");
+    this->resize(1200, 400);
 
     dialog = new DBdialog(myChessDB);
     dialog->setAttribute(Qt::WA_QuitOnClose);
@@ -151,7 +151,7 @@ MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(par
 
     timer = new QTimer;
     connect(timer, SIGNAL(timeout()), this, SLOT(clocks()));
-    timer->start(1000);
+    //timer->start(1000);
 
     /* Output - Boxes */
     output = new QTextEdit();
@@ -187,6 +187,8 @@ MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(par
     layout = new QHBoxLayout;
     layout->addWidget(BoardTab);
     layout->addWidget(GameInfoBox);
+    layout->addWidget(game[activeBoard]->movehistory);
+
     layout->setMargin(0);
 
     centralWidget = new QWidget;
@@ -221,6 +223,7 @@ MyWindow::MyWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(par
 }  
 void MyWindow::setBoardActive(int index) {
     cout << "board " + boost::lexical_cast<string>(index) + " set active" << endl;
+    game[activeBoard]->movehistory->setParent(0);
     activeBoard = index;
     //cout << players[activeBoard * 2] << endl;
     //cout << players[activeBoard * 2 + 1] << endl;
@@ -232,6 +235,7 @@ void MyWindow::setBoardActive(int index) {
     /*time[0]->setText("<font size=20 color=black><b>" + QString::fromStdString(makeTime(t[activeBoard * 2 + 1])) + "</b></font>");
     time[1]->setText("<font size=20 color=white><b>" + QString::fromStdString(makeTime(t[activeBoard * 2])) + "</b></font>");*/
     game[activeBoard]->board->show();
+    layout->addWidget(game[activeBoard]->movehistory);
 }
 
 void MyWindow::checkInputDialog() {
@@ -244,11 +248,13 @@ void MyWindow::checkInputDialog() {
 }
 
 void MyWindow::checkInputDialog(int gameID) {
+    cout << "checkInputDialog " << gameID << endl;
     if (!dialog->result() == QDialog::Rejected) {
         localboard = true;
-        posIndex[activeBoard] = 0;
+        //posIndex[activeBoard] = 0;
         //posIDs[activeBoard] = myChessDB.getPosIDsByGameID(gameID);
         game[activeBoard]->board->loadGame(gameID);
+        cout << "game loaded" << endl;
         //posID = posIDs[0];
         vector<string> p = myChessDB.getPlayersByGameID(gameID);
         for(int i = 0; i < 2; i++) {

@@ -20,6 +20,7 @@ DBdialog::DBdialog(ChessDatabase chessDB){
     combo1 = new QComboBox;
     combo1->setSizeAdjustPolicy(QComboBox::AdjustToContents);
 
+    combo1->addItem("All Events");
     for(int i = 0; i < eventIDs.size(); i++) {
         combo1->addItem(QString::fromStdString(myChessDB.getEventByID(eventIDs[i])));
     }
@@ -62,16 +63,20 @@ void DBdialog::setEvent(int value) {
     results->clear();
     comboGames->clear();
     gameIDs.clear();
-    eventID = eventIDs[value];
-    vector<vector<int>> ids = myChessDB.getGameIDsByEventID(eventIDs[value]);
-    string games;
-    for(int i = 0; i < ids.size(); i++) { 
-        gameIDs.push_back(ids[i][0]);
-        games = myChessDB.getPlayerByID(ids[i][1]) + "-" + myChessDB.getPlayerByID(ids[i][2]);
-        //comboGames->addItem(QString::fromStdString(games));
-        item.push_back(new QListWidgetItem);
-        item[i]->setText(QString::fromStdString(games));
-        results->addItem(item[i]);
+    /* All Games / Get Games By Event ID */
+    if(value == 0) eventID = 0; else {
+        value--;
+        eventID = eventIDs[value];
+        vector<vector<int>> ids = myChessDB.getGameIDsByEventID(eventIDs[value]);
+        string games;
+        for(int i = 0; i < ids.size(); i++) {
+            gameIDs.push_back(ids[i][0]);
+            games = myChessDB.getPlayerByID(ids[i][1]) + "-" + myChessDB.getPlayerByID(ids[i][2]);
+            //comboGames->addItem(QString::fromStdString(games));
+            item.push_back(new QListWidgetItem);
+            item[i]->setText(QString::fromStdString(games));
+            results->addItem(item[i]);
+        }
     }
     //layout->addWidget(results);
 }
@@ -81,7 +86,7 @@ void DBdialog::getGame(QString txt) {
     results->clear();
     comboGames->clear();
     gameIDs.clear();
-    cout << "set event " << txt.toStdString() << endl;
+    cout << "eventID = " << eventID << endl;
     vector<vector<int>> ids = myChessDB.getGameIDsByString(txt.toStdString(), eventID);
     cout << "got ids " << endl;
     cout << ids.size() << endl;

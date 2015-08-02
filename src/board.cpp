@@ -611,28 +611,34 @@ void Board::setPosition(int index) {
 }
 
 void Board::loadGame(int GameID) {
+    cout << "load game " << GameID << endl;
     vector<int> posIDs = DB.getPosIDsByGameID(GameID);
+    cout << "posIDs set" << endl;
     positions.clear();
     CurrentPosIndex = 0;
     for(int i = 1; i < posIDs.size(); i++) {
         positions.push_back(DB.getPositionFromDBByID(posIDs[i]));
     }
     cout << GameID << endl;
-    cout << DB.getMoves(GameID) << endl;
-    vector<string> moves = getSplittedPGN(DB.getMoves(GameID));
-    vector<string> halfmoves;
-    for(int i = 0; i < moves.size(); i++) {
-        cout << moves[i] << endl;
-        size_t sp = moves[i].find(" ");
-        if(sp == string::npos) sp = moves[i].find("\n");
-        if(sp == 0) sp = moves[i].find("\n", 1);
-        halfmoves.push_back(moves[i].substr(0, sp));
-        halfmoves.push_back(moves[i].substr(sp + 1));
+    string movestr = DB.getMoves(GameID);
+    cout << movestr << endl;
+    if(movestr.size() > 0) {
+        vector<string> moves = getSplittedPGN(movestr);
+        vector<string> halfmoves;
+        for(int i = 0; i < moves.size(); i++) {
+            cout << moves[i] << endl;
+            size_t sp = moves[i].find(" ");
+            if(sp == string::npos) sp = moves[i].find("\n");
+            if(sp == 0) sp = moves[i].find("\n", 1);
+            halfmoves.push_back(moves[i].substr(0, sp));
+            halfmoves.push_back(moves[i].substr(sp + 1));
+        }
+        halfmoves.erase(halfmoves.begin()); // Remove inital empty move
+        movehistory = halfmoves;
+        movehistory.erase(movehistory.begin());
     }
-    halfmoves.erase(halfmoves.begin()); // Remove inital empty move
-    movehistory = halfmoves;
-    movehistory.erase(movehistory.begin());
-    if(movehistory.size() > 5) cout << movehistory[5] << endl;
+    position = positions[0];
+    show();
 }
 
 vector<string> Board::getSplittedPGN(string pgn_raw) {

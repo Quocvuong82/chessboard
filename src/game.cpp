@@ -41,7 +41,9 @@ void Game::setActiveColor(char c) {
 
 void Game::showMoveHistory() {
     vector<string> mvhist = board->getMoveHistory();
+    if(mvhist.size() == 0) return;
     cout << currmoveNr << endl;
+    movehistory->clear();
     for(int i = 0; i < mvhist.size(); i++) {
         if(i % 2 == 0) movehistory->insertTopLevelItem(i/2, new QTreeWidgetItem());
         movehistory->topLevelItem(i / 2)->setText(0, QString::fromStdString(boost::lexical_cast<string>(i/2)));
@@ -52,6 +54,8 @@ void Game::showMoveHistory() {
         movehistory->resizeColumnToContents(i);
     }
     movehistory->show();
+    cout << floor(currmoveNr/2) << endl;
+    movehistory->topLevelItem(floor(currmoveNr/2))->setSelected(true);
 }
 
 void Game::move(string movecmd) {
@@ -80,4 +84,5 @@ void Game::HistoryItemClicked(QTreeWidgetItem* item, int c) {
     cout << item->text(c).toStdString() << endl;
     board->setPosition(index);
     board->show();
+    currmoveNr = index;
 }

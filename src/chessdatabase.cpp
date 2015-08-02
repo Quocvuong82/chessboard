@@ -296,7 +296,8 @@ double ChessDatabase::getEvaluation(int posID) {
 
 }
 
-Fen ChessDatabase::getPositionFromDBByID(int GameID) {
+Fen ChessDatabase::getPositionFromDBByID(int posID) {
+    cout << "get Position " << posID << endl;
     MYSQL_RES *res;
     MYSQL_ROW row;
     mysql_init(&mysql);
@@ -304,7 +305,7 @@ Fen ChessDatabase::getPositionFromDBByID(int GameID) {
     {
         cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
     }
-    string query = "SELECT fen1, fen2, fen3, fen4, fen5, fen6, fen7, fen8, active_color, castle, en_passant, parent, game_id FROM position WHERE position_id=" + boost::lexical_cast<string>(GameID) + ';';
+    string query = "SELECT fen1, fen2, fen3, fen4, fen5, fen6, fen7, fen8, active_color, castle, en_passant, parent, game_id FROM position WHERE position_id=" + boost::lexical_cast<string>(posID) + ';';
 
     //cout << query << endl;
     mysql_real_query(&mysql, query.c_str(), query.length());
@@ -316,6 +317,8 @@ Fen ChessDatabase::getPositionFromDBByID(int GameID) {
         fenstrings[i] = row[i];
         //cout << fenstrings[i] << endl;
     }
+    mysql_free_result(res);
+    mysql_close(&mysql);
     fenstrings[11] = "0";
     fenstrings[12] = "1";
 
@@ -337,5 +340,6 @@ string ChessDatabase::getMoves(int GameID) {
     row = mysql_fetch_row(res);
     string moves = row[0];
     mysql_free_result(res);
+    mysql_close(&mysql);
     return moves;
 }

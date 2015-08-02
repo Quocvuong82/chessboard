@@ -18,11 +18,11 @@ public:
     void move(string movecmd);
     void nextPos();
     void prevPos();
+    QTreeWidget* movehistory;
 private:
     static size_t NrOfGames;
     int gameID;
     char activeColor;
-    QTreeWidget* movehistory;
     int currmoveNr = 0;
 public slots:
     void HistoryItemClicked(QTreeWidgetItem*, int);
