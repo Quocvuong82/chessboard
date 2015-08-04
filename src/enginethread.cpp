@@ -2,9 +2,16 @@
 #include <QtCore>
 #include <QtGui>
 #include <QWidget>
+#include <QTextEdit>
+#include <QScrollBar>
+#include <boost/lexical_cast.hpp>
 
 EngineThread::EngineThread(QObject *parent) : QThread(parent) {
     boost::thread engine ( &EngineThread::readPipe, this );
+    output = new QTextEdit();
+    output->setReadOnly(true);
+    writeToEngine("setoption name Threads value 4");
+    writeToEngine("setoption name MultiPV value 5");
 }
 
 void EngineThread::emitMySignal() {
@@ -12,9 +19,8 @@ void EngineThread::emitMySignal() {
 }
 
 bool EngineThread::stockfish() {
-    pos = 0;
     pid_t	childpid;
-
+    pos.push_back(0); pos.push_back(0);
     /*------------------------------------------------------------------------
      * CREATE THE PAIR OF PIPES
      *
@@ -62,6 +68,8 @@ bool EngineThread::stockfish() {
         ::close(CHILD_WRITE);
 
         /* do parent stuff */
+        connect(this, SIGNAL(newOutput()), this, SLOT(showOutput()));
+        output->setWindowTitle("stockfish 6");
     }
     return true;
 }
@@ -94,7 +102,10 @@ void EngineThread::readPipe() {
             //newline = buffer.find("\n");
             //cout << buf;
         }
-        if(pos < buffer.size() - 1) emit newOutput();
+        while(buffer.size() > 0 && pos[0] < buffer.size() - 1) {
+            cout << pos[0] << " " << buffer.size() - 1 << endl;
+            getValues();
+        }
 
         //cout << " " << b << endl;
         //cout << " (" << b << " Bytes read)" << endl;
@@ -103,8 +114,9 @@ void EngineThread::readPipe() {
 }
 
 int EngineThread::writeToEngine(string message) {
-    buffer.clear();
-    pos = 0;
+    /*buffer.clear();
+    for(int i = 0; i < pos.size(); i++)
+    pos[i] = 0;*/
     int b;
     #define	PARENT_READ	readpipe[0]
     #define	CHILD_WRITE	readpipe[1]
@@ -121,13 +133,123 @@ int EngineThread::writeToEngine(string message) {
 }
 
 /* Returns Engine Output Line By Line */
-string EngineThread::readFromEngine() {
-    if (pos > buffer.size()) return "";
-    size_t newline = buffer.find("\n", pos);
+string EngineThread::readFromEngine(int ReaderID) {
+    cout << "read from engine (" << ReaderID << endl;
+    if (pos[ReaderID] > buffer.size()) return "";
+    size_t newline = buffer.find("\n", pos[ReaderID]);
     //cout << "newline: " << newline << " pos: " << pos << endl;
-    string s = buffer.substr(pos, newline - pos + 1);
-    if(newline != string::npos) pos = newline + 1;
+    string s = buffer.substr(pos[ReaderID], newline - pos[ReaderID] + 1);
+    if(newline != string::npos) pos[ReaderID] = newline + 1;
     //cout << pos - (newline + 1) << " ";
     //pos = buffer.size();
     return s;
+}
+
+string EngineThread::getBestmove() {
+    cout << "bestmove: " << bestmove << endl;
+    return bestmove;
+}
+
+void EngineThread::printBestmove() {
+    cout << "bestmove: " << bestmove << endl;
+}
+
+void EngineThread::getValues() {
+    string outstr = readFromEngine(0);
+    while(outstr.size() > 0) {
+        emit newOutput();
+        if (outstr.size() < 0) return;
+        //cout << outstr.size() << " ";
+
+        /* get bestmove */
+        int p = outstr.find("bestmove ");
+        int e = outstr.find(" ", p + 9);
+        if(p != string::npos) {
+            bestmove = outstr.substr(p + 9, e- p - 9);
+            emit newBestmove();
+        }
+
+        /* Collect MultiPV-Data (get possible moves) */
+        size_t pv = outstr.find(" pv ");
+        size_t multipv = outstr.find(" multipv ");
+        if(pv != string::npos && multipv != string::npos) {
+            size_t sp = outstr.find(" ", multipv + 10);
+            string multipvstr = outstr.substr(multipv + 9, sp - (multipv + 9));
+            //multipvstr.erase(multipvstr.size() - 1);
+            //cout << multipvstr << endl;
+            bool toggle = false;
+            if(boost::lexical_cast<int>(multipvstr) > currnr) {
+                //currmoves.push_back(outstr.substr(pv + 4));
+                currnr++;
+                bool newMultiPv = true;
+                for(int i = 0; i < multipvs.size(); i++) {
+                    //cout << multipvs[i] << " == " << outstr.substr(pv + 4, multipvs[i].size()) << endl;
+                    if(multipvs[i] == outstr.substr(pv + 4, multipvs[i].size())) {
+                        multipvs[i] = outstr.substr(pv + 4, outstr.substr(pv + 4).size() - 1);
+                        newMultiPv = false;
+                    }
+                }
+                if(newMultiPv) {
+                    size_t nl = outstr.substr(pv + 4).find("\n");
+                    string str = outstr.substr(pv + 4, nl);
+                    if(nl != string::npos) {
+                        if(str.size() > 4)
+                            multipvs.push_back(outstr.substr(pv + 4, outstr.substr(pv + 4).size() - 1));
+                        else
+                            multipvs.push_back(outstr.substr(pv + 4, nl));
+                    } else {
+                        cout << "no newline" << endl;
+                    }
+                }
+                //cout << outstr;
+                string output = ""; string html = "";
+                for(int i = 0; i < multipvs.size(); i++) {
+                    output += multipvs[i];
+                    html += "<a href=\"" + multipvs[i] + "\">" + multipvs[i] + "</a><br/>";
+                    if(multipvs[i].length() > 5 * 4) {
+                        writeToEngine("stop");
+                    }
+                }
+                //engineOutput->setText(QString::fromStdString(output));
+                //engineView->setHtml(QString::fromStdString(html));
+                //engineView->page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
+            } else {
+                currnr = 0;
+                if(toggle) { /*engineOutput->clear();*/ toggle = false; } else toggle = true;
+            }
+            //cout << currnr << endl;
+        }
+
+        /* get score of the best move */
+        /*size_t sc = 0;
+        sc = outstr.find("score ");
+        while(sc < outstr.length()) {
+            pv = outstr.find(" pv ", sc + 1);
+            int l = 1;
+            if(sc < outstr.length()) {
+                //cout << outstr.length() << " " << sc << " " << pv << endl;
+                if((sc + 9) < outstr.length()) {
+                    //string str = outstr.substr(sc + 10);
+                    l = outstr.substr(sc + 9).find(" ");
+                }
+                //cout << "score: ";
+                if((sc + 9 + l) < outstr.length()) {
+                    //cout << outstr.substr(sc + 9, l) << endl;
+                    scores.push_back(outstr.substr(sc + 9, l));
+                    if(pv != string::npos) moves.push_back(outstr.substr(pv + 4,outstr.substr(pv + 4).size() - 1));
+                }
+            }
+            sc = outstr.find("score ", sc + 1);
+        }*/
+    outstr = readFromEngine(0);
+    }
+}
+vector<string> EngineThread::getMultiPV() {
+    return multipvs;
+}
+
+void EngineThread::showOutput() {
+    output->setText(output->toPlainText().append(QString::fromStdString(readFromEngine(1))));
+    output->show();
+    output->verticalScrollBar()->setValue(output->verticalScrollBar()->maximum());
 }

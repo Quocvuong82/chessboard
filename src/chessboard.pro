@@ -3,7 +3,6 @@ SOURCES += \
     board.cpp \
     fen.cpp \
     move.cpp \
-    mywindow.cpp \
     database.cpp \
     chessdatabase.cpp \
     enginethread.cpp \
@@ -13,7 +12,9 @@ SOURCES += \
     qsquare.cpp \
     icgamelist.cpp \
     playerlabel.cpp \
-    timelabel.cpp
+    timelabel.cpp \
+    player.cpp \
+    mainwindow.cpp
 QT += core gui widgets
 QT += svg
 QT += webkitwidgets
@@ -22,7 +23,6 @@ HEADERS += \
     board.h \
     fen.h \
     move.h \
-    mywindow.h \
     database.h \
     chessdatabase.h \
     enginethread.h \
@@ -32,7 +32,9 @@ HEADERS += \
     qsquare.h \
     icgamelist.h \
     playerlabel.h \
-    timelabel.h
+    timelabel.h \
+    player.h \
+    mainwindow.h
 LIBS += -L/usr/lib/mysql -lmysqlclient
 LIBS += -L/usr/lib/mysql -lboost_regex
 LIBS += -L/usr/lib/mysql -lboost_thread

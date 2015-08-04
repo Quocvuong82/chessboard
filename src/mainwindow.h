@@ -1,5 +1,5 @@
-#ifndef MYWINDOW
-#define MYWINDOW
+#ifndef MAINWINDOW
+#define MAINWINDOW
 #include <QWidget>
 #include <QVBoxLayout>
 #include <QMessageBox>
@@ -59,10 +59,10 @@
 
 using namespace std;
 
-class MyWindow : public QMainWindow {
+class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
-    MyWindow(QMainWindow *parent = 0, Qt::WindowFlags flags = 0);
+    MainWindow(QMainWindow *parent = 0, Qt::WindowFlags flags = 0);
     //int writeToStockfish(string message);
 private:
     //vector<Board*> board;
@@ -97,8 +97,11 @@ private:
     QMenu *icsMenu;
     QMenu *viewMenu;
 
+    /* Status Bar */
+    QLabel* activeColorStatus;
+
     QWidget* centralWidget;
-    const int NrOfButtons = 6;
+    const int NrOfButtons = 7;
     QPushButton* myButton;
     QPushButton* EngineButton;
     QPushButton* RefreshButton;
@@ -162,6 +165,7 @@ private:
 protected:
   void keyPressEvent(QKeyEvent *e);
   void mousePressEvent(QMouseEvent *event);
+  void closeEvent(QCloseEvent *event);
 public slots:
     // Slot for Control
     void nextPos();
@@ -171,7 +175,7 @@ public slots:
     //void setGame(int value);
     void readInput();
     void think();
-    void printEngineOutput();
+    //void printEngineOutput();
     void readICServer();
     void parseICSOutput(string);
     bool ICSconnect();
@@ -196,7 +200,10 @@ public slots:
     void itemExpanded(QTreeWidgetItem*);
     void showPosition(QTreeWidgetItem*);
     void linkClicked(QUrl);
+    void updateStatusBar();
+    void showBestmoveMessage();
+    void setPlayerName(int playerID);
 };
 
-#endif // MYWINDOW
+#endif // MAINWINDOW
 

@@ -10,6 +10,10 @@ Game::Game()
     movehistory->setWindowTitle("move list");
     //movehistory->setFixedWidth(150);
     movehistory->setColumnCount(3);
+    movehistory->setColumnWidth(0, 25);
+    for(int i = 1; i < movehistory->columnCount(); i++) {
+        movehistory->setColumnWidth(i, 50);
+    }
     movehistory->headerItem()->setText(0, "#");
     movehistory->headerItem()->setText(1, "white");
     movehistory->headerItem()->setText(2, "black");
@@ -29,8 +33,8 @@ void Game::setGameID(int id) {
 }
 
 char Game::getActiveColor() {
-    if(board->getActiveColor() % 2 == 0) activeColor = 'w';
-    else activeColor = 'b';
+    if(board->getActiveColor() % 2 == 0) activeColor = 'b';
+    else activeColor = 'w';
     return activeColor;
 }
 
@@ -85,4 +89,8 @@ void Game::HistoryItemClicked(QTreeWidgetItem* item, int c) {
     board->setPosition(index);
     board->show();
     currmoveNr = index;
+}
+
+void Game::saveGame() {
+    board->saveGame();
 }

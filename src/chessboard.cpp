@@ -8,7 +8,7 @@
 #include <fen.h>
 #include <board.h>
 #include <iostream>
-#include <mywindow.h>
+#include <mainwindow.h>
 
 #include <chessdatabase.h>
 #include <vector>
@@ -25,7 +25,7 @@ using namespace std;
 
 int main(int argc, char **argv) {
     QApplication app(argc, argv);
-    MyWindow window;
+    MainWindow window;
     window.show();
     return app.exec();
 }

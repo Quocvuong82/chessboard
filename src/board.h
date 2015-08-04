@@ -17,8 +17,11 @@
 #include <QSvgWidget>
 #include "qsquare.h"
 #include "chessdatabase.h"
+#include "player.h"
 
 class Board {
+    Player White;
+    Player Black;
 	string moves;
 	int activeColor = 0;
     bool castleWK;
@@ -66,6 +69,7 @@ class Board {
     void writePositionTosquares();
 
     int getRecentGameIDFromDB();
+
     void initSquares();
     QPixmap pieces[12];
     QSvgWidget* piecesSVG[12];
@@ -101,8 +105,9 @@ class Board {
     vector<Fen> positions;
     vector<string> movehistory;
     vector<string> getSplittedPGN(string pgn_raw);
+    void writePositionsToDB();
 public:
-    int GameID;
+    int GameID = 0;
     QGridLayout *Grid;
     QVector<QSquare*> squares;
     //char getActiveColor();
@@ -110,6 +115,7 @@ public:
     /* temporary public */
     bool getPositionFromDBByID(int id);
     int getPositionIDFromDB();
+    void saveGame();
     Fen position;
     int CurrentPosIndex = 0;
     vector<string> getMoveHistory();
@@ -145,6 +151,7 @@ public:
     bool writeGameToDB();
     int getGameID();
     bool updateGame(int posID);
+    void newGame();
 };
 
 

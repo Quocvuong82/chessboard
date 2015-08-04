@@ -9,6 +9,7 @@
 #include <mysql.h>
 #include "board.h"
 #include "move.h"
+#include <ctime>
 #include <boost/lexical_cast.hpp>
 #include <boost/regex.hpp>
 #include <QLabel>
@@ -159,8 +160,16 @@ Board::Board(Fen pos) {
     castleBK = true;
     castleBQ = true;
     //setPosition(pos);
-
 }
+
+void Board::newGame() {
+    //white = White.getName();
+    //black = Black.getName();
+    /*cout << white << " " << black << endl;
+    writePlayersToDB();
+    writeGameToDB();*/
+}
+
 void Board::print() {
 	position.print();
 }
@@ -594,12 +603,15 @@ void Board::printMoves() {
 void Board::nextPos() {
     if(CurrentPosIndex + 1 < positions.size()) CurrentPosIndex++;
     position = positions[CurrentPosIndex];
+    activeColor = position.getActiveColor();
+    cout << activeColor << endl;
     //cout << movehistory[CurrentPosIndex - 1] << endl;
 }
 
 void Board::prevPos() {
     if(CurrentPosIndex > 0) CurrentPosIndex--;
     position = positions[CurrentPosIndex];
+    activeColor = position.getActiveColor();
     //cout << movehistory[CurrentPosIndex] << endl;
 }
 
@@ -622,7 +634,7 @@ void Board::loadGame(int GameID) {
     cout << GameID << endl;
     string movestr = DB.getMoves(GameID);
     cout << movestr << endl;
-    if(movestr.size() > 0) {
+    if(movestr.size() > 1) {
         vector<string> moves = getSplittedPGN(movestr);
         vector<string> halfmoves;
         for(int i = 0; i < moves.size(); i++) {
@@ -688,13 +700,14 @@ void Board::move(string movecmd) {
     cout << endl;
     if(DBwrite) writePositionToDB();
 	parent = getPositionIDFromDB();
-	updateGame(parent);
+
 	if(activeColor == 1) activeColor = 0; else activeColor = 1; // aktiviere den anderen Spieler
     show();
 
 }
 
 bool Board::updateGame(int posID) {
+    cout << "updating Game " << GameID << " with " << posID << endl;
 	MYSQL_RES *res;
 	MYSQL_ROW row;
 	string query; string positions;
@@ -917,6 +930,7 @@ bool Board::writeGameToDB() {
     }
     int white_id = getPlayerIDFromDB(white); int black_id = getPlayerIDFromDB(black);
     int event_id = 49; // ICS Rated Chess Match
+    event_id = 282; // Chessboard Match
 
     query = "SELECT game_id FROM game WHERE white_id=" + boost::lexical_cast<string>(white_id) + " and black_id=" + boost::lexical_cast<string>(black_id) + " and date='" + date + "'";
     //cout << query << endl;
@@ -991,4 +1005,22 @@ void Board::setActiveColor(char c) {
 
 void Board::setGameDate(string date) {
     this->date = date;
+}
+
+void Board::writePositionsToDB() {
+    for(int i = 0; i < positions.size(); i++) {
+        position = positions[i];
+        writePositionToDB();
+        updateGame(getPositionIDFromDB());
+    }
+}
+
+void Board::saveGame() {
+    cout << "Saving Game ";
+    writePlayersToDB();
+    time_t result = std::time(nullptr);
+    date = asctime(localtime(&result));
+    writeGameToDB();
+    cout << GameID << endl;
+    writePositionsToDB();
 }

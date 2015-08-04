@@ -44,6 +44,7 @@ Fen::Fen(std::vector<string> fenstrings) {
         for(int i = 8; i < 13; i++) {
             fenstring.push_back(fenstrings[i]);
         }
+        //cout << fenstrings[8] << " " << fenstring[8] << endl;
     }
 }
 
@@ -88,6 +89,7 @@ string Fen::getRow(int i) {
 }
 
 char Fen::getActiveColor() {
+    //cout << fenstring[8] << endl;
     return getFen(8)[0];
 }
 

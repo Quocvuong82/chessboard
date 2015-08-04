@@ -315,7 +315,7 @@ Fen ChessDatabase::getPositionFromDBByID(int posID) {
 
     for(int i = 0; i < 11; i++) {
         fenstrings[i] = row[i];
-        //cout << fenstrings[i] << endl;
+        cout << fenstrings[i] << endl;
     }
     mysql_free_result(res);
     mysql_close(&mysql);

@@ -19,6 +19,7 @@ public:
     void nextPos();
     void prevPos();
     QTreeWidget* movehistory;
+    void saveGame();
 private:
     static size_t NrOfGames;
     int gameID;
