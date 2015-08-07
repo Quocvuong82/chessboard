@@ -152,6 +152,8 @@ Board::Board(Fen pos) {
     //Grid->SetMinimumSize;
 
 	//connectwithDB();
+    initialPosition = pos;
+    currentPosition = &initialPosition;
     position = pos;
     positions.push_back(position);
 	parent = 1;
@@ -200,7 +202,7 @@ string Board::getFenstring() {
     string f;
     for (int i = 0; i < 8; i++) {
         f.clear();
-        f = position.getFen(i);
+        f = currentPosition->getFen(i);
         fenstr.append(f);
         if(i < 7) fenstr.append("/");
     }
@@ -308,7 +310,7 @@ void Board::initSquares(){
 void Board::writePositionTosquares() {
     QString fenstr;
     for (int i = 7; i >= 0; i--) {
-        fenstr.append(QString::fromStdString(position.getRow(i)));
+        fenstr.append(QString::fromStdString(currentPosition->getRow(i)));
     }
     //cout << "created QString fenstr" << endl;
     //cout << fenstr.toStdString() << endl;
@@ -601,18 +603,54 @@ void Board::printMoves() {
 }
 
 void Board::nextPos() {
-    if(CurrentPosIndex + 1 < positions.size()) CurrentPosIndex++;
-    position = positions[CurrentPosIndex];
-    activeColor = position.getActiveColor();
-    cout << activeColor << endl;
-    //cout << movehistory[CurrentPosIndex - 1] << endl;
+    if(currentPosition->hasChildren()) {
+        currentPosition = currentPosition->getLastChild();
+    }
+
+    vector<Fen*> children = currentPosition->getChildren();
+        cout << children.size() << " Children: ";
+        for(int i = 0; i < children.size(); i++) {
+            cout << DB.getPositionIDFromDB(*children[i]) << " ";
+        }
+        cout << endl;
+    /*position = *position.getLastChild();
+    activeColor = position.getActiveColor();*/
+
+    /*vector<Fen> children = position.getChildren();
+    cout << children.size() << " Children: ";
+    for(int i = 0; i < children.size(); i++) {
+        cout << DB.getPositionIDFromDB(children[i]) << " ";
+    }*/
 }
 
+void Board::nextPos(int index) {
+    vector<Fen*> children = currentPosition->getChildren();
+    if(currentPosition->hasChildren()) {
+        currentPosition = children[index];
+    }
+        cout << children.size() << " Children: ";
+        for(int i = 0; i < children.size(); i++) {
+            cout << DB.getPositionIDFromDB(*children[i]) << " ";
+        }
+        cout << endl;
+}
 void Board::prevPos() {
-    if(CurrentPosIndex > 0) CurrentPosIndex--;
-    position = positions[CurrentPosIndex];
+    cout << "Parent" << DB.getPositionIDFromDB(*currentPosition->getParent()) << endl;
+    currentPosition = currentPosition->getParent();
+    //position = *position.getParent()->getParent()->getParent();
     activeColor = position.getActiveColor();
-    //cout << movehistory[CurrentPosIndex] << endl;
+
+    vector<Fen*> children = currentPosition->getChildren();
+        cout << children.size() << " Children: ";
+        for(int i = 0; i < children.size(); i++) {
+            cout << DB.getPositionIDFromDB(*children[i]) << " ";
+        }
+    cout << endl;
+    /*vector<Fen> children = position.getChildren();
+    cout << children.size() << " Children: ";
+    for(int i = 0; i < children.size(); i++) {
+        cout << nextCombochildren[i]) << " ";
+    }*/
 }
 
 void Board::setPosition(int index) {
@@ -625,12 +663,27 @@ void Board::setPosition(int index) {
 void Board::loadGame(int GameID) {
     cout << "load game " << GameID << endl;
     vector<int> posIDs = DB.getPosIDsByGameID(GameID);
-    cout << "posIDs set" << endl;
+    //cout << "posIDs set" << endl;
     positions.clear();
     CurrentPosIndex = 0;
+    vector<Fen> positions;
     for(int i = 1; i < posIDs.size(); i++) {
         positions.push_back(DB.getPositionFromDBByID(posIDs[i]));
+    };
+    initialPosition = positions[0];
+    currentPosition = &initialPosition;
+    for(int i = 2; i < positions.size(); i++) {
+        currentPosition->addChild(DB.getPositionFromDBByID(posIDs[i]));
+            cout << "i: " << i << endl;
+        currentPosition = currentPosition->getLastChild();
     }
+    currentPosition = &initialPosition;
+    /*Fen* child;
+    child = currentPosition;
+    for(int i = 0; i < positions.size(); i++) {
+        child->addChild(positions[i]);
+        child = child->getLastChild();
+    }*/
     cout << GameID << endl;
     string movestr = DB.getMoves(GameID);
     cout << movestr << endl;
@@ -688,20 +741,40 @@ vector<string> Board::getSplittedPGN(string pgn_raw) {
 }
 
 /* einen Zug machen */
-void Board::move(string movecmd) {
+/*void Board::move(string movecmd) {
     movehistory.push_back(movecmd);
 	Move move(position, movecmd, activeColor); // einen neuen Zug machen mit Ausgansposition, Zugbefehl und aktivem Spieler
-	position = move.getPosition(); // neue Position übernehmen
+    positions[CurrentPosIndex].addChild(move.getPosition());
+    position = move.getPosition(); // neue Position übernehmen
     CurrentPosIndex = positions.size(); // Update Position Index to current position
     positions.push_back(position); // add position to position list (move history)
-    for(int i = 0; i < 8; i++) {
-        cout << position.getFen(i) << " ";
+
+    cout << "PosIDs";
+    for(int i = 0; i < positions.size(); i++) {
+        cout << nextCombopositions[i]) << " ";
     }
     cout << endl;
     if(DBwrite) writePositionToDB();
 	parent = getPositionIDFromDB();
 
 	if(activeColor == 1) activeColor = 0; else activeColor = 1; // aktiviere den anderen Spieler
+    show();
+
+}*/
+
+/* einen Zug machen */
+void Board::move(string movecmd) {
+    Move move(*currentPosition, movecmd, activeColor); // einen neuen Zug machen mit Ausgansposition, Zugbefehl und aktivem Spieler
+    /*while(position.hasChildren()) {
+        position = *position.getLastChild();
+    }*/
+    currentPosition->addChild(move.getPosition());
+    currentPosition = currentPosition->getLastChild();
+
+    if(DBwrite) writePositionToDB();
+    parent = getPositionIDFromDB();
+
+    if(activeColor == 1) activeColor = 0; else activeColor = 1; // aktiviere den anderen Spieler
     show();
 
 }
@@ -832,6 +905,42 @@ int Board::getPositionIDFromDB() {
 	//cout << endl;
 	return posID;
 }
+
+/*int Board::getPositionIDFromDB(Fen pos) {
+    int posID = 0;
+    //cout << "getting pos ID from DB: ";
+
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    mysql_init(&mysql);
+    if (!mysql_real_connect(&mysql,"localhost","root","floppy","schach",0,NULL,0))
+    {
+        cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
+        return false;
+    }
+    string query = "SELECT position_id FROM position WHERE fen1 = '" + pos.getFen(0) + "' AND fen2 = '" + pos.getFen(1) + "' AND fen3 = '" + pos.getFen(2) +
+    "' AND fen4 = '" + pos.getFen(3) + "' AND fen5 = '" + pos.getFen(4) + "' AND fen6 = '" +
+    pos.getFen(5) + "' AND fen7 = '" + pos.getFen(6) + "' AND fen8 = '" + pos.getFen(7) + "'";
+
+    if(!mysql_real_query(&mysql, query.c_str(), query.length())) {
+
+        res = mysql_use_result(&mysql);
+
+        row = mysql_fetch_row(res);
+        if(row) {
+            posID = boost::lexical_cast<int>(row[0]);
+            //posID = static_cast<int>(row[0]);
+            //cout << "PosID: " << posID << endl;
+        }
+        mysql_free_result(res);
+
+    }
+
+    mysql_close(&mysql);
+    //cout << endl;
+    return posID;
+}*/
+
 bool Board::writePositionToDB() {
 	//MYSQL mysql;
 	int pos = getPositionIDFromDB();

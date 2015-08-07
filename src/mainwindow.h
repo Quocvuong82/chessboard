@@ -83,6 +83,7 @@ private:
 
     int posID;
     vector<int> posIndex; //Selected position index
+    int nextPosIndex = 0;
     //vector<int> eventIDs;
     //vector<int> gameIDs;
     vector<vector<int>> posIDs;
@@ -106,6 +107,7 @@ private:
     QPushButton* EngineButton;
     QPushButton* RefreshButton;
     QPushButton* next;
+    QComboBox* nextCombo;
     QPushButton* back;
     vector<QPushButton*> button;
 
@@ -162,6 +164,8 @@ private:
 
     bool clickcmd = false;
 
+    void getNextPositions();
+
 protected:
   void keyPressEvent(QKeyEvent *e);
   void mousePressEvent(QMouseEvent *event);
@@ -203,6 +207,8 @@ public slots:
     void updateStatusBar();
     void showBestmoveMessage();
     void setPlayerName(int playerID);
+    void setNextPosition(int);
+    void unsetEngine(int i);
 };
 
 #endif // MAINWINDOW

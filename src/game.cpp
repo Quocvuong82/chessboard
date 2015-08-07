@@ -46,7 +46,7 @@ void Game::setActiveColor(char c) {
 void Game::showMoveHistory() {
     vector<string> mvhist = board->getMoveHistory();
     if(mvhist.size() == 0) return;
-    cout << currmoveNr << endl;
+    cout << "currmoveNr" << currmoveNr << endl;
     movehistory->clear();
     for(int i = 0; i < mvhist.size(); i++) {
         if(i % 2 == 0) movehistory->insertTopLevelItem(i/2, new QTreeWidgetItem());
@@ -65,19 +65,29 @@ void Game::showMoveHistory() {
 void Game::move(string movecmd) {
     board->move(movecmd);
     showMoveHistory();
+    currmoveNr++;
 }
 
 void Game::nextPos() {
     board->nextPos();
     board->show();
-    currmoveNr++;
+    vector<string> mvhist = board->getMoveHistory();
+    if (currmoveNr + 1 < mvhist.size()) currmoveNr++;
+    showMoveHistory();
+}
+
+void Game::nextPos(int index) {
+    board->nextPos(index);
+    board->show();
+    vector<string> mvhist = board->getMoveHistory();
+    if (currmoveNr + 1 < mvhist.size()) currmoveNr++;
     showMoveHistory();
 }
 
 void Game::prevPos() {
     board->prevPos();
     board->show();
-    currmoveNr--;
+    if(currmoveNr > 0) currmoveNr--;
     showMoveHistory();
 }
 

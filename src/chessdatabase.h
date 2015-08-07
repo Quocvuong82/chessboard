@@ -21,6 +21,7 @@ public:
     double getEvaluation(int posID);
     Fen getPositionFromDBByID(int posID);
     string getMoves(int GameID);
+    int getPositionIDFromDB(Fen pos);
     //void cleanUpDatabase();
 private:
     vector<int> getPlayersByString(string str);

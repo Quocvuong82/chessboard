@@ -103,10 +103,12 @@ class Board {
     QPixmap bishop_b_d;
 
     vector<Fen> positions;
+    Fen initialPosition;
     vector<string> movehistory;
     vector<string> getSplittedPGN(string pgn_raw);
     void writePositionsToDB();
 public:
+    Fen* currentPosition;
     int GameID = 0;
     QGridLayout *Grid;
     QVector<QSquare*> squares;
@@ -115,12 +117,14 @@ public:
     /* temporary public */
     bool getPositionFromDBByID(int id);
     int getPositionIDFromDB();
+    //int getPositionIDFromDB(Fen pos);
     void saveGame();
     Fen position;
     int CurrentPosIndex = 0;
     vector<string> getMoveHistory();
     /* ---------------- */
     void nextPos();
+    void nextPos(int index);
     void prevPos();
 
     void setGameDate(string date);

@@ -28,6 +28,7 @@ Fen::Fen(std::vector<string> fenstrings) {
 		cout << Fen::fen.size() << endl;
 	}
 }*/
+
 Fen::Fen() {
     fenstring = {"rnbqkbnr", "pppppppp", "8", "8", "8", "8", "PPPPPPPP", "RNBQKBNR", "w", "KQkq", "-", "1", "1"};
 }
@@ -46,6 +47,53 @@ Fen::Fen(std::vector<string> fenstrings) {
         }
         //cout << fenstrings[8] << " " << fenstring[8] << endl;
     }
+}
+
+void Fen::addChild(Fen child) {
+    //child.setParent(this);
+    std::vector<string> fenstrings;
+    for(int i; i < 13; i++) {
+        fenstrings.push_back(child.getFen(i));
+    }
+    children.push_back(new Fen(fenstrings));
+    /*Fen* newChild; Fen* parent;
+    parent = this;
+    newChild = children[children.size() - 1];
+    while(newChild->hasChildren()) {
+        newChild->setParent(parent);
+        newChild = parent;
+        parent = parent->getLastChild();
+    }*/
+    children[children.size() - 1]->setParent(this);
+}
+
+vector<Fen*> Fen::getChildren() {
+    return children;
+}
+
+Fen* Fen::getLastChild() {
+    return children[children.size() - 1];
+}
+
+Fen* Fen::getChild(int i) {
+    return children[i];
+}
+
+bool Fen::hasChildren() {
+    if (children.size() > 0) return true;
+    else return false;
+}
+
+void Fen::setParent(Fen* p) {
+    parent = p;
+    /*parent = new Fen();
+    *parent = *p;*/
+}
+
+Fen* Fen::getParent() {
+    if(parent != NULL)
+    return parent;
+    else return this;
 }
 
 bool Fen::isNumber(char c) {

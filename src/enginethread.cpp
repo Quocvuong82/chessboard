@@ -134,7 +134,7 @@ int EngineThread::writeToEngine(string message) {
 
 /* Returns Engine Output Line By Line */
 string EngineThread::readFromEngine(int ReaderID) {
-    cout << "read from engine (" << ReaderID << endl;
+    //cout << "read from engine (" << ReaderID << ")" << endl;
     if (pos[ReaderID] > buffer.size()) return "";
     size_t newline = buffer.find("\n", pos[ReaderID]);
     //cout << "newline: " << newline << " pos: " << pos << endl;

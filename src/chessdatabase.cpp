@@ -55,6 +55,41 @@ vector<int> ChessDatabase::getPosIDsByGameID(int gameID) {
     return posIDs;
 }
 
+int ChessDatabase::getPositionIDFromDB(Fen pos) {
+    int posID = 0;
+    //cout << "getting pos ID from DB: ";
+
+    MYSQL_RES *res;
+    MYSQL_ROW row;
+    mysql_init(&mysql);
+    if (!mysql_real_connect(&mysql,"localhost","root","floppy","schach",0,NULL,0))
+    {
+        cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
+        return false;
+    }
+    string query = "SELECT position_id FROM position WHERE fen1 = '" + pos.getFen(0) + "' AND fen2 = '" + pos.getFen(1) + "' AND fen3 = '" + pos.getFen(2) +
+    "' AND fen4 = '" + pos.getFen(3) + "' AND fen5 = '" + pos.getFen(4) + "' AND fen6 = '" +
+    pos.getFen(5) + "' AND fen7 = '" + pos.getFen(6) + "' AND fen8 = '" + pos.getFen(7) + "'";
+
+    if(!mysql_real_query(&mysql, query.c_str(), query.length())) {
+
+        res = mysql_use_result(&mysql);
+
+        row = mysql_fetch_row(res);
+        if(row) {
+            posID = boost::lexical_cast<int>(row[0]);
+            //posID = static_cast<int>(row[0]);
+            //cout << "PosID: " << posID << endl;
+        }
+        mysql_free_result(res);
+
+    }
+
+    mysql_close(&mysql);
+    //cout << endl;
+    return posID;
+}
+
 vector<int> ChessDatabase::getPlayersByString(string str) {
     string query = "SELECT player_id FROM player WHERE name LIKE '%" + str + "%'";
     //cout << query << endl;

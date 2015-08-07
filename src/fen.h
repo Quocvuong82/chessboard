@@ -15,9 +15,18 @@ class Fen {
 	std::vector<string> fenstring;
 	bool isNumber(char c);
 	string makeFen(string row);
+    vector<Fen*> children;
+    Fen* parent = NULL;
+    void setParent(Fen* parent);
 public:
 	Fen();
 	Fen(std::vector<string> pos);
+    void addChild(Fen child);
+    Fen* getLastChild();
+    Fen* getParent();
+    bool hasChildren();
+    vector<Fen*> getChildren();
+    Fen* getChild(int i);
 	string getPos(int i);
 	string getRow(int i);
 	string getFen(int i);

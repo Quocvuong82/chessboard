@@ -17,6 +17,7 @@ public:
     void showMoveHistory();
     void move(string movecmd);
     void nextPos();
+    void nextPos(int index);
     void prevPos();
     QTreeWidget* movehistory;
     void saveGame();

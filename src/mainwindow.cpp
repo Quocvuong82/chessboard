@@ -70,6 +70,11 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
 
     /* Buttons */
     next = new QPushButton("next");
+    nextCombo = new QComboBox;
+    nextCombo->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    nextCombo->hide();
+    QObject::connect(nextCombo, SIGNAL(activated(int)), this, SLOT(setNextPosition(int)));
+    //nextCombo->addItem("All Events");
     back = new QPushButton("back");
     input = new QLineEdit();
     EngineButton = new QPushButton("Think");
@@ -124,6 +129,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     for(int i = 0; i < NrOfButtons; i++) {
         ButtonBoxLayout->addWidget(button[i]);
     }
+    ButtonBoxLayout->addWidget(nextCombo);
 
     /* Player Info */
     for(int i = 0; i < 2; i++) {
@@ -162,7 +168,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     timer = new QTimer;
     connect(timer, SIGNAL(timeout()), this, SLOT(clocks()));
 
-    //timer->start(1000);
+    timer->start(1000);
 
     /* Output - Boxes */
     output = new QTextEdit();
@@ -294,7 +300,8 @@ void MainWindow::nextPos() {
     if(chessserver && examining && !localboard) {
        fics.writeSocket("forward\n");
     } else {
-        game[activeBoard]->nextPos();
+        game[activeBoard]->nextPos(nextPosIndex);
+        getNextPositions();
         //game[activeBoard]->board->show();
         /*if(posIDs[activeBoard].size() > 0 && (posIndex[activeBoard] + 1) < posIDs[activeBoard].size()) {
             posIndex[activeBoard]++;
@@ -304,11 +311,28 @@ void MainWindow::nextPos() {
     if(thinkOnMove) think();
 }
 
+void MainWindow::getNextPositions() {
+    nextPosIndex = 0;
+    if(game[activeBoard]->board->currentPosition->hasChildren()) {
+        nextCombo->clear();
+        vector<Fen*> nextPositions = game[activeBoard]->board->currentPosition->getChildren();
+        if(nextPositions.size() > 1) {
+            for(int i = 0; i < nextPositions.size(); i++) {
+                nextCombo->addItem(QString::fromStdString(boost::lexical_cast<string>(myChessDB.getPositionIDFromDB(*nextPositions[i]))));
+            }
+            nextCombo->show();
+        } else nextCombo->hide();
+    }
+}
+
 void MainWindow::prevPos() {
     if(chessserver && examining && !localboard) {
        fics.writeSocket("backward\n");
     } else {
+        unsetEngine(0);
+        unsetEngine(1);
         game[activeBoard]->prevPos();
+        getNextPositions();
         /*if(posIndex[activeBoard]>0) {
             posIndex[activeBoard]--;
             updateBoard();
@@ -823,4 +847,13 @@ void MainWindow::setPlayerName(int playerID) {
         players[playerID] = txt.toStdString();
         game[activeBoard]->board->setPlayer(color, txt.toStdString(), 0);
     }
+}
+
+void MainWindow::setNextPosition(int i) {
+    nextPosIndex = i;
+}
+
+void MainWindow::unsetEngine(int i) {
+    if(i % 2 == 0) engineW = false;
+    else engineB = false;
 }
