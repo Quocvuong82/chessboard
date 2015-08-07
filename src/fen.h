@@ -30,6 +30,8 @@ public:
 	string getPos(int i);
 	string getRow(int i);
 	string getFen(int i);
+    string getFen();
+    string getMove();
     char getActiveColor();
     int getMoveNr();
 	std::vector<int> searchChessman(char man);

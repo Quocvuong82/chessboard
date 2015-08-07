@@ -74,18 +74,18 @@ Board::Board() {
 			mysql_free_result(res);
 			Fen fen(fenstrings);
 			position = fen;
-            positions.push_back(position);
+            //positions.push_back(position);
 		} else {
 			Fen fen;
 			position = fen;
-            positions.push_back(position);
+            //positions.push_back(position);
 			parent = 1;
 			writePositionToDB();
 		}
 	} else {
 		Fen fen;
 		position = fen;
-        positions.push_back(position);
+        //positions.push_back(position);
 		parent = 1;
 		writePositionToDB();
 	}
@@ -155,7 +155,7 @@ Board::Board(Fen pos) {
     initialPosition = pos;
     currentPosition = &initialPosition;
     position = pos;
-    positions.push_back(position);
+    //positions.push_back(position);
 	parent = 1;
     castleWK = true;
     castleWQ = true;
@@ -173,7 +173,7 @@ void Board::newGame() {
 }
 
 void Board::print() {
-	position.print();
+    currentPosition->print();
 }
 
 void Board::show() {
@@ -185,8 +185,10 @@ vector<string> Board::getMoveHistory() {
 }
 
 bool Board::setPosition(Fen pos) {
-    position = pos;
-    positions.push_back(position);
+    initialPosition = pos;
+    currentPosition = &initialPosition;
+    /*position = pos;
+    positions.push_back(position);*/
 
     setActiveColor(pos.getActiveColor());
     string values = pos.getFen(9);
@@ -613,10 +615,10 @@ void Board::nextPos() {
             cout << DB.getPositionIDFromDB(*children[i]) << " ";
         }
         cout << endl;
-    /*position = *position.getLastChild();
-    activeColor = position.getActiveColor();*/
+    /*position = *currentPosition->getLastChild();
+    activeColor = currentPosition->getActiveColor();*/
 
-    /*vector<Fen> children = position.getChildren();
+    /*vector<Fen> children = currentPosition->getChildren();
     cout << children.size() << " Children: ";
     for(int i = 0; i < children.size(); i++) {
         cout << DB.getPositionIDFromDB(children[i]) << " ";
@@ -637,8 +639,8 @@ void Board::nextPos(int index) {
 void Board::prevPos() {
     cout << "Parent" << DB.getPositionIDFromDB(*currentPosition->getParent()) << endl;
     currentPosition = currentPosition->getParent();
-    //position = *position.getParent()->getParent()->getParent();
-    activeColor = position.getActiveColor();
+    //position = *currentPosition->getParent()->getParent()->getParent();
+    activeColor = currentPosition->getActiveColor();
 
     vector<Fen*> children = currentPosition->getChildren();
         cout << children.size() << " Children: ";
@@ -646,7 +648,7 @@ void Board::prevPos() {
             cout << DB.getPositionIDFromDB(*children[i]) << " ";
         }
     cout << endl;
-    /*vector<Fen> children = position.getChildren();
+    /*vector<Fen> children = currentPosition->getChildren();
     cout << children.size() << " Children: ";
     for(int i = 0; i < children.size(); i++) {
         cout << nextCombochildren[i]) << " ";
@@ -655,7 +657,7 @@ void Board::prevPos() {
 
 void Board::setPosition(int index) {
     if(index < positions.size()) {
-        position = positions[index];
+        currentPosition = positions[index];
         CurrentPosIndex = index;
     }
 }
@@ -666,18 +668,15 @@ void Board::loadGame(int GameID) {
     //cout << "posIDs set" << endl;
     positions.clear();
     CurrentPosIndex = 0;
-    vector<Fen> positions;
-    for(int i = 1; i < posIDs.size(); i++) {
-        positions.push_back(DB.getPositionFromDBByID(posIDs[i]));
-    };
-    initialPosition = positions[0];
+    initialPosition = DB.getPositionFromDBByID(posIDs[0]);
     currentPosition = &initialPosition;
-    for(int i = 2; i < positions.size(); i++) {
+    for(int i = 1; i < posIDs.size(); i++) {
         currentPosition->addChild(DB.getPositionFromDBByID(posIDs[i]));
-            cout << "i: " << i << endl;
+        positions.push_back(currentPosition);
         currentPosition = currentPosition->getLastChild();
     }
     currentPosition = &initialPosition;
+
     /*Fen* child;
     child = currentPosition;
     for(int i = 0; i < positions.size(); i++) {
@@ -702,7 +701,6 @@ void Board::loadGame(int GameID) {
         movehistory = halfmoves;
         movehistory.erase(movehistory.begin());
     }
-    position = positions[0];
     show();
 }
 
@@ -765,11 +763,13 @@ vector<string> Board::getSplittedPGN(string pgn_raw) {
 /* einen Zug machen */
 void Board::move(string movecmd) {
     Move move(*currentPosition, movecmd, activeColor); // einen neuen Zug machen mit Ausgansposition, Zugbefehl und aktivem Spieler
-    /*while(position.hasChildren()) {
-        position = *position.getLastChild();
+    /*while(currentPosition->hasChildren()) {
+        position = *currentPosition->getLastChild();
     }*/
     currentPosition->addChild(move.getPosition());
     currentPosition = currentPosition->getLastChild();
+    positions.push_back(currentPosition);
+    movehistory.push_back(currentPosition->getMove());
 
     if(DBwrite) writePositionToDB();
     parent = getPositionIDFromDB();
@@ -850,9 +850,9 @@ bool Board::getPositionFromDBByID(int id) {
 
 	Fen fen(fenstrings);
     position = fen;
-    positions.push_back(position);
-    setActiveColor(position.getActiveColor());
-    string values = position.getFen(9);
+    //positions.push_back(position);
+    setActiveColor(currentPosition->getActiveColor());
+    string values = currentPosition->getFen(9);
     if(values[0] == 'K') castleWK = true; else castleWK = false;
     if(values[1] == 'Q') castleWQ = true; else castleWQ = false;
     if(values[2] == 'k') castleBK = true; else castleBK = false;
@@ -883,9 +883,9 @@ int Board::getPositionIDFromDB() {
 		cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
 		return false;
 	}
-	string query = "SELECT position_id FROM position WHERE fen1 = '" + position.getFen(0) + "' AND fen2 = '" + position.getFen(1) + "' AND fen3 = '" + position.getFen(2) +
-	"' AND fen4 = '" + position.getFen(3) + "' AND fen5 = '" + position.getFen(4) + "' AND fen6 = '" +
-	position.getFen(5) + "' AND fen7 = '" + position.getFen(6) + "' AND fen8 = '" + position.getFen(7) + "'";
+    string query = "SELECT position_id FROM position WHERE fen1 = '" + currentPosition->getFen(0) + "' AND fen2 = '" + currentPosition->getFen(1) + "' AND fen3 = '" + currentPosition->getFen(2) +
+    "' AND fen4 = '" + currentPosition->getFen(3) + "' AND fen5 = '" + currentPosition->getFen(4) + "' AND fen6 = '" +
+    currentPosition->getFen(5) + "' AND fen7 = '" + currentPosition->getFen(6) + "' AND fen8 = '" + currentPosition->getFen(7) + "'";
 
 	if(!mysql_real_query(&mysql, query.c_str(), query.length())) {
 
@@ -955,7 +955,7 @@ bool Board::writePositionToDB() {
 	if(pos == 0) {
         string query = "INSERT INTO position (position_id, fen1, fen2, fen3, fen4, fen5, fen6, fen7, fen8, active_color, castle, en_passant, parent, game_id) VALUES (NULL, ";
 		for(int i = 0; i < 8; i++) {
-			query += '\'' + position.getFen(i) + "', ";
+            query += '\'' + currentPosition->getFen(i) + "', ";
 		}
         query += "\'";
         query += getActiveColor();
@@ -1118,7 +1118,7 @@ void Board::setGameDate(string date) {
 
 void Board::writePositionsToDB() {
     for(int i = 0; i < positions.size(); i++) {
-        position = positions[i];
+        //position = positions[i];
         writePositionToDB();
         updateGame(getPositionIDFromDB());
     }

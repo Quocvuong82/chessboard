@@ -15,7 +15,6 @@ class Move {
 	Fen position;
 	int activeColor;
 	void parseMoveCmd();
-	std::string coord(int x, int y);
 	int checkChar(char character);
 	Fen castling();
 	Fen kingqueen();
@@ -26,11 +25,12 @@ class Move {
 	void pawn();
 	void replacement();
 public:
+    Move();
+    Move(Fen pos, std::string movecommand, int activeC);
+    static std::string coord(int x, int y);
 	void print();
 	std::string getCmd();
 	Fen getPosition();
-	Move();
-	Move(Fen pos, std::string movecommand, int activeC);
 };
 
 

@@ -102,7 +102,7 @@ class Board {
     QPixmap bishop_b_l;
     QPixmap bishop_b_d;
 
-    vector<Fen> positions;
+    vector<Fen*> positions;
     Fen initialPosition;
     vector<string> movehistory;
     vector<string> getSplittedPGN(string pgn_raw);

@@ -96,6 +96,31 @@ Fen* Fen::getParent() {
     else return this;
 }
 
+#include <iostream>
+#include "move.h"
+string Fen::getMove() {
+
+    /* Compare child position with parent position to get the diff between them */
+    string source, target;
+    for(int i = 0; i < 8; i++) {
+        string parentFen = parent->getRow(i);
+        string childFen = this->getRow(i);
+        for(int j = 0; j < parentFen.size(); j++) {
+            if(parentFen[j] != childFen[j]) {
+                if(childFen[j] == '0') {
+                    source = Move::coord(j, i);
+                    //move.append(Move::coord(i, j));
+                } else target = Move::coord(j, i);
+            }
+        }
+    }
+
+    string move;
+    move.append(source);
+    move.append(target);
+    return move;
+}
+
 bool Fen::isNumber(char c) {
 	int c_ascii = static_cast<int>(c);
 	if(c_ascii > 48 && c_ascii < 58) return true;
@@ -198,6 +223,14 @@ void Fen::changeFen(int i, string row) {
 
 string Fen::getFen(int i) {
 	return fenstring[i];
+}
+
+string Fen::getFen() {
+    string fen;
+    for(int i = 0; fenstring.size(); i++) {
+        fen.append(fenstring[i]);
+    }
+    return fen;
 }
 
 void Fen::print() {

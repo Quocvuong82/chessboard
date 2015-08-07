@@ -14,6 +14,7 @@ Game::Game()
     for(int i = 1; i < movehistory->columnCount(); i++) {
         movehistory->setColumnWidth(i, 50);
     }
+    movehistory->setFocusPolicy(Qt::NoFocus);
     movehistory->headerItem()->setText(0, "#");
     movehistory->headerItem()->setText(1, "white");
     movehistory->headerItem()->setText(2, "black");
@@ -96,7 +97,7 @@ void Game::HistoryItemClicked(QTreeWidgetItem* item, int c) {
     index = item->text(0).toInt() * 2 + (c - 1);
     cout << index << " ";
     cout << item->text(c).toStdString() << endl;
-    board->setPosition(index);
+    board->setPosition(index + 1);
     board->show();
     currmoveNr = index;
 }
