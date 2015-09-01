@@ -29,7 +29,42 @@ void Move::parseMoveCmd() {
     if(boost::regex_search(movecmd, m, expr)) {
         cout << "Long algebraic" << endl;
         cout << movecmd << endl;
-        /* Zielfeld */
+
+        /* Handle Castling */
+        if(movecmd == "e1g1") { movecmd == "O-O"; castling(); }
+        if(movecmd == "e1c1") { movecmd == "O-O-O"; castling(); }
+        if(movecmd == "e8g8") { movecmd == "O-O"; castling(); }
+        if(movecmd == "e8c8") { movecmd == "O-O-O"; castling(); }
+
+        /* Disable Castling */
+        string castlstr = position.getFen(9);
+        cout << "castlstr: " << castlstr << endl;
+        bool disableCastl = false;
+        if(movecmd.substr(0, 2) == "a1") {
+            castlstr[3] = '-';
+            disableCastl = true;
+        } else if (movecmd.substr(0, 2) == "h1") {
+            castlstr[2] = '-';
+            disableCastl = true;
+        } else if (movecmd.substr(0, 2) == "a8") {
+            castlstr[1] = '-';
+            disableCastl = true;
+        } else if (movecmd.substr(0, 2) == "h8") {
+            castlstr[0] = '-';
+            disableCastl = true;
+        } else if (movecmd.substr(0, 2) == "e1") {
+            castlstr[0] = '-';
+            castlstr[1] = '-';
+            disableCastl = true;
+        } else if (movecmd.substr(0, 2) == "e8") {
+            castlstr[2] = '-';
+            castlstr[3] = '-';
+            disableCastl = true;
+        }
+
+        if(disableCastl) position.changeFen(9, castlstr);
+
+        /* Target-Square */
         int x = static_cast<int>(movecmd[2]) - 97;
         int y = 8 - (static_cast<int>(movecmd[3]) - 48);
         int x_origin = static_cast<int>(movecmd[0]) - 97;
@@ -110,6 +145,7 @@ string Move::coord(int x, int y) {
 	return coord;
 }
 Fen Move::castling() {
+    string castlstr = position.getFen(9);
 	if(!activeColor) { /* Weiß am Zug */
 		position.setChessman('0', 4, 7); // Ursprungsfeld frei machen König
 		if(movecmd == "O-O-O") {
@@ -119,6 +155,7 @@ Fen Move::castling() {
 			/* Zielfelder besetzen */
 			position.setChessman('K', 2, 7); // König
 			position.setChessman('R', 3, 7); // Turm
+            castlstr[1] = '-';
 		} else {
 			cout << "Königseitige Rochade" << endl;
 			position.setChessman('0', 7, 7); // Ursprungsfeld frei machen Turm
@@ -126,6 +163,7 @@ Fen Move::castling() {
 			/* Zielfelder besetzen */
 			position.setChessman('K', 6, 7); // König
 			position.setChessman('R', 5, 7); // Turm
+            castlstr[0] = '-';
 		}
 	} else { /* Schwarz am Zug */
 		position.setChessman('0', 4, 0); // Ursprungsfeld frei machen König
@@ -136,6 +174,7 @@ Fen Move::castling() {
 			/* Zielfelder besetzen */
 			position.setChessman('k', 2, 0); // König
 			position.setChessman('r', 3, 0); // Turm
+            castlstr[3] = '-';
 		} else {
 			cout << "Königseitige Rochade" << endl;
 			position.setChessman('0', 7, 0); // Ursprungsfeld frei machen Turm
@@ -143,9 +182,11 @@ Fen Move::castling() {
 			/* Zielfelder besetzen */
 			position.setChessman('k', 6, 0); // König
 			position.setChessman('r', 5, 0); // Turm
+            castlstr[2] = '-';
 		}
 
 	}
+    position.changeFen(9, castlstr);
 	return position;
 }
 Fen Move::NBR() {

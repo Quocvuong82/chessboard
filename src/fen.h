@@ -8,7 +8,7 @@
 #define FEN_H_
 #include <vector>
 #include <string>
-#include <boost/lexical_cast.hpp>
+//#include <boost/lexical_cast.hpp>
 using namespace std;
 
 class Fen {
@@ -29,8 +29,9 @@ public:
     Fen* getChild(int i);
 	string getPos(int i);
 	string getRow(int i);
-	string getFen(int i);
-    string getFen();
+    string getFen(int i);
+    vector<string> getFen();
+    string getFenString();
     string getMove();
     char getActiveColor();
     int getMoveNr();
@@ -39,6 +40,7 @@ public:
 	void setChessman(char man, int x, int y); // eine Schachfigur auf dem Feld x/y positionieren
 	void changeFen(int i, string row);
 	void print();
+    void setActiveColor(char c);
 };
 
 #endif /* FEN_H_ */

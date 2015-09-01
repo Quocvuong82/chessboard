@@ -73,6 +73,7 @@ class Board {
     void initSquares();
     QPixmap pieces[12];
     QSvgWidget* piecesSVG[12];
+    static QString PATH;
     QSvgWidget* pawn_w;
     QSvgWidget* pawn_b;
     QPixmap square_d;
@@ -108,7 +109,7 @@ class Board {
     vector<string> getSplittedPGN(string pgn_raw);
     void writePositionsToDB();
 public:
-    Fen* currentPosition;
+    Fen* currentPosition = NULL;
     int GameID = 0;
     QGridLayout *Grid;
     QVector<QSquare*> squares;

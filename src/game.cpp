@@ -41,7 +41,7 @@ char Game::getActiveColor() {
 
 void Game::setActiveColor(char c) {
     activeColor = c;
-    //board->setActiveColor(c);
+    board->setActiveColor(c);
 }
 
 void Game::showMoveHistory() {

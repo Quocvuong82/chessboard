@@ -49,14 +49,14 @@
 #include <boost/thread.hpp>
 
 #include "chessdatabase.h"
-#include "enginethread.h"
+#include "uciengine.h"
 #include "icclient.h"
 #include "icgamelist.h"
 #include "dbdialog.h"
 #include "game.h"
 #include "playerlabel.h"
 #include "timelabel.h"
-
+#include "enginecontroller.h"
 using namespace std;
 
 class MainWindow : public QMainWindow {
@@ -149,7 +149,8 @@ private:
     void updateBoard();
     bool stockfish();
     string EngineOutput;
-    EngineThread engine;
+    UCIEngine engine;
+    EngineController* engineController;
     string bestmove;
     vector<string> scores;
     vector<string> moves;
@@ -198,6 +199,7 @@ public slots:
     void EnginePlayWhite();
     void quit();
     void setGameID();
+    void setActiveColor();
     void undock();
     void scanICS();
     void showPositionTree();

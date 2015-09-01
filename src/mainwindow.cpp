@@ -3,7 +3,7 @@
 #include <QtGui>
 #include "fen.h"
 #include <QAction>
-#include"enginethread.h"
+#include"uciengine.h"
 
 MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(parent, flags) {
 
@@ -20,6 +20,8 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
 
     this->setWindowTitle("Chessboard 0.6");
     this->resize(1200, 400);
+
+    engineController = new EngineController();
 
     dialog = new DBdialog(myChessDB);
     dialog->setAttribute(Qt::WA_QuitOnClose);
@@ -53,7 +55,9 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Next Move"), this, SLOT(nextPos()));
     gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Previous Move"), this, SLOT(prevPos()));
     gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Set Game ID"), this, SLOT(setGameID()));
+    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Set Active Color"), this, SLOT(setActiveColor()));
     gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Duplicate Game"), this, SLOT());
+    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Undock Engine-Controller"), engineController, SLOT(undock()));
 
     viewMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Undock Gameinfo"), this, SLOT(undock()));
 
@@ -103,7 +107,11 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     QObject::connect(button[3], SIGNAL(clicked()), this, SLOT(scanICS()));
     QObject::connect(button[4], SIGNAL(clicked()), this, SLOT(prevPos()));
     QObject::connect(button[5], SIGNAL(clicked()), this, SLOT(nextPos()));
+    QObject::connect(button[6], SIGNAL(clicked()), &engine, SLOT(showOutput()));
     QObject::connect(&engine, SIGNAL(newBestmove()), this, SLOT(showBestmoveMessage()));
+
+    QObject::connect(button[4], SIGNAL(clicked()), this, SLOT(updateStatusBar()));
+    QObject::connect(button[5], SIGNAL(clicked()), this, SLOT(updateStatusBar()));
 
 /* -------------------------------------------------------------------------------------- */
 /*   D e f i n e  L a y o u t                                                             */
@@ -191,7 +199,14 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     GameInfoLayout->addWidget(ButtonFrame);
     GameInfoLayout->addWidget(input);
     GameInfoLayout->addWidget(output);
-    GameInfoLayout->addWidget(engine.output);
+    QGroupBox* engineControllerGroup = new QGroupBox();
+    QVBoxLayout* engineControllerLayout = new QVBoxLayout();
+    engineControllerGroup->setLayout(engineControllerLayout);
+    QString style = "QGroupBox {border: 1px solid gray;border-radius: 9px;margin-top: 0.5em;} QGroupBox::title {subcontrol-origin: margin;left: 10px;padding: 0 3px 0 3px;}";
+    engineControllerGroup->setStyleSheet(style);
+    engineControllerGroup->setTitle("Engine Controller");
+    engineControllerLayout->addWidget(engineController);
+    GameInfoLayout->addWidget(engineControllerGroup);
     GameInfoBox = new QGroupBox("Game Info");
     GameInfoBox->setLayout(GameInfoLayout);
 
@@ -226,8 +241,10 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     /* Connect Engine-Thread with Output-TextEdit Object */
     //QObject::connect(&engine, SIGNAL(newOutput()), this, SLOT(printEngineOutput()));
 
-    engine.start();
-    engine.stockfish();
+    //engine.start();
+    //engine.stockfish();
+    engineController->show();
+    engineController->setGame(game[0]);
 
     QObject::connect(&fics, SIGNAL(unread()), this, SLOT(readICServer()));
 
@@ -249,6 +266,7 @@ void MainWindow::setBoardActive(int index) {
     time[1]->setText("<font size=20 color=white><b>" + QString::fromStdString(makeTime(t[activeBoard * 2])) + "</b></font>");*/
     game[activeBoard]->board->show();
     layout->addWidget(game[activeBoard]->movehistory);
+    engineController->setGame(game[index]);
     updateStatusBar();
 }
 
@@ -300,7 +318,7 @@ void MainWindow::nextPos() {
     if(chessserver && examining && !localboard) {
        fics.writeSocket("forward\n");
     } else {
-        game[activeBoard]->nextPos(nextPosIndex);
+        game[activeBoard]->nextPos(nextPosIndex);  
         getNextPositions();
         //game[activeBoard]->board->show();
         /*if(posIDs[activeBoard].size() > 0 && (posIndex[activeBoard] + 1) < posIDs[activeBoard].size()) {
@@ -441,6 +459,16 @@ void MainWindow::setGameID() {
                 this, "Set Game ID", "Enter a new Game ID", 10, 0 , 999, 1, &ok);
     if(ok) game[activeBoard]->setGameID(gameID);
 
+}
+
+void MainWindow::setActiveColor() {
+    bool ok;
+    int activeColor = QInputDialog::getInt(
+                this, "Set active color", "Enter a new color", 0, 0 , 1, 1, &ok);
+    if(ok) {
+        if(activeColor == 1) game[activeBoard]->setActiveColor('b');
+        else game[activeBoard]->setActiveColor('w');
+    }
 }
 
 void MainWindow::readICServer() {
@@ -592,6 +620,7 @@ void MainWindow::parseICSOutput(string outstr) {
             game[activeBoard]->board->show();
             if(thinkOnMove) think();
         }
+        updateStatusBar();
 
     }
 
@@ -616,7 +645,7 @@ void MainWindow::clocks() {
     /* Update time for every game every second */
     for(int j = 0; j < Game::getNrOfGames(); j++) {
         int i = 0;
-        if(game[j]->getActiveColor() == 'b') i = 1;
+        if(game[j]->getActiveColor() == 'w') i = 1;
         t[j * 2 + i]--;
         if(j == activeBoard) time[i]->setTime(t[j * 2 + i]);
         //cout << (j * 2 + i) << endl;
@@ -707,6 +736,7 @@ void MainWindow::SquareDropped(int target, int source) {
         updateStatusBar();
         //game[activeBoard]->showMoveHistory();
         /* Aktivate oppent (chess engine) */
+        engineController->go();
         if((engineB && game[activeBoard]->getActiveColor() == 'b') || (engineW && game[activeBoard]->getActiveColor() == 'w')) think();
     }
 }
@@ -815,7 +845,10 @@ void MainWindow::linkClicked(QUrl url) {
 }
 
 void MainWindow::updateStatusBar() {
-    activeColorStatus->setText(QString::fromStdString(boost::lexical_cast<string>(game[activeBoard]->getActiveColor())));
+    if(game[activeBoard]->getActiveColor() == 'w')
+        activeColorStatus->setText("White to move");
+    else
+        activeColorStatus->setText("Black to move");
 }
 
 void MainWindow::showBestmoveMessage() {
@@ -828,10 +861,10 @@ void MainWindow::closeEvent(QCloseEvent *event)
     int ret = QMessageBox::warning(this, "Quitting Chessboard", "There are unsaved games. Do you want to save them?", QMessageBox::Close | QMessageBox::Cancel | QMessageBox::Save);
     if (ret == QMessageBox::Save) {
         game[activeBoard]->saveGame();
-        engine.exit();
+        //engine.exit();
         event->accept();
     } else if (ret == QMessageBox::Close) {
-        engine.exit();
+        //engine.exit();
         event->accept();
     } else {
         event->ignore();
@@ -840,9 +873,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
 
 void MainWindow::setPlayerName(int playerID) {
     bool ok;
-    QString txt = QInputDialog::getText(this, "Enter a new name", "Enter a new name", QLineEdit::Normal, "Enter a name", &ok);
+    int color = 1 - playerID % 2;
+    QString txt = QInputDialog::getText(this, "Renaming " + player[color]->getName(), "Enter a new name", QLineEdit::Normal, player[color]->getName(), &ok);
     if(ok && !txt.isEmpty()) {
-        int color = 1 - playerID % 2;
         player[color]->setText(txt);
         players[playerID] = txt.toStdString();
         game[activeBoard]->board->setPlayer(color, txt.toStdString(), 0);

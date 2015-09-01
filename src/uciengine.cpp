@@ -1,24 +1,130 @@
-#include"enginethread.h"
+#include"uciengine.h"
 #include <QtCore>
 #include <QtGui>
 #include <QWidget>
 #include <QTextEdit>
 #include <QScrollBar>
+#include <QProcess>
 #include <boost/lexical_cast.hpp>
 
-EngineThread::EngineThread(QObject *parent) : QThread(parent) {
-    boost::thread engine ( &EngineThread::readPipe, this );
+UCIEngine::UCIEngine(QObject *parent) : QObject(parent) {
+
+    engine2 = new QProcess();
+    engine2->start("/bin/stockfish");
+    buffer = "";
+    for(int i = 0; i < 2; i++) {
+        pos.push_back(0);
+    }
+    setThinking(false);
+    bestmove = "";
+    searchdepth = 5;
+    movetime = -1;
+    mate = -1;
+    nodes = -1;
+
+    /*QThread* engineThread = new QThread;
+    EngineReader* reader = new EngineReader(this, engine2, &buffer, &pos);
+    reader->moveToThread(engineThread);
+
+    connect(reader, SIGNAL(error(QString)), this, SLOT(errorString(QString)));
+    connect(engineThread, SIGNAL(started()), reader, SLOT(process()));
+    connect(reader, SIGNAL(finished()), engineThread, SLOT(quit()));
+    connect(reader, SIGNAL(finished()), reader, SLOT(deleteLater()));
+    connect(engineThread, SIGNAL(finished()), engineThread, SLOT(deleteLater()));
+    connect(reader, SIGNAL(newOutput()), this, SLOT(getValues()));
+    engineThread->start();*/
+
+    /*string message = "isready\n";
+    engine2->write(message.c_str(), qstrlen(message.c_str()));*/
+
+    connect(this, SIGNAL(newOutput()), this, SLOT(showOutput()));
+    writeToEngine("isready");
+    writeToEngine("setoption name MultiPV value 5");
+    writeToEngine("setoption name Threads value 4");
+
+    //boost::thread engine ( &EngineThread::readPipe, this );
     output = new QTextEdit();
     output->setReadOnly(true);
-    writeToEngine("setoption name Threads value 4");
-    writeToEngine("setoption name MultiPV value 5");
 }
 
-void EngineThread::emitMySignal() {
-   emit newOutput();
+void UCIEngine::readEngine() {
+    qint64 b = 1; int c;
+    while(getBestmove() == "") {
+        char buf[8192];
+        memset(buf, 0, sizeof buf);
+
+        b = engine2->read(buf, sizeof(buf));
+        if(b > 0) {
+            buffer.append(buf);
+            usleep(100000);
+            //cout << buf << endl;
+            //emit newOutput();
+            //parent->getValues();
+             //getValues();
+        }
+
+        while(buffer.size() > 0 && pos[0] < buffer.size() - 1) {
+            //cout << pos[0] << " " << buffer.size() - 1 << endl;
+            getValues();
+        }
+
+        //cout << " " << b << endl;
+        //cout << " (" << b << " Bytes read)" << endl;
+        if(b <= 0) usleep(10000);
+    }
+    //emit finished();
 }
 
-bool EngineThread::stockfish() {
+void UCIEngine::setThinking(bool state) {
+    thinking = state;
+    if(state) emit stateChanged(1);
+    else emit stateChanged(0);
+}
+
+void UCIEngine::setPosition(string fen) {
+    cout << "setting position: " << fen << endl;
+    this->fen = fen;
+}
+
+EngineReader::EngineReader(UCIEngine* parent, QProcess* engine, string* buffer, vector<size_t>* pos) {
+    this->engine = engine;
+    this->buffer = buffer;
+    this->parent = parent;
+    this->pos = pos;
+}
+
+void EngineReader::process() {
+    qint64 b = 1; int c;
+    while(1) {
+        char buf[8192];
+        memset(buf, 0, sizeof buf);
+
+        b = engine->read(buf, sizeof(buf));
+        if(b > 0) {
+            buffer->append(buf);
+            usleep(100000);
+            //cout << buf << endl;
+            //emit newOutput();
+            //parent->getValues();
+        }
+
+        /*while(buffer->size() > 0 && pos->at(0) < buffer->size() - 1) {
+            cout << pos->at(0) << " " << buffer->size() - 1 << endl;
+            emit newOutput();
+        }*/
+
+        //cout << " " << b << endl;
+        //cout << " (" << b << " Bytes read)" << endl;
+        if(b <= 0) usleep(10000);
+    }
+    emit finished();
+}
+
+bool UCIEngine::isThinking() {
+    return thinking;
+}
+
+bool UCIEngine::stockfish() {
     pid_t	childpid;
     pos.push_back(0); pos.push_back(0);
     /*------------------------------------------------------------------------
@@ -68,13 +174,15 @@ bool EngineThread::stockfish() {
         ::close(CHILD_WRITE);
 
         /* do parent stuff */
+        writeToEngine("setoption name Threads value 4");
+        writeToEngine("setoption name MultiPV value 5");
         connect(this, SIGNAL(newOutput()), this, SLOT(showOutput()));
         output->setWindowTitle("stockfish 6");
     }
     return true;
 }
 
-void EngineThread::readPipe() {
+void UCIEngine::readPipe() {
     //setbuf(stdout, NULL);
     //setbuf(stdin, NULL);
 
@@ -113,7 +221,18 @@ void EngineThread::readPipe() {
     }
 }
 
-int EngineThread::writeToEngine(string message) {
+int UCIEngine::writeToEngine(string message) {
+    /* Clear MultiPVs from last move  */
+    size_t n = 0;
+    while(n != string::npos) {
+        if(message.substr(n + 1,2) == "go") {
+            multipvs.clear();
+            cout << "multipvs cleared" << endl;
+        }
+        n = message.find('\n', n + 1);
+    }
+    return engine2->write((message + "\n").c_str(), qstrlen((message + "\n").c_str()));
+
     /*buffer.clear();
     for(int i = 0; i < pos.size(); i++)
     pos[i] = 0;*/
@@ -133,11 +252,11 @@ int EngineThread::writeToEngine(string message) {
 }
 
 /* Returns Engine Output Line By Line */
-string EngineThread::readFromEngine(int ReaderID) {
+string UCIEngine::readFromEngine(int ReaderID) {
     //cout << "read from engine (" << ReaderID << ")" << endl;
     if (pos[ReaderID] > buffer.size()) return "";
     size_t newline = buffer.find("\n", pos[ReaderID]);
-    //cout << "newline: " << newline << " pos: " << pos << endl;
+    //cout << "newline: " << newline << " pos: " << pos[ReaderID] << endl;
     string s = buffer.substr(pos[ReaderID], newline - pos[ReaderID] + 1);
     if(newline != string::npos) pos[ReaderID] = newline + 1;
     //cout << pos - (newline + 1) << " ";
@@ -145,19 +264,56 @@ string EngineThread::readFromEngine(int ReaderID) {
     return s;
 }
 
-string EngineThread::getBestmove() {
-    cout << "bestmove: " << bestmove << endl;
+vector<string> UCIEngine::getUniqueMultiPV(int depth) {
+    vector<string> uniqueMultiPV;
+    for(int i = 0; i < multipvs.size(); i++) {
+        bool unique = true;
+        for(int j = 0; j < uniqueMultiPV.size(); j++) {
+            if(uniqueMultiPV[j] == multipvs[i].substr(0, depth * 4)) unique = false;
+        }
+        if(unique) {
+            uniqueMultiPV.push_back(multipvs[i].substr(0, depth * 4));
+        }
+    }
+    return uniqueMultiPV;
+}
+
+string UCIEngine::getBestmove() {
+    //cout << "bestmove: " << bestmove << endl;
+    if(bestmove == "") return "";
     return bestmove;
+
+    /* Get the first move of multipvs only once */
+    vector<string> uniqueMultiPV = getUniqueMultiPV(1);
+    string multipvstr = "\nother moves: ";
+    for(int i = 0; i < uniqueMultiPV.size(); i++) {
+        multipvstr += uniqueMultiPV[i];
+        multipvstr += ", ";
+    }
+    return bestmove + multipvstr;
 }
 
-void EngineThread::printBestmove() {
+string UCIEngine::getOtherMoves() {
+    /* Get the first move of multipvs only once */
+    vector<string> uniqueMultiPV = getUniqueMultiPV(1);
+    string multipvstr = "\nother moves: ";
+    for(int i = 0; i < uniqueMultiPV.size(); i++) {
+        multipvstr += uniqueMultiPV[i];
+        multipvstr += ", ";
+    }
+    return multipvstr;
+}
+
+void UCIEngine::printBestmove() {
     cout << "bestmove: " << bestmove << endl;
 }
 
-void EngineThread::getValues() {
+void UCIEngine::getValues() {
     string outstr = readFromEngine(0);
+    emit newOutput();
     while(outstr.size() > 0) {
-        emit newOutput();
+        //emit newOutput();
+        //showOutput();
         if (outstr.size() < 0) return;
         //cout << outstr.size() << " ";
 
@@ -167,6 +323,15 @@ void EngineThread::getValues() {
         if(p != string::npos) {
             bestmove = outstr.substr(p + 9, e- p - 9);
             emit newBestmove();
+            setThinking(false);
+        }
+
+        /* get depth */
+        p = outstr.find("depth ");
+        e = outstr.find(" ", p + 6);
+        if(p != string::npos) {
+            int depth = boost::lexical_cast<int>(outstr.substr(p + 6, e- p - 6));
+            emit newDepth(depth);
         }
 
         /* Collect MultiPV-Data (get possible moves) */
@@ -206,8 +371,8 @@ void EngineThread::getValues() {
                 for(int i = 0; i < multipvs.size(); i++) {
                     output += multipvs[i];
                     html += "<a href=\"" + multipvs[i] + "\">" + multipvs[i] + "</a><br/>";
-                    if(multipvs[i].length() > 5 * 4) {
-                        writeToEngine("stop");
+                    if(multipvs[i].length() > searchdepth * 4) {
+                        //cout << multipvs[i] << endl;
                     }
                 }
                 //engineOutput->setText(QString::fromStdString(output));
@@ -244,12 +409,78 @@ void EngineThread::getValues() {
     outstr = readFromEngine(0);
     }
 }
-vector<string> EngineThread::getMultiPV() {
+vector<string> UCIEngine::getMultiPV() {
     return multipvs;
 }
 
-void EngineThread::showOutput() {
-    output->setText(output->toPlainText().append(QString::fromStdString(readFromEngine(1))));
+void UCIEngine::showOutput() {
+    string outtext;
+    while(pos[1] < buffer.size() - 1) {
+        outtext.append(readFromEngine(1));
+    }
+
+    output->setText(output->toPlainText().append(QString::fromStdString(outtext)));
     output->show();
     output->verticalScrollBar()->setValue(output->verticalScrollBar()->maximum());
+}
+
+void UCIEngine::go() {
+    buffer = "";
+    for(int i = 0; i < 2; i++) {
+        pos[i] = 0;
+    }
+    output->clear();
+    bestmove = "";
+
+    /* Create Command with Fen-String */
+    string command;
+
+    command = "position fen " + fen + "\n";
+
+    command += "go";
+
+    /* Add Search Parameters */
+    if(searchdepth < 0 && movetime < 0) command += " infinite";
+    else {
+        if (searchdepth > 0) command += " depth " + boost::lexical_cast<string>(searchdepth);
+        if(movetime > 0) command += " movetime " + boost::lexical_cast<string>(movetime);
+        if(mate > 0) command += " movetime " + boost::lexical_cast<string>(mate);
+        if(nodes > 0) command += " movetime " + boost::lexical_cast<string>(nodes);
+    }
+
+    /*command = "position fen " + game[activeBoard]->board->getFenstring();*/
+    cout << command << endl;
+    writeToEngine(command);
+    setThinking(true);
+    stopping = false;
+    boost::thread engine ( &UCIEngine::readEngine, this );
+}
+
+void UCIEngine::stop() {
+    if(!stopping) {
+        cout << "stopping engine " << endl;
+        writeToEngine("stop");
+        cout << "engine stopped" << endl;
+    }
+    stopping = true;
+    setThinking(false);
+}
+
+void UCIEngine::setSearchDepth(int value) {
+    //cout << "setting search depth " << value << endl;
+    searchdepth = value;
+}
+
+void UCIEngine::setMovetime(int value) {
+    //cout << "setting movetime " << value << endl;
+    movetime = value;
+}
+
+void UCIEngine::setMate(int value) {
+    //cout << "setting mate " << value << endl;
+    mate = value;
+}
+void UCIEngine::setNodes(int value) {
+    cout << "setting nodes " << value << endl;
+    nodes = value;
 }

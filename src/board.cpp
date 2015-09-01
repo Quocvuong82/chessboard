@@ -6,6 +6,7 @@
  */
 
 #include <iostream>
+#include <fstream>
 #include <mysql.h>
 #include "board.h"
 #include "move.h"
@@ -19,6 +20,8 @@
 
 using namespace std;
 using namespace boost;
+
+QString Board::PATH = "/home/alex/build-chessboard-Desktop_Qt_5_4_2_GCC_64bit-Debug/";
 
 Board::Board() {
     /* Create the 64 squares of the board */
@@ -89,13 +92,15 @@ Board::Board() {
 		parent = 1;
 		writePositionToDB();
 	}
+    initialPosition = Fen ();
+    currentPosition = &initialPosition;
 }
 
 Board::Board(Fen pos) {
 
     /* Create the 64 squares of the board */
-    QPixmap square_d = QPixmap("./textures/wood_d.png");
-    QPixmap square_l = QPixmap("./textures/wood_l.png");
+    QPixmap square_d = QPixmap(PATH + "textures/wood_d.png");
+    QPixmap square_l = QPixmap(PATH + "textures/wood_l.png");
 
     int i;
     initSquares();
@@ -185,8 +190,23 @@ vector<string> Board::getMoveHistory() {
 }
 
 bool Board::setPosition(Fen pos) {
-    initialPosition = pos;
-    currentPosition = &initialPosition;
+        bool newPos = false;
+        for(int i = 0; i < 8; i++) {
+           if(currentPosition->getFen(i).compare(pos.getFen(i))) newPos = true;
+        }
+
+    if(newPos) {
+        cout << "adding child" << endl;
+        currentPosition->addChild( pos );
+        cout << "getting last child" << endl;
+        currentPosition = currentPosition->getLastChild();
+        cout << "add position to positions" << endl;
+        positions.push_back(currentPosition);
+        cout << "add position to movehistory" << endl;
+        movehistory.push_back(currentPosition->getMove());
+    }
+    /*initialPosition = pos;
+    currentPosition = &initialPosition;*/
     /*position = pos;
     positions.push_back(position);*/
 
@@ -210,10 +230,11 @@ string Board::getFenstring() {
     }
     fenstr += " " + boost::lexical_cast<string>(getActiveColor());
     fenstr += " ";
-    if(castleWK) fenstr += "K"; else fenstr += "-";
+    fenstr += currentPosition->getFen(9);
+    /*if(castleWK) fenstr += "K"; else fenstr += "-";
     if(castleWQ) fenstr += "Q"; else fenstr += "-";
     if(castleBK) fenstr += "k"; else fenstr += "-";
-    if(castleBQ) fenstr += "q"; else fenstr += "-";
+    if(castleBQ) fenstr += "q"; else fenstr += "-";*/
     //fenstr += " KQkq - 1 1";
     fenstr += " - 1 ";
     fenstr += boost::lexical_cast<string>(moveNr);
@@ -221,32 +242,32 @@ string Board::getFenstring() {
 }
 
 void Board::initSquares(){
-    square_d = QPixmap("./textures/wood_d.png");
-    square_l = QPixmap("./textures/wood_l.png");
-    pawn_w_l = QPixmap("./textures/pawn_white_l.png");
-    pawn_w_d = QPixmap("./textures/pawn_white_d.png");
-    pawn_b_l = QPixmap("./textures/pawn_black_l.png");
-    pawn_b_d = QPixmap("./textures/pawn_black_d.png");
-    rook_w_l = QPixmap("./textures/rook_white_l.png");
-    rook_w_d = QPixmap("./textures/rook_white_d.png");
-    knight_w_l = QPixmap("./textures/knight_white_l.png");
-    knight_w_d = QPixmap("./textures/knight_white_d.png");
-    rook_b_l = QPixmap("./textures/rook_black_l.png");
-    rook_b_d = QPixmap("./textures/rook_black_d.png");
-    knight_b_l = QPixmap("./textures/knight_black_l.png");
-    knight_b_d = QPixmap("./textures/knight_black_d.png");
-    queen_w_l = QPixmap("./textures/queen_white_l.png");
-    queen_w_d = QPixmap("./textures/queen_white_d.png");
-    queen_b_l = QPixmap("./textures/queen_black_l.png");
-    queen_b_d = QPixmap("./textures/queen_black_d.png");
-    king_w_l = QPixmap("./textures/king_white_l.png");
-    king_w_d = QPixmap("./textures/king_white_d.png");
-    king_b_l = QPixmap("./textures/king_black_l.png");
-    king_b_d = QPixmap("./textures/king_black_d.png");
-    bishop_w_l = QPixmap("./textures/bishop_white_l.png");
-    bishop_w_d = QPixmap("./textures/bishop_white_d.png");
-    bishop_b_l = QPixmap("./textures/bishop_black_l.png");
-    bishop_b_d = QPixmap("./textures/bishop_black_d.png");
+    square_d = QPixmap(PATH + "textures/wood_d.png");
+    square_l = QPixmap(PATH + "textures/wood_l.png");
+    pawn_w_l = QPixmap(PATH + "textures/pawn_white_l.png");
+    pawn_w_d = QPixmap(PATH + "textures/pawn_white_d.png");
+    pawn_b_l = QPixmap(PATH + "textures/pawn_black_l.png");
+    pawn_b_d = QPixmap(PATH + "textures/pawn_black_d.png");
+    rook_w_l = QPixmap(PATH + "textures/rook_white_l.png");
+    rook_w_d = QPixmap(PATH + "textures/rook_white_d.png");
+    knight_w_l = QPixmap(PATH + "textures/knight_white_l.png");
+    knight_w_d = QPixmap(PATH + "textures/knight_white_d.png");
+    rook_b_l = QPixmap(PATH + "textures/rook_black_l.png");
+    rook_b_d = QPixmap(PATH + "textures/rook_black_d.png");
+    knight_b_l = QPixmap(PATH + "textures/knight_black_l.png");
+    knight_b_d = QPixmap(PATH + "textures/knight_black_d.png");
+    queen_w_l = QPixmap(PATH + "textures/queen_white_l.png");
+    queen_w_d = QPixmap(PATH + "textures/queen_white_d.png");
+    queen_b_l = QPixmap(PATH + "textures/queen_black_l.png");
+    queen_b_d = QPixmap(PATH + "textures/queen_black_d.png");
+    king_w_l = QPixmap(PATH + "textures/king_white_l.png");
+    king_w_d = QPixmap(PATH + "textures/king_white_d.png");
+    king_b_l = QPixmap(PATH + "textures/king_black_l.png");
+    king_b_d = QPixmap(PATH + "textures/king_black_d.png");
+    bishop_w_l = QPixmap(PATH + "textures/bishop_white_l.png");
+    bishop_w_d = QPixmap(PATH + "textures/bishop_white_d.png");
+    bishop_b_l = QPixmap(PATH + "textures/bishop_black_l.png");
+    bishop_b_d = QPixmap(PATH + "textures/bishop_black_d.png");
 
     int scale = 64;
 
@@ -272,24 +293,24 @@ void Board::initSquares(){
 
     vector<QPainter*> painter;
     pawn_w = new QSvgWidget;
-    pawn_w->load(QString ("./textures/WhitePawn.svg"));
+    pawn_w->load(QString (PATH + "textures/WhitePawn.svg"));
     pawn_w->resize(scale,scale);
 
     for(int i = 0; i < 12; i++) {
         piecesSVG[i] = new QSvgWidget;
     }
-    piecesSVG[0]->load(QString ("./textures/WhitePawn.svg"));
-    piecesSVG[1]->load(QString ("./textures/WhiteRook.svg"));
-    piecesSVG[2]->load(QString ("./textures/WhiteKnight.svg"));
-    piecesSVG[3]->load(QString ("./textures/WhiteBishop.svg"));
-    piecesSVG[4]->load(QString ("./textures/WhiteQueen.svg"));
-    piecesSVG[5]->load(QString ("./textures/WhiteKing.svg"));
-    piecesSVG[6]->load(QString ("./textures/BlackPawn.svg"));
-    piecesSVG[7]->load(QString ("./textures/BlackRook.svg"));
-    piecesSVG[8]->load(QString ("./textures/BlackKnight.svg"));
-    piecesSVG[9]->load(QString ("./textures/BlackBishop.svg"));
-    piecesSVG[10]->load(QString ("./textures/BlackQueen.svg"));
-    piecesSVG[11]->load(QString ("./textures/BlackKing.svg"));
+    piecesSVG[0]->load(QString (PATH + "textures/WhitePawn.svg"));
+    piecesSVG[1]->load(QString (PATH + "textures/WhiteRook.svg"));
+    piecesSVG[2]->load(QString (PATH + "textures/WhiteKnight.svg"));
+    piecesSVG[3]->load(QString (PATH + "textures/WhiteBishop.svg"));
+    piecesSVG[4]->load(QString (PATH + "textures/WhiteQueen.svg"));
+    piecesSVG[5]->load(QString (PATH + "textures/WhiteKing.svg"));
+    piecesSVG[6]->load(QString (PATH + "textures/BlackPawn.svg"));
+    piecesSVG[7]->load(QString (PATH + "textures/BlackRook.svg"));
+    piecesSVG[8]->load(QString (PATH + "textures/BlackKnight.svg"));
+    piecesSVG[9]->load(QString (PATH + "textures/BlackBishop.svg"));
+    piecesSVG[10]->load(QString (PATH + "textures/BlackQueen.svg"));
+    piecesSVG[11]->load(QString (PATH + "textures/BlackKing.svg"));
 
     for(int i = 0; i < 12; i++) {
         piecesSVG[i]->resize(scale,scale);
@@ -375,8 +396,9 @@ void Board::writePositionTosquares() {
 }
 
 char Board::getActiveColor() {
-    if(activeColor % 2 == 0) return 'w';
-    else return 'b';
+    return currentPosition->getActiveColor();
+    /*if(activeColor % 2 == 0) return 'w';
+    else return 'b';*/
 }
 
 bool Board::addMetadata(string metadata) {
@@ -629,6 +651,7 @@ void Board::nextPos(int index) {
     vector<Fen*> children = currentPosition->getChildren();
     if(currentPosition->hasChildren()) {
         currentPosition = children[index];
+        activeColor = currentPosition->getActiveColor();
     }
         cout << children.size() << " Children: ";
         for(int i = 0; i < children.size(); i++) {
@@ -663,17 +686,26 @@ void Board::setPosition(int index) {
 }
 
 void Board::loadGame(int GameID) {
+    ofstream chessfile;
+
+    chessfile.open("chessfile.chx", ios_base::app);
+    if(!chessfile.is_open())
+        cerr << "Chess-File could not be created" << endl;
+
     cout << "load game " << GameID << endl;
     vector<int> posIDs = DB.getPosIDsByGameID(GameID);
+    if(posIDs.size() < 1) cout << "no Position IDs" << endl;
     //cout << "posIDs set" << endl;
     positions.clear();
     CurrentPosIndex = 0;
     initialPosition = DB.getPositionFromDBByID(posIDs[0]);
     currentPosition = &initialPosition;
     for(int i = 1; i < posIDs.size(); i++) {
+        chessfile << currentPosition->getFenString() << endl;
         currentPosition->addChild(DB.getPositionFromDBByID(posIDs[i]));
         positions.push_back(currentPosition);
         currentPosition = currentPosition->getLastChild();
+        movehistory.push_back(currentPosition->getMove());
     }
     currentPosition = &initialPosition;
 
@@ -767,6 +799,7 @@ void Board::move(string movecmd) {
         position = *currentPosition->getLastChild();
     }*/
     currentPosition->addChild(move.getPosition());
+    char activeColor = currentPosition->getActiveColor();
     currentPosition = currentPosition->getLastChild();
     positions.push_back(currentPosition);
     movehistory.push_back(currentPosition->getMove());
@@ -774,7 +807,9 @@ void Board::move(string movecmd) {
     if(DBwrite) writePositionToDB();
     parent = getPositionIDFromDB();
 
-    if(activeColor == 1) activeColor = 0; else activeColor = 1; // aktiviere den anderen Spieler
+    if(activeColor == 'w') currentPosition->setActiveColor('b'); else
+        currentPosition->setActiveColor('w');
+    //if(activeColor == 1) activeColor = 0; else activeColor = 1; // depecated (active color is now handled by position)
     show();
 
 }
@@ -843,13 +878,15 @@ bool Board::getPositionFromDBByID(int id) {
 
     for(int i = 0; i < 11; i++) {
 		fenstrings[i] = row[i];
-        //cout << fenstrings[i] << endl;
+        cout << fenstrings[i] << endl;
 	}
     fenstrings[11] = "0";
     fenstrings[12] = "1";
 
 	Fen fen(fenstrings);
     position = fen;
+    initialPosition = fen;
+    currentPosition = &initialPosition;
     //positions.push_back(position);
     setActiveColor(currentPosition->getActiveColor());
     string values = currentPosition->getFen(9);
@@ -1108,6 +1145,7 @@ int Board::getGameID() {
 }*/
 
 void Board::setActiveColor(char c) {
+    currentPosition->setActiveColor(c);
     activeColor = 0;
     if(c == 'b') activeColor = 1;
 }

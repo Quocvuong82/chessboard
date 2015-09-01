@@ -5,7 +5,6 @@ SOURCES += \
     move.cpp \
     database.cpp \
     chessdatabase.cpp \
-    enginethread.cpp \
     icclient.cpp \
     dbdialog.cpp \
     game.cpp \
@@ -14,7 +13,10 @@ SOURCES += \
     playerlabel.cpp \
     timelabel.cpp \
     player.cpp \
-    mainwindow.cpp
+    mainwindow.cpp \
+    enginecontroller.cpp \
+    uciengine.cpp \
+    qdialvalue.cpp
 QT += core gui widgets
 QT += svg
 QT += webkitwidgets
@@ -25,7 +27,6 @@ HEADERS += \
     move.h \
     database.h \
     chessdatabase.h \
-    enginethread.h \
     icclient.h \
     dbdialog.h \
     game.h \
@@ -34,13 +35,18 @@ HEADERS += \
     playerlabel.h \
     timelabel.h \
     player.h \
-    mainwindow.h
+    mainwindow.h \
+    enginecontroller.h \
+    uciengine.h \
+    qdialvalue.h
 LIBS += -L/usr/lib/mysql -lmysqlclient
 LIBS += -L/usr/lib/mysql -lboost_regex
 LIBS += -L/usr/lib/mysql -lboost_thread
 LIBS += -L/usr/lib/mysql -lboost_system
 INCLUDEPATH += /usr/include/mysql
+INCLUDEPATH += /usr/include
 CONFIG   += c++11
 
 FORMS += \
-    icgamelist.ui
+    icgamelist.ui \
+    enginecontroller.ui

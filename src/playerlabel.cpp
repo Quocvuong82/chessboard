@@ -27,6 +27,10 @@ void PlayerLabel::setColor(string color) {
     this->QLabel::setText("<font size=20 color=" + this->color + "><b>" + name + "</b></font>");
 }
 
+QString PlayerLabel::getName() {
+    return name;
+}
+
 void PlayerLabel::mousePressEvent(QMouseEvent *event) {
     std::cout << ID << " clicked" << endl;
     emit clicked(ID);

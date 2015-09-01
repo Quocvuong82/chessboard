@@ -8,6 +8,7 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <boost/lexical_cast.hpp>
 using namespace std;
 
 /*Fen::Fen() {
@@ -44,15 +45,18 @@ Fen::Fen(std::vector<string> fenstrings) {
     } else {
         for(int i = 8; i < 13; i++) {
             fenstring.push_back(fenstrings[i]);
+            cout << fenstring[i] << endl;
         }
         //cout << fenstrings[8] << " " << fenstring[8] << endl;
     }
 }
 
 void Fen::addChild(Fen child) {
+    cout << "Fen::addChild" << endl;
     //child.setParent(this);
     std::vector<string> fenstrings;
-    for(int i; i < 13; i++) {
+    for(int i = 0; i < 13; i++) {
+        cout << i << endl;
         fenstrings.push_back(child.getFen(i));
     }
     children.push_back(new Fen(fenstrings));
@@ -218,20 +222,32 @@ void Fen::setChessman(char man, int x, int y) {
 }
 
 void Fen::changeFen(int i, string row) {
-	fenstring[i] = makeFen(row);
+    if(i < 8) fenstring[i] = makeFen(row);
+    else fenstring[i] = row;
 }
 
 string Fen::getFen(int i) {
 	return fenstring[i];
 }
 
-string Fen::getFen() {
+vector<string> Fen::getFen() {
+    return fenstring;
     string fen;
     for(int i = 0; fenstring.size(); i++) {
         fen.append(fenstring[i]);
     }
+    //return fen;
+}
+
+string Fen::getFenString() {
+    string fen;
+    cout << "get Fenstring" << endl;
+    for(int i = 0; i < fenstring.size(); i++) {
+        fen.append(fenstring[i] + " ");
+    }
     return fen;
 }
+
 
 void Fen::print() {
 	for (int i = 0; i < 8; i++) {
@@ -261,3 +277,7 @@ void Fen::print() {
 	fen[7] = "PPPPPPPP";
 	fen[8] = "RNBQKBNR";
 }*/
+
+void Fen::setActiveColor(char c) {
+    fenstring[8] = c;
+}
