@@ -4,7 +4,8 @@ size_t Game::NrOfGames = 0;
 
 Game::Game()
 {
-    board = new Board(Fen ());
+    //board = new Board(Fen ());
+    board = new QBoard();
     NrOfGames++;
     movehistory = new QTreeWidget();
     movehistory->setWindowTitle("move list");
@@ -47,7 +48,7 @@ void Game::setActiveColor(char c) {
 void Game::showMoveHistory() {
     vector<string> mvhist = board->getMoveHistory();
     if(mvhist.size() == 0) return;
-    cout << "currmoveNr" << currmoveNr << endl;
+    //cout << "currmoveNr" << currmoveNr << endl;
     movehistory->clear();
     for(int i = 0; i < mvhist.size(); i++) {
         if(i % 2 == 0) movehistory->insertTopLevelItem(i/2, new QTreeWidgetItem());
@@ -59,12 +60,13 @@ void Game::showMoveHistory() {
         movehistory->resizeColumnToContents(i);
     }
     movehistory->show();
-    cout << floor(currmoveNr/2) << endl;
+    //cout << floor(currmoveNr/2) << endl;
     movehistory->topLevelItem(floor(currmoveNr/2))->setSelected(true);
 }
 
 void Game::move(string movecmd) {
-    board->move(movecmd);
+    board->QBoard::move(movecmd);
+    board->show();
     showMoveHistory();
     currmoveNr++;
 }
@@ -97,11 +99,15 @@ void Game::HistoryItemClicked(QTreeWidgetItem* item, int c) {
     index = item->text(0).toInt() * 2 + (c - 1);
     cout << index << " ";
     cout << item->text(c).toStdString() << endl;
-    board->setPosition(index + 1);
+    board->setPosition(index);
     board->show();
     currmoveNr = index;
 }
 
 void Game::saveGame() {
     board->saveGame();
+}
+
+int Game::getCurrentMoveNr() {
+    return currmoveNr;
 }

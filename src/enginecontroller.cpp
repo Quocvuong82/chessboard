@@ -8,6 +8,8 @@ EngineController::EngineController(QWidget *parent) :
 {
     ui->setupUi(this);
     engine = new UCIEngine();
+    goButtonPressed = false;
+
     ui->verticalLayout->addWidget(engine->output);
     connect(ui->goButton, SIGNAL(pressed()), this, SLOT(toggleGoStop()));
     //connect(ui->refreshButton, SIGNAL(pressed()), engine, SLOT(showOutput()));
@@ -39,7 +41,7 @@ EngineController::EngineController(QWidget *parent) :
     ui->searchdepth->setMinimum(0);
     ui->searchdepth->setMaximum(50);
     ui->movetime->setMinimum(0);
-    ui->movetime->setMaximum(100000);
+    //ui->movetime->setMaximum(100000);
     ui->nodes->setMinimum(0);
     ui->nodes->setMaximum(500);
     ui->spinBox_depth->setMaximum(ui->searchdepth->maximum());
@@ -97,6 +99,12 @@ void EngineController::setGame(Game* game) {
 
 void EngineController::go() {
     if(isOn()) {
+        if(!goButtonPressed) {
+            if(ui->radio_play->isChecked()) {
+                if(ui->checkBox_black->isChecked() && !ui->checkBox_white->isChecked() && game->getActiveColor() == 'w') return;
+                if(ui->checkBox_white->isChecked() && !ui->checkBox_black->isChecked() && game->getActiveColor() == 'b') return;
+            }
+        }
         if(!engine->isThinking()) {
             engine->setPosition(game->board->getFenstring());
             engine->go();
@@ -104,6 +112,7 @@ void EngineController::go() {
             ui->playButton->setEnabled(false);
             ui->progressBar->setValue(0);
         }
+        goButtonPressed = false;
     }
 }
 
@@ -113,15 +122,26 @@ void EngineController::toggleGoStop() {
             engine->stop();
             ui->goButton->setText("stopping");
         } else {
+            goButtonPressed = true;
             go();
         }
     }
 }
 
 void EngineController::play() {
-    if(engine->getBestmove().size() == 4) {
+    /* make moves in long algebraic notation "d2d4" or "f7f8q" */
+    if(engine->getBestmove().size() == 4 || engine->getBestmove().size() == 5) {
         game->move(engine->getBestmove());
-        go();
+
+        /* Let other widgets know, that we made a move */
+        emit madeMove();
+        ui->playButton->setDisabled(true);
+
+        /* Think on next move if radiobutton play and color checkbox are checked */
+        if(ui->radio_play->isChecked() || ui->radio_think->isChecked()) {
+            if((ui->checkBox_black->isChecked() && game->getActiveColor() == 'b')
+                    || (ui->checkBox_white->isChecked() && game->getActiveColor() == 'w')) go();
+        }
     }
 }
 

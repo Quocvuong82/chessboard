@@ -31,11 +31,14 @@ public slots:
     void play();
     void turnOff();
     void turnOn();
+signals:
+    void madeMove();
 private:
     Ui::EngineController *ui;
     UCIEngine* engine;
     Board* board;
     Game* game;
+    bool goButtonPressed;
 };
 
 #endif // ENGINECONTROLLER_H

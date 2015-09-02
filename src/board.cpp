@@ -21,146 +21,19 @@
 using namespace std;
 using namespace boost;
 
-QString Board::PATH = "/home/alex/build-chessboard-Desktop_Qt_5_4_2_GCC_64bit-Debug/";
+//QString Board::PATH = "/home/alex/build-chessboard-Desktop_Qt_5_4_2_GCC_64bit-Debug/";
 
 Board::Board() {
-    /* Create the 64 squares of the board */
-    //Grid = new QGridLayout;
-
-    /*int i;
-    for (int y = 0; y < 8; y++) {
-        for (int x = 0; x < 8; x++) {
-            i = y * 8 + x;
-            squares.append(new QLabel);
-            squares[i]->setText(QString::number(i));
-            //Grid->addWidget(squares[i], 8 - y, x);
-        }
-    }*/
-    int i;
-    for (int y = 0; y < 8; y++) {
-       for (int x = 0; x < 8; x++) {
-           i = y * 8 + x;
-           squares.append(new QSquare);
-           if((y + x) % 2 == 0) squares[i]->setPixmap(square_d); else
-               squares[i]->setPixmap(square_l);
-       }
-    }
-	connectwithDB(); 	// Verbinde mit Datenbank
-
-	MYSQL_RES *res;
-	MYSQL_ROW row;
-	//mysql_init(&mysql);
-	//mysql_options(&mysql,MYSQL_READ_DEFAULT_GROUP,"your_prog_name");
-	/*if (!mysql_real_connect(&mysql,"localhost","root","floppy","schach",0,NULL,0))
-	{
-		cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
-	}*/
-
-	/* Hole Position aus der Datenbank */
-	string query = "SELECT fen1, fen2, fen3, fen4, fen5, fen6, fen7, fen8, parent FROM position WHERE position_id=1";
-	/*query = "SELECT fen1, fen2, fen3, fen4, fen5, fen6, fen7, fen8 FROM position WHERE position_id=";
-	query += argv[1];
-	query += ";";*/
-	parent = 1;
-
-	if(!mysql_real_query(&mysql, query.c_str(), query.length())) {
-
-		res = mysql_use_result(&mysql);
-
-		row = mysql_fetch_row(res);
-		vector<string> fenstrings(8);
-
-		if(row) {
-			for(int i = 0; i < 8; i++) {
-				fenstrings[i] = row[i];
-			}
-			mysql_free_result(res);
-			Fen fen(fenstrings);
-			position = fen;
-            //positions.push_back(position);
-		} else {
-			Fen fen;
-			position = fen;
-            //positions.push_back(position);
-			parent = 1;
-			writePositionToDB();
-		}
-	} else {
-		Fen fen;
-		position = fen;
-        //positions.push_back(position);
-		parent = 1;
-		writePositionToDB();
-	}
     initialPosition = Fen ();
     currentPosition = &initialPosition;
+    positions.push_back(currentPosition);
 }
 
 Board::Board(Fen pos) {
-
-    /* Create the 64 squares of the board */
-    QPixmap square_d = QPixmap(PATH + "textures/wood_d.png");
-    QPixmap square_l = QPixmap(PATH + "textures/wood_l.png");
-
-    int i;
-    initSquares();
-    Grid = new QGridLayout;
-    Grid->setHorizontalSpacing(0);
-    Grid->setVerticalSpacing(0);
-
-    /* Board Labeling */
-    /* Letters */
-    int minWidth = 0;
-    for (int i = 1; i < 9; i++) {
-        QLabel* l = new QLabel;
-        string str = boost::lexical_cast<string>(i);
-        str[0] = str[0] + 16;
-        l->setText(QString::fromStdString(str));
-        l->setAlignment(Qt::AlignCenter);
-        //l->setMinimumHeight(minWidth);
-        Grid->addWidget(l, 9, i);
-    }
-    for (int i = 1; i < 9; i++) {
-        QLabel* l = new QLabel;
-        string str = boost::lexical_cast<string>(i);
-        str[0] = str[0] + 16;
-        l->setText(QString::fromStdString(str));
-        l->setAlignment(Qt::AlignCenter);
-        //l->setMinimumHeight(minWidth);
-        Grid->addWidget(l, 0, i);
-    }
-    /* Numbers */
-    for (int i = 1; i < 9; i++) {
-        QLabel* l = new QLabel;
-        l->setText(QString::fromStdString(boost::lexical_cast<string>(9 - i)));
-        l->setAlignment(Qt::AlignCenter);
-        //l->setMinimumWidth(minWidth);
-        Grid->addWidget(l, i, 0);
-    }
-    for (int i = 1; i < 9; i++) {
-        QLabel* l = new QLabel;
-        l->setText(QString::fromStdString(boost::lexical_cast<string>(9 - i)));
-        l->setAlignment(Qt::AlignCenter);
-        //l->setMinimumWidth(minWidth);
-        Grid->addWidget(l, i, 9);
-    }
-
-    /* Board Squares */
-    for (int y = 0; y < 8; y++) {
-       for (int x = 0; x < 8; x++) {
-           i = y * 8 + x;
-           Grid->addWidget(squares[i], 8 - y, x + 1);
-       }
-    }
-
-    Grid->setMargin(0);
-    //Grid->SetMinimumSize;
-
-	//connectwithDB();
     initialPosition = pos;
     currentPosition = &initialPosition;
     position = pos;
-    //positions.push_back(position);
+    positions.push_back(currentPosition);
 	parent = 1;
     castleWK = true;
     castleWQ = true;
@@ -181,9 +54,9 @@ void Board::print() {
     currentPosition->print();
 }
 
-void Board::show() {
+/*void Board::show() {
     writePositionTosquares();
-}
+}*/
 
 vector<string> Board::getMoveHistory() {
     return movehistory;
@@ -241,7 +114,7 @@ string Board::getFenstring() {
     return fenstr;
 }
 
-void Board::initSquares(){
+/*void Board::initSquares(){
     square_d = QPixmap(PATH + "textures/wood_d.png");
     square_l = QPixmap(PATH + "textures/wood_l.png");
     pawn_w_l = QPixmap(PATH + "textures/pawn_white_l.png");
@@ -393,7 +266,7 @@ void Board::writePositionTosquares() {
      //cout << endl;
     //cout << "wrote Position to Squares" << endl;
 
-}
+}*/
 
 char Board::getActiveColor() {
     return currentPosition->getActiveColor();
@@ -652,6 +525,7 @@ void Board::nextPos(int index) {
     if(currentPosition->hasChildren()) {
         currentPosition = children[index];
         activeColor = currentPosition->getActiveColor();
+        moveNr++;
     }
         cout << children.size() << " Children: ";
         for(int i = 0; i < children.size(); i++) {
@@ -660,22 +534,19 @@ void Board::nextPos(int index) {
         cout << endl;
 }
 void Board::prevPos() {
-    cout << "Parent" << DB.getPositionIDFromDB(*currentPosition->getParent()) << endl;
+    //cout << "Parent" << DB.getPositionIDFromDB(*currentPosition->getParent()) << endl;
     currentPosition = currentPosition->getParent();
-    //position = *currentPosition->getParent()->getParent()->getParent();
+
     activeColor = currentPosition->getActiveColor();
 
-    vector<Fen*> children = currentPosition->getChildren();
+    /*vector<Fen*> children = currentPosition->getChildren();
         cout << children.size() << " Children: ";
         for(int i = 0; i < children.size(); i++) {
             cout << DB.getPositionIDFromDB(*children[i]) << " ";
         }
-    cout << endl;
-    /*vector<Fen> children = currentPosition->getChildren();
-    cout << children.size() << " Children: ";
-    for(int i = 0; i < children.size(); i++) {
-        cout << nextCombochildren[i]) << " ";
-    }*/
+    cout << endl;*/
+
+    if(moveNr > 0) moveNr--;
 }
 
 void Board::setPosition(int index) {
@@ -733,7 +604,7 @@ void Board::loadGame(int GameID) {
         movehistory = halfmoves;
         movehistory.erase(movehistory.begin());
     }
-    show();
+    //show();
 }
 
 vector<string> Board::getSplittedPGN(string pgn_raw) {
@@ -810,8 +681,8 @@ void Board::move(string movecmd) {
     if(activeColor == 'w') currentPosition->setActiveColor('b'); else
         currentPosition->setActiveColor('w');
     //if(activeColor == 1) activeColor = 0; else activeColor = 1; // depecated (active color is now handled by position)
-    show();
-
+    //show();
+    moveNr++; NrofMoves++;
 }
 
 bool Board::updateGame(int posID) {
@@ -980,6 +851,7 @@ int Board::getPositionIDFromDB() {
 
 bool Board::writePositionToDB() {
 	//MYSQL mysql;
+    //parent = DB.getPositionIDFromDB(*currentPosition->getParent());
 	int pos = getPositionIDFromDB();
 
 	mysql_init(&mysql);
@@ -1155,8 +1027,11 @@ void Board::setGameDate(string date) {
 }
 
 void Board::writePositionsToDB() {
-    for(int i = 0; i < positions.size(); i++) {
-        //position = positions[i];
+
+    /* Write positions to DB (start with initial position) */
+    currentPosition = &initialPosition;
+    while (currentPosition->hasChildren()) {
+        currentPosition = currentPosition->getLastChild();
         writePositionToDB();
         updateGame(getPositionIDFromDB());
     }
@@ -1165,9 +1040,51 @@ void Board::writePositionsToDB() {
 void Board::saveGame() {
     cout << "Saving Game ";
     writePlayersToDB();
+
+    /* Get current date */
     time_t result = std::time(nullptr);
     date = asctime(localtime(&result));
+
     writeGameToDB();
     cout << GameID << endl;
     writePositionsToDB();
+}
+
+void Board::loadFile(string filename) {
+    initialPosition = Fen();
+    currentPosition = &initialPosition;
+    NrofMoves = 0;
+    positions.clear();
+    positions.push_back(currentPosition);
+    ifstream chessfile;
+    chessfile.open(filename, ios_base::in);
+    string buffer;
+    int c = 0;
+    getline (chessfile, buffer);
+    while(getline (chessfile, buffer)) {
+        size_t sp = 0, b = 0;
+        std::vector<string> pos;
+        while(sp != string::npos) {
+            sp = buffer.find(" ", b);
+            pos.push_back(buffer.substr(b, sp - b));
+            //QMessageBox::information(0, "Reading File", QString::fromStdString(buffer.substr(b, sp - b)), QMessageBox::Ok);
+            b = sp + 1;
+        }
+        Fen p = Fen(pos);
+        currentPosition->addChild(p);
+        NrofMoves++;
+        currentPosition = currentPosition->getLastChild();
+        positions.push_back(currentPosition);
+        c++;
+        buffer.clear();
+    }
+    currentPosition = &initialPosition;
+}
+
+bool Board::hasChildren() {
+    return currentPosition->hasChildren();
+}
+
+vector<Fen*> Board::getChildren() {
+    return currentPosition->getChildren();
 }

@@ -6,8 +6,10 @@ class QSquare : public QLabel {
     Q_OBJECT
 public:
     QSquare();
+    static QString PATH;
     void emitSignal();
     void setPixmap(QPixmap p);
+    void highlight(bool);
 private:
     static int ID;
     int id;

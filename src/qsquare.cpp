@@ -7,6 +7,9 @@
 #include "boost/lexical_cast.hpp"
 using namespace boost;
 using namespace std;
+
+QString QSquare::PATH = "/home/alex/build-chessboard-Desktop_Qt_5_4_2_GCC_64bit-Debug/";
+
 int QSquare::ID = 0;
 QSquare::QSquare()
 {
@@ -15,6 +18,11 @@ QSquare::QSquare()
     setAcceptDrops(true);
     piece = new QLabel(this);
     if(id % 2 == 1 - (id / 8 % 2)) this->QLabel::setPixmap(square_l); else this->QLabel::setPixmap(square_d);
+}
+
+void QSquare::highlight(bool activate) {
+    if(activate) this->QLabel::setStyleSheet("border: 2px solid #ffff00"); else
+        this->QLabel::setStyleSheet("border: 0px solid #ffff00");
 }
 
 void QSquare::setPixmap(QPixmap p) {

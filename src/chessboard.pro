@@ -16,7 +16,8 @@ SOURCES += \
     mainwindow.cpp \
     enginecontroller.cpp \
     uciengine.cpp \
-    qdialvalue.cpp
+    qdialvalue.cpp \
+    qboard.cpp
 QT += core gui widgets
 QT += svg
 QT += webkitwidgets
@@ -38,7 +39,8 @@ HEADERS += \
     mainwindow.h \
     enginecontroller.h \
     uciengine.h \
-    qdialvalue.h
+    qdialvalue.h \
+    qboard.h
 LIBS += -L/usr/lib/mysql -lmysqlclient
 LIBS += -L/usr/lib/mysql -lboost_regex
 LIBS += -L/usr/lib/mysql -lboost_thread

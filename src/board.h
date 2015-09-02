@@ -29,7 +29,6 @@ class Board {
     bool castleBK;
     bool castleBQ;
     string enPassant = "-";
-    int moveNr = 1;
     //int GameID;
 	string event;
 	string site;
@@ -66,58 +65,31 @@ class Board {
 	int getGameIDFromDB(string moves);
 	int getPlayerIDFromDB(string player);
 
-    void writePositionTosquares();
-
     int getRecentGameIDFromDB();
+    void writePositionsToDB();
 
-    void initSquares();
-    QPixmap pieces[12];
-    QSvgWidget* piecesSVG[12];
-    static QString PATH;
-    QSvgWidget* pawn_w;
-    QSvgWidget* pawn_b;
-    QPixmap square_d;
-    QPixmap square_l;
-    QPixmap pawn_w_l;
-    QPixmap pawn_w_d;
-    QPixmap pawn_b_l;
-    QPixmap pawn_b_d;
-    QPixmap rook_w_l;
-    QPixmap rook_w_d;
-    QPixmap knight_w_l;
-    QPixmap knight_w_d;
-    QPixmap rook_b_l;
-    QPixmap rook_b_d;
-    QPixmap knight_b_l;
-    QPixmap knight_b_d;
-    QPixmap queen_w_l;
-    QPixmap queen_w_d;
-    QPixmap queen_b_l;
-    QPixmap queen_b_d;
-    QPixmap king_w_l;
-    QPixmap king_w_d;
-    QPixmap king_b_l;
-    QPixmap king_b_d;
-    QPixmap bishop_w_l;
-    QPixmap bishop_w_d;
-    QPixmap bishop_b_l;
-    QPixmap bishop_b_d;
+    //static QString PATH;
 
-    vector<Fen*> positions;
     Fen initialPosition;
     vector<string> movehistory;
     vector<string> getSplittedPGN(string pgn_raw);
-    void writePositionsToDB();
-public:
+protected:
+    int NrofMoves = 0;
+    int moveNr = 0;
+    vector<Fen*> positions;
     Fen* currentPosition = NULL;
+public:
+    void loadFile(string filename);
     int GameID = 0;
     QGridLayout *Grid;
     QVector<QSquare*> squares;
-    //char getActiveColor();
+    char getActiveColor();
     void setActiveColor(char c);
     /* temporary public */
     bool getPositionFromDBByID(int id);
     int getPositionIDFromDB();
+    bool hasChildren(); // check if the current Position has children
+    vector<Fen*> getChildren(); // get the children of the current Position
     //int getPositionIDFromDB(Fen pos);
     void saveGame();
     Fen position;
@@ -129,11 +101,10 @@ public:
     void prevPos();
 
     void setGameDate(string date);
-    char getActiveColor();
     string getPlayerW();
     string getPlayerB();
 	void print();
-    void show();
+    //void show();
     string getFenstring();
 	void move(string movecmd);
 	bool addMetadata(string metadata);

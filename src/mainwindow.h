@@ -14,6 +14,7 @@
 #include <QTimer>
 #include <QVector>
 #include <QString>
+#include <QSlider>
 #include <QThread>
 #include <QTabWidget>
 #include <QMainWindow>
@@ -99,7 +100,8 @@ private:
     QMenu *viewMenu;
 
     /* Status Bar */
-    QLabel* activeColorStatus;
+    QLabel* statusActiveColor;
+    QLabel* statusMoveNr;
 
     QWidget* centralWidget;
     const int NrOfButtons = 7;
@@ -143,6 +145,8 @@ private:
     QTextEdit* output2;
     QTextEdit* engineOutput;
     QWebView* engineView;
+
+    QSlider* slider;
 
     DBdialog* dialog;
 

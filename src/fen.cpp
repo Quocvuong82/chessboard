@@ -45,7 +45,7 @@ Fen::Fen(std::vector<string> fenstrings) {
     } else {
         for(int i = 8; i < 13; i++) {
             fenstring.push_back(fenstrings[i]);
-            cout << fenstring[i] << endl;
+            //cout << fenstring[i] << endl;
         }
         //cout << fenstrings[8] << " " << fenstring[8] << endl;
     }
@@ -56,7 +56,7 @@ void Fen::addChild(Fen child) {
     //child.setParent(this);
     std::vector<string> fenstrings;
     for(int i = 0; i < 13; i++) {
-        cout << i << endl;
+        //cout << i << endl;
         fenstrings.push_back(child.getFen(i));
     }
     children.push_back(new Fen(fenstrings));
@@ -175,6 +175,7 @@ int Fen::getMoveNr() {
 }
 
 string Fen::makeFen (string row) {
+    //cout << row << endl;
 	string fen;
     fen.clear();
 	for(int i = 0; i < 8; i++) {

@@ -64,10 +64,11 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     /* Initialize Games and Boards */
     for(int i = 0; i < NrOfBoards; i++) {
         game.push_back(new Game());
-        for(int j = 0; j < game[i]->board->squares.size(); j++) {
+        connect(game[i]->board, SIGNAL(madeMove()), engineController, SLOT(go()));
+        /*for(int j = 0; j < game[i]->board->squares.size(); j++) {
             QObject::connect(game[i]->board->squares[j], SIGNAL(clicked(int)), this, SLOT(SquareClicked(int)));
             QObject::connect(game[i]->board->squares[j], SIGNAL(dropped(int, int)), this, SLOT(SquareDropped(int, int)));
-        }
+        }*/
     }
 
     posID = 1;
@@ -97,21 +98,26 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
 
 
     /* Signal - Slot Connections */  
-    QObject::connect(next, SIGNAL(clicked()), this, SLOT(nextPos()));
-    QObject::connect(back, SIGNAL(clicked()), this, SLOT(prevPos()));
-    QObject::connect(input, SIGNAL(returnPressed()), this, SLOT(readInput()));
-    QObject::connect(EngineButton, SIGNAL(clicked()), this, SLOT(think()));
-    QObject::connect(button[0], SIGNAL(clicked()), this, SLOT(readICServer()));
-    QObject::connect(button[1], SIGNAL(clicked()), this, SLOT(ICSgameList()));
-    QObject::connect(button[2], SIGNAL(clicked()), this, SLOT(showPositionTree()));
-    QObject::connect(button[3], SIGNAL(clicked()), this, SLOT(scanICS()));
-    QObject::connect(button[4], SIGNAL(clicked()), this, SLOT(prevPos()));
-    QObject::connect(button[5], SIGNAL(clicked()), this, SLOT(nextPos()));
-    QObject::connect(button[6], SIGNAL(clicked()), &engine, SLOT(showOutput()));
-    QObject::connect(&engine, SIGNAL(newBestmove()), this, SLOT(showBestmoveMessage()));
+    connect(input, SIGNAL(returnPressed()), this, SLOT(readInput()));
 
-    QObject::connect(button[4], SIGNAL(clicked()), this, SLOT(updateStatusBar()));
-    QObject::connect(button[5], SIGNAL(clicked()), this, SLOT(updateStatusBar()));
+    /* Buttons */
+    connect(next, SIGNAL(clicked()), this, SLOT(nextPos()));
+    connect(back, SIGNAL(clicked()), this, SLOT(prevPos()));
+    connect(EngineButton, SIGNAL(clicked()), this, SLOT(think()));
+    connect(button[0], SIGNAL(clicked()), this, SLOT(readICServer()));
+    connect(button[1], SIGNAL(clicked()), this, SLOT(ICSgameList()));
+    connect(button[2], SIGNAL(clicked()), this, SLOT(showPositionTree()));
+    connect(button[3], SIGNAL(clicked()), this, SLOT(scanICS()));
+    connect(button[4], SIGNAL(clicked()), this, SLOT(prevPos()));
+    connect(button[5], SIGNAL(clicked()), this, SLOT(nextPos()));
+    connect(button[6], SIGNAL(clicked()), &engine, SLOT(showOutput()));
+
+    connect(&engine, SIGNAL(newBestmove()), this, SLOT(showBestmoveMessage()));
+
+    /* Status Updates */
+    connect(button[4], SIGNAL(clicked()), this, SLOT(updateStatusBar()));
+    connect(button[5], SIGNAL(clicked()), this, SLOT(updateStatusBar()));
+    connect(engineController, SIGNAL(madeMove()), this, SLOT(updateStatusBar()));
 
 /* -------------------------------------------------------------------------------------- */
 /*   D e f i n e  L a y o u t                                                             */
@@ -185,6 +191,9 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     engineView = new QWebView();
     QObject::connect(engineView, SIGNAL(linkClicked(QUrl)), this, SLOT(linkClicked(QUrl)));
 
+    /* Game-Progress-Slider */
+    slider = game[activeBoard]->board->Slider;
+
     /* Game Info */
     gameinfo = new QWidget;
     QVBoxLayout* gameinfoLayout = new QVBoxLayout;
@@ -197,6 +206,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     //GameInfoLayout->addWidget(playerFrame[0]);
     //GameInfoLayout->addWidget(playerFrame[1]);
     GameInfoLayout->addWidget(ButtonFrame);
+    GameInfoLayout->addWidget(slider);
     GameInfoLayout->addWidget(input);
     GameInfoLayout->addWidget(output);
     QGroupBox* engineControllerGroup = new QGroupBox();
@@ -223,9 +233,12 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     this->setCentralWidget(centralWidget);
     this->setFocusPolicy(Qt::StrongFocus);
     statusBar();
-    activeColorStatus = new QLabel();
-    activeColorStatus->setText(QString::fromStdString(boost::lexical_cast<string>(game[activeBoard]->getActiveColor())));
-    statusBar()->addPermanentWidget(activeColorStatus);
+    statusActiveColor = new QLabel();
+    statusActiveColor->setText(QString::fromStdString(boost::lexical_cast<string>(game[activeBoard]->getActiveColor())));
+    statusMoveNr = new QLabel();
+    statusMoveNr->setText(QString::fromStdString(boost::lexical_cast<string>(game[activeBoard]->getCurrentMoveNr())));
+    statusBar()->addPermanentWidget(statusMoveNr);
+    statusBar()->addPermanentWidget(statusActiveColor);
 
 /* -------------------------------------------------------------------------------------- */
 
@@ -251,7 +264,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
 }  
 void MainWindow::setBoardActive(int index) {
     cout << "board " + boost::lexical_cast<string>(index) + " set active" << endl;
-    game[activeBoard]->movehistory->setParent(0);
+    //game[activeBoard]->movehistory->setParent(0);
     activeBoard = index;
     //cout << players[activeBoard * 2] << endl;
     //cout << players[activeBoard * 2 + 1] << endl;
@@ -265,7 +278,6 @@ void MainWindow::setBoardActive(int index) {
     /*time[0]->setText("<font size=20 color=black><b>" + QString::fromStdString(makeTime(t[activeBoard * 2 + 1])) + "</b></font>");
     time[1]->setText("<font size=20 color=white><b>" + QString::fromStdString(makeTime(t[activeBoard * 2])) + "</b></font>");*/
     game[activeBoard]->board->show();
-    layout->addWidget(game[activeBoard]->movehistory);
     engineController->setGame(game[index]);
     updateStatusBar();
 }
@@ -318,7 +330,7 @@ void MainWindow::nextPos() {
     if(chessserver && examining && !localboard) {
        fics.writeSocket("forward\n");
     } else {
-        game[activeBoard]->nextPos(nextPosIndex);  
+        game[activeBoard]->nextPos(nextPosIndex);
         getNextPositions();
         //game[activeBoard]->board->show();
         /*if(posIDs[activeBoard].size() > 0 && (posIndex[activeBoard] + 1) < posIDs[activeBoard].size()) {
@@ -331,9 +343,9 @@ void MainWindow::nextPos() {
 
 void MainWindow::getNextPositions() {
     nextPosIndex = 0;
-    if(game[activeBoard]->board->currentPosition->hasChildren()) {
+    if(game[activeBoard]->board->hasChildren()) {
         nextCombo->clear();
-        vector<Fen*> nextPositions = game[activeBoard]->board->currentPosition->getChildren();
+        vector<Fen*> nextPositions = game[activeBoard]->board->getChildren();
         if(nextPositions.size() > 1) {
             for(int i = 0; i < nextPositions.size(); i++) {
                 nextCombo->addItem(QString::fromStdString(boost::lexical_cast<string>(myChessDB.getPositionIDFromDB(*nextPositions[i]))));
@@ -409,6 +421,7 @@ bool MainWindow::ICSconnect() {
     chessserver = true;
     localboard = false;
     fics.connect();
+    output->setParent(0);
     output->clear();
     output->show();
     icgamelist = new ICGameList();
@@ -669,10 +682,10 @@ void MainWindow::newGame() {
     game[Game::getNrOfGames() - 1]->board->getPositionFromDBByID(1);
 
     /* Connect Square-Signals to MainWindow-Slots */
-    for(int j = 0; j < game[Game::getNrOfGames() - 1]->board->squares.size(); j++) {
+    /*for(int j = 0; j < game[Game::getNrOfGames() - 1]->board->squares.size(); j++) {
         QObject::connect(game[Game::getNrOfGames() - 1]->board->squares[j], SIGNAL(clicked(int)), this, SLOT(SquareClicked(int)));
         QObject::connect(game[Game::getNrOfGames() - 1]->board->squares[j], SIGNAL(dropped(int, int)), this, SLOT(SquareDropped(int, int)));
-    }
+    }*/
     game[Game::getNrOfGames() - 1]->board->show(); // Write position to squares (QLabels)
     game[Game::getNrOfGames() - 1]->board->setPlayer(0, "Player " + lexical_cast<string>(players.size()), 0);
     game[Game::getNrOfGames() - 1]->board->setPlayer(1, "Player " + lexical_cast<string>(players.size() + 1), 0);
@@ -846,9 +859,10 @@ void MainWindow::linkClicked(QUrl url) {
 
 void MainWindow::updateStatusBar() {
     if(game[activeBoard]->getActiveColor() == 'w')
-        activeColorStatus->setText("White to move");
+        statusActiveColor->setText("White to move");
     else
-        activeColorStatus->setText("Black to move");
+        statusActiveColor->setText("Black to move");
+    statusMoveNr->setText(QString::fromStdString("Move " + boost::lexical_cast<string>(game[activeBoard]->getCurrentMoveNr())));
 }
 
 void MainWindow::showBestmoveMessage() {

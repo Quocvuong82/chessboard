@@ -1,6 +1,7 @@
 #ifndef GAME_H
 #define GAME_H
 #include "board.h"
+#include "qboard.h"
 #include <QTreeWidget>
 
 class Game : public QObject
@@ -8,11 +9,12 @@ class Game : public QObject
 Q_OBJECT
 public:
     Game();
-    Board* board;
+    QBoard* board;
     static size_t getNrOfGames();
     int getGameID();
     void setGameID(int id);
     char getActiveColor();
+    int getCurrentMoveNr();
     void setActiveColor(char c);
     void showMoveHistory();
     void move(string movecmd);
