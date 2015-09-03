@@ -416,6 +416,7 @@ void Board::loadGame(int GameID) {
     vector<int> posIDs = DB.getPosIDsByGameID(GameID);
     if(posIDs.size() < 1) cout << "no Position IDs" << endl;
     //cout << "posIDs set" << endl;
+    NrofMoves = posIDs.size();
     positions.clear();
     CurrentPosIndex = 0;
     initialPosition = DB.getPositionFromDBByID(posIDs[0]);
