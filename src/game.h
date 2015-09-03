@@ -16,7 +16,6 @@ public:
     char getActiveColor();
     int getCurrentMoveNr();
     void setActiveColor(char c);
-    void showMoveHistory();
     void move(string movecmd);
     void nextPos();
     void nextPos(int index);
@@ -29,6 +28,7 @@ private:
     char activeColor;
     int currmoveNr = 0;
 public slots:
+    void showMoveHistory();
     void HistoryItemClicked(QTreeWidgetItem*, int);
 };
 #endif // GAME_H

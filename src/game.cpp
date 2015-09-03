@@ -19,7 +19,8 @@ Game::Game()
     movehistory->headerItem()->setText(0, "#");
     movehistory->headerItem()->setText(1, "white");
     movehistory->headerItem()->setText(2, "black");
-    QObject::connect(movehistory, SIGNAL(itemClicked(QTreeWidgetItem*, int)), this, SLOT(HistoryItemClicked(QTreeWidgetItem*, int)));
+    connect(movehistory, SIGNAL(itemClicked(QTreeWidgetItem*, int)), this, SLOT(HistoryItemClicked(QTreeWidgetItem*, int)));
+    connect(board, SIGNAL(madeMove()), this, SLOT(showMoveHistory()));
 }
 
 size_t Game::getNrOfGames() {
@@ -45,6 +46,7 @@ void Game::setActiveColor(char c) {
     board->setActiveColor(c);
 }
 
+/* Update Movehistory */
 void Game::showMoveHistory() {
     vector<string> mvhist = board->getMoveHistory();
     if(mvhist.size() == 0) return;
@@ -59,7 +61,7 @@ void Game::showMoveHistory() {
     for(int i = 0; i < movehistory->columnCount(); i++) {
         movehistory->resizeColumnToContents(i);
     }
-    movehistory->show();
+    //movehistory->show();
     //cout << floor(currmoveNr/2) << endl;
     movehistory->topLevelItem(floor(currmoveNr/2))->setSelected(true);
 }

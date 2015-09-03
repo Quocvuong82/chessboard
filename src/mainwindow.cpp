@@ -191,9 +191,6 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     engineView = new QWebView();
     QObject::connect(engineView, SIGNAL(linkClicked(QUrl)), this, SLOT(linkClicked(QUrl)));
 
-    /* Game-Progress-Slider */
-    slider = game[activeBoard]->board->Slider;
-
     /* Game Info */
     gameinfo = new QWidget;
     QVBoxLayout* gameinfoLayout = new QVBoxLayout;
@@ -206,7 +203,10 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     //GameInfoLayout->addWidget(playerFrame[0]);
     //GameInfoLayout->addWidget(playerFrame[1]);
     GameInfoLayout->addWidget(ButtonFrame);
-    GameInfoLayout->addWidget(slider);
+    for(int i = 0; i < NrOfBoards; i++) {
+        GameInfoLayout->addWidget(game[i]->board->Slider); /* Game-Progress-Slider */
+        game[i]->board->Slider->hide();
+    }
     GameInfoLayout->addWidget(input);
     GameInfoLayout->addWidget(output);
     QGroupBox* engineControllerGroup = new QGroupBox();
@@ -224,7 +224,10 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     layout = new QHBoxLayout;
     layout->addWidget(BoardTab);
     layout->addWidget(GameInfoBox);
-    layout->addWidget(game[activeBoard]->movehistory);
+    for(int i = 0; i < game.size(); i++) {
+        layout->addWidget(game[i]->movehistory);
+        game[i]->movehistory->hide();
+    }
 
     layout->setMargin(0);
 
@@ -239,6 +242,9 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     statusMoveNr->setText(QString::fromStdString(boost::lexical_cast<string>(game[activeBoard]->getCurrentMoveNr())));
     statusBar()->addPermanentWidget(statusMoveNr);
     statusBar()->addPermanentWidget(statusActiveColor);
+
+    game[activeBoard]->board->Slider->show();
+    game[activeBoard]->movehistory->show();
 
 /* -------------------------------------------------------------------------------------- */
 
@@ -279,6 +285,14 @@ void MainWindow::setBoardActive(int index) {
     time[1]->setText("<font size=20 color=white><b>" + QString::fromStdString(makeTime(t[activeBoard * 2])) + "</b></font>");*/
     game[activeBoard]->board->show();
     engineController->setGame(game[index]);
+
+    /* Hide Movehistory and Slider of inactive games */
+    for(int i = 0; i < NrOfBoards; i++) {
+        game[i]->board->Slider->hide(); /* Game-Progress-Slider */
+        game[i]->movehistory->hide();
+    }
+    game[activeBoard]->board->Slider->show();
+    game[activeBoard]->movehistory->show();
     updateStatusBar();
 }
 
@@ -423,6 +437,7 @@ bool MainWindow::ICSconnect() {
     fics.connect();
     output->setParent(0);
     output->clear();
+    output->setFixedSize(400, 300);
     output->show();
     icgamelist = new ICGameList();
     QObject::connect(icgamelist->list, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(onICGameListItemclicked(QListWidgetItem*)));
@@ -761,6 +776,7 @@ void MainWindow::quit() {
 
 void MainWindow::ICSgameList() {
     input->setText(QString::fromStdString("games"));
+    sendToServer("games");
     cout << "sent to server games " << endl;
     //icgamelist->show();
 }

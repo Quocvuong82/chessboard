@@ -220,7 +220,7 @@ void QBoard::loadFile(string filename) {
 }
 
 void QBoard::setPosition(int id) {
-    cout << moveNr << " " << id << endl;
+    //cout << moveNr << " " << id << endl;
     if(id > NrofMoves) return;
     moveNr = id;
     currentPosition = positions[id];
@@ -232,7 +232,29 @@ void QBoard::show() {
 }
 
 bool QBoard::setPosition(Fen pos) {
-    return Board::setPosition(pos);
+
+    if(Board::setPosition(pos)) {
+        string movecmd = currentPosition->getMove();
+        cout << "Move: " << movecmd << endl;
+        if(movecmd.length() > 0) {
+            /* Highlight Squares */
+            for(int i = 0; i < squares.size(); i++) {
+                squares[i]->highlight(false);
+            }
+            int x = static_cast<int>(movecmd[2]) - 97;
+            int y = 8 - (static_cast<int>(movecmd[3]) - 48);
+            int x_origin = static_cast<int>(movecmd[0]) - 97;
+            int y_origin = 8 - (static_cast<int>(movecmd[1]) - 48);
+            int i = (7-y) * 8 + x;
+            int j = (7-y_origin) * 8 + x_origin;
+            squares[i]->highlight(true);
+            squares[j]->highlight(true);
+        }
+
+        Slider->setMaximum(NrofMoves);
+        Slider->setValue(NrofMoves);
+        emit madeMove();
+    }
 }
 
 void QBoard::move(string movecmd) {

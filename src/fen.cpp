@@ -104,6 +104,9 @@ Fen* Fen::getParent() {
 #include "move.h"
 string Fen::getMove() {
 
+    /* There is no move for the initial position */
+    if(parent == NULL) return "";
+
     /* Compare child position with parent position to get the diff between them */
     string source, target;
     for(int i = 0; i < 8; i++) {
@@ -281,4 +284,13 @@ void Fen::print() {
 
 void Fen::setActiveColor(char c) {
     fenstring[8] = c;
+}
+
+/* Get the very last position in the game */
+Fen* Fen::getLastPosition() {
+    Fen* lastPos = this;
+    while(lastPos->hasChildren()) {
+        lastPos = lastPos->getLastChild();
+    }
+    return lastPos;
 }

@@ -63,33 +63,36 @@ vector<string> Board::getMoveHistory() {
 }
 
 bool Board::setPosition(Fen pos) {
+
+    cout << "Board::setPosition" << endl;
+
+    /* Add the new position at the very last position */
+    Fen* lastPos = currentPosition->getLastPosition();
+    //lastPos = currentPosition;
+
+        /* Check if the new position is different from the current position */
         bool newPos = false;
         for(int i = 0; i < 8; i++) {
-           if(currentPosition->getFen(i).compare(pos.getFen(i))) newPos = true;
+           if(lastPos->getFen(i).compare(pos.getFen(i))) newPos = true;
         }
 
     if(newPos) {
-        cout << "adding child" << endl;
-        currentPosition->addChild( pos );
-        cout << "getting last child" << endl;
-        currentPosition = currentPosition->getLastChild();
-        cout << "add position to positions" << endl;
-        positions.push_back(currentPosition);
-        cout << "add position to movehistory" << endl;
-        movehistory.push_back(currentPosition->getMove());
-    }
-    /*initialPosition = pos;
-    currentPosition = &initialPosition;*/
-    /*position = pos;
-    positions.push_back(position);*/
+        lastPos->addChild( pos );
+        lastPos = lastPos->getLastChild();
+        positions.push_back(lastPos);
+        movehistory.push_back(lastPos->getMove());
+        moveNr++; NrofMoves++;
 
-    setActiveColor(pos.getActiveColor());
-    string values = pos.getFen(9);
-    if(values[0] == 'K') castleWK = true; else castleWK = false;
-    if(values[1] == 'Q') castleWQ = true; else castleWQ = false;
-    if(values[2] == 'k') castleBK = true; else castleBK = false;
-    if(values[3] == 'q') castleBQ = true; else castleBQ = false;
-    moveNr = boost::lexical_cast<int>(pos.getFen(12));
+        setActiveColor(pos.getActiveColor());
+        string values = pos.getFen(9);
+        if(values[0] == 'K') castleWK = true; else castleWK = false;
+        if(values[1] == 'Q') castleWQ = true; else castleWQ = false;
+        if(values[2] == 'k') castleBK = true; else castleBK = false;
+        if(values[3] == 'q') castleBQ = true; else castleBQ = false;
+        //NrofMoves = boost::lexical_cast<int>(pos.getFen(12));
+        currentPosition = lastPos; // Jump to the new position
+    }
+    return newPos;
 }
 
 string Board::getFenstring() {
@@ -113,160 +116,6 @@ string Board::getFenstring() {
     fenstr += boost::lexical_cast<string>(moveNr);
     return fenstr;
 }
-
-/*void Board::initSquares(){
-    square_d = QPixmap(PATH + "textures/wood_d.png");
-    square_l = QPixmap(PATH + "textures/wood_l.png");
-    pawn_w_l = QPixmap(PATH + "textures/pawn_white_l.png");
-    pawn_w_d = QPixmap(PATH + "textures/pawn_white_d.png");
-    pawn_b_l = QPixmap(PATH + "textures/pawn_black_l.png");
-    pawn_b_d = QPixmap(PATH + "textures/pawn_black_d.png");
-    rook_w_l = QPixmap(PATH + "textures/rook_white_l.png");
-    rook_w_d = QPixmap(PATH + "textures/rook_white_d.png");
-    knight_w_l = QPixmap(PATH + "textures/knight_white_l.png");
-    knight_w_d = QPixmap(PATH + "textures/knight_white_d.png");
-    rook_b_l = QPixmap(PATH + "textures/rook_black_l.png");
-    rook_b_d = QPixmap(PATH + "textures/rook_black_d.png");
-    knight_b_l = QPixmap(PATH + "textures/knight_black_l.png");
-    knight_b_d = QPixmap(PATH + "textures/knight_black_d.png");
-    queen_w_l = QPixmap(PATH + "textures/queen_white_l.png");
-    queen_w_d = QPixmap(PATH + "textures/queen_white_d.png");
-    queen_b_l = QPixmap(PATH + "textures/queen_black_l.png");
-    queen_b_d = QPixmap(PATH + "textures/queen_black_d.png");
-    king_w_l = QPixmap(PATH + "textures/king_white_l.png");
-    king_w_d = QPixmap(PATH + "textures/king_white_d.png");
-    king_b_l = QPixmap(PATH + "textures/king_black_l.png");
-    king_b_d = QPixmap(PATH + "textures/king_black_d.png");
-    bishop_w_l = QPixmap(PATH + "textures/bishop_white_l.png");
-    bishop_w_d = QPixmap(PATH + "textures/bishop_white_d.png");
-    bishop_b_l = QPixmap(PATH + "textures/bishop_black_l.png");
-    bishop_b_d = QPixmap(PATH + "textures/bishop_black_d.png");
-
-    int scale = 64;
-
-    for(int i = 0; i < 12; i++) {
-        pieces[i] = QPixmap::fromImage(QImage(scale,scale, QImage::Format_ARGB32));
-        pieces[i].fill(Qt::transparent);
-        pieces[i].scaled(scale,scale);
-    }
-
-    pawn_w_l.fromImage(QImage(scale,scale, QImage::Format_ARGB32));
-    pawn_w_d.fromImage(QImage(scale,scale, QImage::Format_ARGB32));
-    pawn_w_l.fill(Qt::transparent);
-    pawn_w_d.fill(Qt::transparent);
-    pawn_w_l.scaled(scale,scale);
-    pawn_w_d.scaled(scale,scale);
-
-    pawn_b_l.fromImage(QImage(scale,scale, QImage::Format_ARGB32));
-    pawn_b_d.fromImage(QImage(scale,scale, QImage::Format_ARGB32));
-    pawn_b_l.fill(Qt::transparent);
-    pawn_b_d.fill(Qt::transparent);
-    pawn_b_l.scaled(scale,scale);
-    pawn_b_d.scaled(scale,scale);
-
-    vector<QPainter*> painter;
-    pawn_w = new QSvgWidget;
-    pawn_w->load(QString (PATH + "textures/WhitePawn.svg"));
-    pawn_w->resize(scale,scale);
-
-    for(int i = 0; i < 12; i++) {
-        piecesSVG[i] = new QSvgWidget;
-    }
-    piecesSVG[0]->load(QString (PATH + "textures/WhitePawn.svg"));
-    piecesSVG[1]->load(QString (PATH + "textures/WhiteRook.svg"));
-    piecesSVG[2]->load(QString (PATH + "textures/WhiteKnight.svg"));
-    piecesSVG[3]->load(QString (PATH + "textures/WhiteBishop.svg"));
-    piecesSVG[4]->load(QString (PATH + "textures/WhiteQueen.svg"));
-    piecesSVG[5]->load(QString (PATH + "textures/WhiteKing.svg"));
-    piecesSVG[6]->load(QString (PATH + "textures/BlackPawn.svg"));
-    piecesSVG[7]->load(QString (PATH + "textures/BlackRook.svg"));
-    piecesSVG[8]->load(QString (PATH + "textures/BlackKnight.svg"));
-    piecesSVG[9]->load(QString (PATH + "textures/BlackBishop.svg"));
-    piecesSVG[10]->load(QString (PATH + "textures/BlackQueen.svg"));
-    piecesSVG[11]->load(QString (PATH + "textures/BlackKing.svg"));
-
-    for(int i = 0; i < 12; i++) {
-        piecesSVG[i]->resize(scale,scale);
-        painter.push_back(new QPainter(&pieces[i]));
-        piecesSVG[i]->render(painter[i], QPoint(), QRegion(), QWidget::DrawChildren);
-    }
-
-    int i;
-    for (int y = 0; y < 8; y++) {
-       for (int x = 0; x < 8; x++) {
-           i = y * 8 + x;
-           squares.append(new QSquare);
-           if((y + x) % 2 == 0) squares[i]->setPixmap(square_d); else
-               squares[i]->setPixmap(square_l);
-               squares[i]->setFixedSize(scale,scale);
-       }
-    }
-}
-
-void Board::writePositionTosquares() {
-    QString fenstr;
-    for (int i = 7; i >= 0; i--) {
-        fenstr.append(QString::fromStdString(currentPosition->getRow(i)));
-    }
-    //cout << "created QString fenstr" << endl;
-    //cout << fenstr.toStdString() << endl;
-    //for (int i = 0; i < 64; i++) {
-    //cout << fenstr.toStdString();
-    int i;
-     for (int y = 0; y < 8; y++) {
-        for (int x = 0; x < 8; x++) {
-            i = y * 8 + x;
-            switch(fenstr[i].unicode()) {
-            case static_cast<int>('P'):
-                squares[i]->setPixmap(pieces[0]);
-                break;
-            case static_cast<int>('R'):
-                squares[i]->setPixmap(pieces[1]);
-                break;
-            case static_cast<int>('N'):
-                squares[i]->setPixmap(pieces[2]);
-                break;
-            case static_cast<int>('B'):
-                squares[i]->setPixmap(pieces[3]);
-                break;
-            case static_cast<int>('Q'):
-                squares[i]->setPixmap(pieces[4]);
-                break;
-            case static_cast<int>('K'):
-                squares[i]->setPixmap(pieces[5]);
-                break;
-            case static_cast<int>('p'):;
-                squares[i]->setPixmap(pieces[6]);
-                break;
-            case static_cast<int>('r'):
-                squares[i]->setPixmap(pieces[7]);
-                break;
-            case static_cast<int>('n'):;
-                squares[i]->setPixmap(pieces[8]);
-                break;
-            case static_cast<int>('b'):
-                squares[i]->setPixmap(pieces[9]);
-                break;
-            case static_cast<int>('q'):
-                squares[i]->setPixmap(pieces[10]);
-                break;
-            case static_cast<int>('k'):
-                squares[i]->setPixmap(pieces[11]);
-                break;
-            default:;
-                if(fenstr[i] == '0' || fenstr[i] == '-') {
-                    QPixmap empty = QPixmap::fromImage(QImage(64,64, QImage::Format_ARGB32));
-                    empty.fill(Qt::transparent);
-                    squares[i]->setPixmap(empty);
-                }
-            }
-            //squares[i]->setText(QString (fenstr[i]));
-        }
-    }
-     //cout << endl;
-    //cout << "wrote Position to Squares" << endl;
-
-}*/
 
 char Board::getActiveColor() {
     return currentPosition->getActiveColor();

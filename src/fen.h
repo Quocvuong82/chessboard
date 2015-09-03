@@ -27,6 +27,7 @@ public:
     bool hasChildren();
     vector<Fen*> getChildren();
     Fen* getChild(int i);
+    Fen* getLastPosition();
 	string getPos(int i);
 	string getRow(int i);
     string getFen(int i);
