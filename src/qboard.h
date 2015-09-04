@@ -26,6 +26,7 @@ private:
     QVector<QSquare*> squares;
     void initSquares();
     void writePositionTosquares();
+    void highlightSquares();
 protected:
       //bool event(QEvent* e);
       //bool gestureEvent(QGestureEvent* e);

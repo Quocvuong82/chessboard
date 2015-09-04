@@ -14,7 +14,7 @@ vector<int> ChessDatabase::getEventIDs() {
     if (!mysql_real_connect(&mysql,host.c_str(),user.c_str(),password.c_str(),database.c_str(),0,NULL,0))
     {
         cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
-        exit(1);
+        return eventIDs;
     }
     MYSQL_RES *res;
     mysql_real_query(&mysql, query.c_str(), query.length());

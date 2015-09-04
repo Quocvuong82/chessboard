@@ -145,6 +145,9 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     }
     ButtonBoxLayout->addWidget(nextCombo);
 
+    QImage img("./person.png");
+    QImage img2("./person.png");
+
     /* Player Info */
     for(int i = 0; i < 2; i++) {
         playerFrame.push_back(new QFrame());
@@ -153,6 +156,17 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
         player[i]->setText("Player " + boost::lexical_cast<string>(1-i));
         time.push_back(new TimeLabel);
         score.push_back(new QLabel);
+
+        /* Player Photo */
+        QLabel* playerPhoto = new QLabel();
+        playerPhoto->setAlignment(Qt::AlignCenter);
+        if(i == 0)
+            playerPhoto->setPixmap(QPixmap::fromImage(img2.scaledToWidth(64)));
+        else
+            playerPhoto->setPixmap(QPixmap::fromImage(img.scaledToWidth(64)));
+        //playerPhoto->setStyleSheet("border: 2px solid #ffff00");
+        playerLayout[i]->addWidget(playerPhoto);
+
         playerLayout[i]->addWidget(player[i]);
         playerLayout[i]->addWidget(time[i]);
         playerLayout[i]->addWidget(score[i]);
@@ -203,11 +217,11 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     //GameInfoLayout->addWidget(playerFrame[0]);
     //GameInfoLayout->addWidget(playerFrame[1]);
     GameInfoLayout->addWidget(ButtonFrame);
-    for(int i = 0; i < NrOfBoards; i++) {
-        GameInfoLayout->addWidget(game[i]->board->Slider); /* Game-Progress-Slider */
+    /*for(int i = 0; i < NrOfBoards; i++) {
+        GameInfoLayout->addWidget(game[i]->board->Slider); // Game-Progress-Slider
         game[i]->board->Slider->hide();
-    }
-    GameInfoLayout->addWidget(input);
+    }*/
+    //GameInfoLayout->addWidget(input);
     GameInfoLayout->addWidget(output);
     QGroupBox* engineControllerGroup = new QGroupBox();
     QVBoxLayout* engineControllerLayout = new QVBoxLayout();
@@ -219,10 +233,17 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     GameInfoLayout->addWidget(engineControllerGroup);
     GameInfoBox = new QGroupBox("Game Info");
     GameInfoBox->setLayout(GameInfoLayout);
+    QVBoxLayout* boardSliderBox = new QVBoxLayout();
+    boardSliderBox->addWidget(BoardTab);
+    for(int i = 0; i < NrOfBoards; i++) {
+        boardSliderBox->addWidget(game[i]->board->Slider); // Game-Progress-Slider
+        game[i]->board->Slider->hide();
+    }
+
 
     /* Main Layout */
     layout = new QHBoxLayout;
-    layout->addWidget(BoardTab);
+    layout->addLayout(boardSliderBox);
     layout->addWidget(GameInfoBox);
     for(int i = 0; i < game.size(); i++) {
         layout->addWidget(game[i]->movehistory);
@@ -309,17 +330,13 @@ void MainWindow::checkInputDialog(int gameID) {
     cout << "checkInputDialog " << gameID << endl;
     if (!dialog->result() == QDialog::Rejected) {
         localboard = true;
-        //posIndex[activeBoard] = 0;
-        //posIDs[activeBoard] = myChessDB.getPosIDsByGameID(gameID);
         game[activeBoard]->board->loadGame(gameID);
         cout << "game loaded" << endl;
-        //posID = posIDs[0];
+
         vector<string> p = myChessDB.getPlayersByGameID(gameID);
-        for(int i = 0; i < 2; i++) {
+        for(int i = 0; i < p.size(); i++) {
             players[activeBoard * 2 + i] = p[i];
         }
-        cout << players[activeBoard * 2] << endl;
-        cout << players[activeBoard * 2 + 1] << endl;
         player[0]->setText(players[activeBoard * 2]);
         player[1]->setText(players[activeBoard * 2 + 1]);
 

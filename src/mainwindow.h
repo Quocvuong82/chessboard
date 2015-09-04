@@ -64,9 +64,7 @@ class MainWindow : public QMainWindow {
     Q_OBJECT
 public:
     MainWindow(QMainWindow *parent = 0, Qt::WindowFlags flags = 0);
-    //int writeToStockfish(string message);
 private:
-    //vector<Board*> board;
     vector<Game*> game;
     int activeBoard = 0;
     ChessDatabase myChessDB = ChessDatabase("localhost", "root", "floppy", "schach");

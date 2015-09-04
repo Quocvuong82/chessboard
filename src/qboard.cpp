@@ -201,17 +201,20 @@ void QBoard::nextPos() {
     Board::nextPos();
     writePositionTosquares();
     Slider->setValue(moveNr);
+    highlightSquares();
 }
 
 void QBoard::nextPos(int index) {
     Board::nextPos(index);
     Slider->setValue(moveNr);
+    highlightSquares();
 }
 
 void QBoard::prevPos() {
     Board::prevPos();
     writePositionTosquares();
     Slider->setValue(moveNr);
+    highlightSquares();
 }
 
 void QBoard::loadFile(string filename) {
@@ -225,6 +228,7 @@ void QBoard::setPosition(int id) {
     moveNr = id;
     currentPosition = positions[id];
     writePositionTosquares();
+    highlightSquares();
 }
 
 void QBoard::show() {
@@ -232,25 +236,8 @@ void QBoard::show() {
 }
 
 bool QBoard::setPosition(Fen pos) {
-
     if(Board::setPosition(pos)) {
-        string movecmd = currentPosition->getMove();
-        cout << "Move: " << movecmd << endl;
-        if(movecmd.length() > 0) {
-            /* Highlight Squares */
-            for(int i = 0; i < squares.size(); i++) {
-                squares[i]->highlight(false);
-            }
-            int x = static_cast<int>(movecmd[2]) - 97;
-            int y = 8 - (static_cast<int>(movecmd[3]) - 48);
-            int x_origin = static_cast<int>(movecmd[0]) - 97;
-            int y_origin = 8 - (static_cast<int>(movecmd[1]) - 48);
-            int i = (7-y) * 8 + x;
-            int j = (7-y_origin) * 8 + x_origin;
-            squares[i]->highlight(true);
-            squares[j]->highlight(true);
-        }
-
+        highlightSquares();
         Slider->setMaximum(NrofMoves);
         Slider->setValue(NrofMoves);
         emit madeMove();
@@ -259,22 +246,9 @@ bool QBoard::setPosition(Fen pos) {
 
 void QBoard::move(string movecmd) {
     Board::move(movecmd);
-
-    /* Highlight Squares */
-    for(int i = 0; i < squares.size(); i++) {
-        squares[i]->highlight(false);
-    }
-    int x = static_cast<int>(movecmd[2]) - 97;
-    int y = 8 - (static_cast<int>(movecmd[3]) - 48);
-    int x_origin = static_cast<int>(movecmd[0]) - 97;
-    int y_origin = 8 - (static_cast<int>(movecmd[1]) - 48);
-    int i = (7-y) * 8 + x;
-    int j = (7-y_origin) * 8 + x_origin;
-    squares[i]->highlight(true);
-    squares[j]->highlight(true);
-
+    highlightSquares();
     show();
-    cout << "Nr of Moves" << NrofMoves << endl;
+
     Slider->setMaximum(NrofMoves);
     Slider->setValue(NrofMoves);
 }
@@ -289,15 +263,12 @@ void QBoard::squareDropped(int target, int source) {
     x = target % 8;
     cmd.push_back(static_cast<char>(x + 97));
     cmd.push_back(static_cast<char>(y + 48));
-    //Board b; b.move(); b.sh
-    cout << "SquareDropped: " << cmd << endl;
-        /* Make a move */
-        move(cmd);
-        emit madeMove();
-        //updateStatusBar();
 
-        /* Aktivate oppent (chess engine) */
-        //engineController->go();
+    cout << "SquareDropped: " << cmd << endl;
+
+    /* Make a move */
+    move(cmd);
+    emit madeMove();
 }
 
 void QBoard::squareClicked(int id) {
@@ -316,4 +287,23 @@ void QBoard::squareClicked(int id) {
         input->setText(QString::fromStdString(cmd));
         clickcmd = true;
     }*/
+}
+
+/* Highlight Squares of the last move */
+void QBoard::highlightSquares() {
+    string movecmd = currentPosition->getMove();
+    cout << "Move: " << movecmd << endl;
+    if(movecmd.length() > 0) {
+        for(int i = 0; i < squares.size(); i++) {
+            squares[i]->highlight(false);
+        }
+        int x = static_cast<int>(movecmd[2]) - 97;
+        int y = 8 - (static_cast<int>(movecmd[3]) - 48);
+        int x_origin = static_cast<int>(movecmd[0]) - 97;
+        int y_origin = 8 - (static_cast<int>(movecmd[1]) - 48);
+        int i = (7-y) * 8 + x;
+        int j = (7-y_origin) * 8 + x_origin;
+        squares[i]->highlight(true);
+        squares[j]->highlight(true);
+    }
 }

@@ -415,8 +415,10 @@ void Board::loadGame(int GameID) {
     cout << "load game " << GameID << endl;
     vector<int> posIDs = DB.getPosIDsByGameID(GameID);
     if(posIDs.size() < 1) cout << "no Position IDs" << endl;
-    //cout << "posIDs set" << endl;
+
     NrofMoves = posIDs.size();
+
+    /* Create Position-Structure */
     positions.clear();
     CurrentPosIndex = 0;
     initialPosition = DB.getPositionFromDBByID(posIDs[0]);
@@ -430,15 +432,8 @@ void Board::loadGame(int GameID) {
     }
     currentPosition = &initialPosition;
 
-    /*Fen* child;
-    child = currentPosition;
-    for(int i = 0; i < positions.size(); i++) {
-        child->addChild(positions[i]);
-        child = child->getLastChild();
-    }*/
-    cout << GameID << endl;
     string movestr = DB.getMoves(GameID);
-    cout << movestr << endl;
+
     if(movestr.size() > 1) {
         vector<string> moves = getSplittedPGN(movestr);
         vector<string> halfmoves;
@@ -454,7 +449,6 @@ void Board::loadGame(int GameID) {
         movehistory = halfmoves;
         movehistory.erase(movehistory.begin());
     }
-    //show();
 }
 
 vector<string> Board::getSplittedPGN(string pgn_raw) {
