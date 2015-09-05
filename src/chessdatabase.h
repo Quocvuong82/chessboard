@@ -23,6 +23,8 @@ public:
     string getMoves(int GameID);
     int getPositionIDFromDB(Fen pos);
     //void cleanUpDatabase();
+protected:
+    bool createChessDatabase();
 private:
     vector<int> getPlayersByString(string str);
 };

@@ -108,10 +108,12 @@ void DBdialog::setGame(int value) {
     //posIDs = myChessDB.getPosIDsByGameID(gameIDs[value]);
     cout << "game " << value << " set" << endl;
     gameID = gameIDs[value];
+    cout << " game ID = " << gameID << endl;
     //posID = posIDs[0];
     //updateBoard();
 }
 
 void DBdialog::mySetResult() {
+    cout << "done" << endl;
     emit done(gameID);
 }

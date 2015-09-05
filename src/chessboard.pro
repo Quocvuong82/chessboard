@@ -17,7 +17,8 @@ SOURCES += \
     enginecontroller.cpp \
     uciengine.cpp \
     qdialvalue.cpp \
-    qboard.cpp
+    qboard.cpp \
+    qchessbase.cpp
 QT += core gui widgets
 QT += svg
 QT += webkitwidgets
@@ -40,7 +41,8 @@ HEADERS += \
     enginecontroller.h \
     uciengine.h \
     qdialvalue.h \
-    qboard.h
+    qboard.h \
+    qchessbase.h
 LIBS += -L/usr/lib/mysql -lmysqlclient
 LIBS += -L/usr/lib/mysql -lboost_regex
 LIBS += -L/usr/lib/mysql -lboost_thread
@@ -51,4 +53,6 @@ CONFIG   += c++11
 
 FORMS += \
     icgamelist.ui \
-    enginecontroller.ui
+    enginecontroller.ui \
+    createdatabase.ui \
+    setupdb.ui

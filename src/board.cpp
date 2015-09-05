@@ -204,7 +204,7 @@ bool Board::addMetadataToDB() {
 	int gameID = 0;
 
 	mysql_init(&mysql);
-	if (!mysql_real_connect(&mysql,"localhost","root","floppy","schach",0,NULL,0))
+    if (!mysql_real_connect(&mysql,host.c_str(),user.c_str(),password.c_str(),database.c_str(),0,NULL,0))
 	{
 		cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
 		return false;
@@ -356,7 +356,7 @@ void Board::nextPos() {
     vector<Fen*> children = currentPosition->getChildren();
         cout << children.size() << " Children: ";
         for(int i = 0; i < children.size(); i++) {
-            cout << DB.getPositionIDFromDB(*children[i]) << " ";
+            cout << DB->getPositionIDFromDB(*children[i]) << " ";
         }
         cout << endl;
     /*position = *currentPosition->getLastChild();
@@ -365,7 +365,7 @@ void Board::nextPos() {
     /*vector<Fen> children = currentPosition->getChildren();
     cout << children.size() << " Children: ";
     for(int i = 0; i < children.size(); i++) {
-        cout << DB.getPositionIDFromDB(children[i]) << " ";
+        cout << DB->getPositionIDFromDB(children[i]) << " ";
     }*/
 }
 
@@ -378,12 +378,12 @@ void Board::nextPos(int index) {
     }
         cout << children.size() << " Children: ";
         for(int i = 0; i < children.size(); i++) {
-            cout << DB.getPositionIDFromDB(*children[i]) << " ";
+            cout << DB->getPositionIDFromDB(*children[i]) << " ";
         }
         cout << endl;
 }
 void Board::prevPos() {
-    //cout << "Parent" << DB.getPositionIDFromDB(*currentPosition->getParent()) << endl;
+    //cout << "Parent" << DB->getPositionIDFromDB(*currentPosition->getParent()) << endl;
     currentPosition = currentPosition->getParent();
 
     activeColor = currentPosition->getActiveColor();
@@ -391,7 +391,7 @@ void Board::prevPos() {
     /*vector<Fen*> children = currentPosition->getChildren();
         cout << children.size() << " Children: ";
         for(int i = 0; i < children.size(); i++) {
-            cout << DB.getPositionIDFromDB(*children[i]) << " ";
+            cout << DB->getPositionIDFromDB(*children[i]) << " ";
         }
     cout << endl;*/
 
@@ -413,7 +413,7 @@ void Board::loadGame(int GameID) {
         cerr << "Chess-File could not be created" << endl;
 
     cout << "load game " << GameID << endl;
-    vector<int> posIDs = DB.getPosIDsByGameID(GameID);
+    vector<int> posIDs = DB->getPosIDsByGameID(GameID);
     if(posIDs.size() < 1) cout << "no Position IDs" << endl;
 
     NrofMoves = posIDs.size();
@@ -421,18 +421,18 @@ void Board::loadGame(int GameID) {
     /* Create Position-Structure */
     positions.clear();
     CurrentPosIndex = 0;
-    initialPosition = DB.getPositionFromDBByID(posIDs[0]);
+    initialPosition = DB->getPositionFromDBByID(posIDs[0]);
     currentPosition = &initialPosition;
     for(int i = 1; i < posIDs.size(); i++) {
         chessfile << currentPosition->getFenString() << endl;
-        currentPosition->addChild(DB.getPositionFromDBByID(posIDs[i]));
+        currentPosition->addChild(DB->getPositionFromDBByID(posIDs[i]));
         positions.push_back(currentPosition);
         currentPosition = currentPosition->getLastChild();
         movehistory.push_back(currentPosition->getMove());
     }
     currentPosition = &initialPosition;
 
-    string movestr = DB.getMoves(GameID);
+    string movestr = DB->getMoves(GameID);
 
     if(movestr.size() > 1) {
         vector<string> moves = getSplittedPGN(movestr);
@@ -535,7 +535,7 @@ bool Board::updateGame(int posID) {
 	MYSQL_ROW row;
 	string query; string positions;
 	mysql_init(&mysql);
-	if (!mysql_real_connect(&mysql,"localhost","root","floppy","schach",0,NULL,0))
+    if (!mysql_real_connect(&mysql,host.c_str(),user.c_str(),password.c_str(),database.c_str(),0,NULL,0))
 	{
 		cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
 		return false;
@@ -566,7 +566,7 @@ bool Board::updateGame(int posID) {
 bool Board::connectwithDB() {
 	mysql_init(&mysql);
 	//mysql_options(&mysql,MYSQL_READ_DEFAULT_GROUP,"your_prog_name");
-	if (!mysql_real_connect(&mysql,"localhost","root","floppy","schach",0,NULL,0))
+    if (!mysql_real_connect(&mysql,host.c_str(),user.c_str(),password.c_str(),database.c_str(),0,NULL,0))
 	{
 		cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
 		return false;
@@ -578,7 +578,7 @@ bool Board::getPositionFromDBByID(int id) {
     MYSQL_RES *res;
     MYSQL_ROW row;
     mysql_init(&mysql);
-    if (!mysql_real_connect(&mysql,"localhost","root","floppy","schach",0,NULL,0))
+    if (!mysql_real_connect(&mysql,host.c_str(),user.c_str(),password.c_str(),database.c_str(),0,NULL,0))
     {
         cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
         return false;
@@ -611,7 +611,7 @@ bool Board::getPositionFromDBByID(int id) {
     if(values[3] == 'q') castleBQ = true; else castleBQ = false;
     moveNr = 1;
     mysql_close(&mysql);
-    cout << "Eval.: " << DB.getEvaluation(id) << endl;
+    cout << "Eval.: " << DB->getEvaluation(id) << endl;
 	return true;
 }
 
@@ -630,7 +630,7 @@ int Board::getPositionIDFromDB() {
 	MYSQL_RES *res;
 	MYSQL_ROW row;
 	mysql_init(&mysql);
-	if (!mysql_real_connect(&mysql,"localhost","root","floppy","schach",0,NULL,0))
+    if (!mysql_real_connect(&mysql,host.c_str(),user.c_str(),password.c_str(),database.c_str(),0,NULL,0))
 	{
 		cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
 		return false;
@@ -665,7 +665,7 @@ int Board::getPositionIDFromDB() {
     MYSQL_RES *res;
     MYSQL_ROW row;
     mysql_init(&mysql);
-    if (!mysql_real_connect(&mysql,"localhost","root","floppy","schach",0,NULL,0))
+    if (!mysql_real_connect(&mysql,host.c_str(),user.c_str(),password.c_str(),database.c_str(),0,NULL,0))
     {
         cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
         return false;
@@ -695,11 +695,11 @@ int Board::getPositionIDFromDB() {
 
 bool Board::writePositionToDB() {
 	//MYSQL mysql;
-    //parent = DB.getPositionIDFromDB(*currentPosition->getParent());
+    //parent = DB->getPositionIDFromDB(*currentPosition->getParent());
 	int pos = getPositionIDFromDB();
 
 	mysql_init(&mysql);
-	if (!mysql_real_connect(&mysql,"localhost","root","floppy","schach",0,NULL,0))
+    if (!mysql_real_connect(&mysql,host.c_str(),user.c_str(),password.c_str(),database.c_str(),0,NULL,0))
 	{
 		cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
 		return false;
@@ -768,7 +768,7 @@ bool Board::setParent(int parent) {
 
 bool Board::writePlayersToDB() {
     mysql_init(&mysql);
-    if (!mysql_real_connect(&mysql,"localhost","root","floppy","schach",0,NULL,0))
+    if (!mysql_real_connect(&mysql,host.c_str(),user.c_str(),password.c_str(),database.c_str(),0,NULL,0))
     {
         cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
         return false;
@@ -785,7 +785,7 @@ bool Board::writeGameToDB() {
     MYSQL_ROW row;
     int gameID = 0;
     mysql_init(&mysql);
-    if (!mysql_real_connect(&mysql,"localhost","root","floppy","schach",0,NULL,0))
+    if (!mysql_real_connect(&mysql,host.c_str(),user.c_str(),password.c_str(),database.c_str(),0,NULL,0))
     {
         cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
         return false;
@@ -931,4 +931,17 @@ bool Board::hasChildren() {
 
 vector<Fen*> Board::getChildren() {
     return currentPosition->getChildren();
+}
+
+void Board::setupDatabaseConnection(string host, string user, string password, string database) {
+    this->host = host;
+    this->user = user;
+    this->password = password;
+    this->database = database;
+    DB = new ChessDatabase(host, user, password, database);
+    connectwithDB();
+}
+
+void Board::setDatabase(ChessDatabase *db) {
+    DB = db;
 }

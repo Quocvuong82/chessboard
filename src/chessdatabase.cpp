@@ -1,11 +1,47 @@
 #include "chessdatabase.h"
 #include <iostream>
 #include <boost/lexical_cast.hpp>
+#include <fstream>
 
-ChessDatabase::ChessDatabase() : Database("localhost", "root", "", "mychessdb") {
+ChessDatabase::ChessDatabase() : Database("localhost", "root", "", "myChessDB") {
 }
 
 ChessDatabase::ChessDatabase (string host, string user, string password, string database): Database(host, user, password, database) {}
+
+bool ChessDatabase::createChessDatabase() {
+    cout << "create new chess database" << endl;
+    mysql_init(&mysql);
+    if (!mysql_real_connect(&mysql,host.c_str(),user.c_str(),password.c_str(),NULL,0,NULL,CLIENT_MULTI_STATEMENTS))
+    {
+        cout << "Failed to connect to MySQL-Server: Error: " << mysql_error(&mysql);
+        return false;
+    }
+
+    string sql;
+    ifstream myfile ("/home/alex/build-chessboard-Desktop_Qt_5_4_2_GCC_64bit-Debug/createChessDB.sql");
+    if (myfile.is_open()) {
+        string line, query;
+        while ( getline (myfile,line) )
+        {
+            if(line.find(';') != string::npos) {
+                query.append(line);
+                cout << query << " ";
+                if(mysql_real_query(&mysql, query.c_str(), query.length())) cout << "true" << endl; else cout << "false" << endl;
+                query.clear();
+            } else {
+                if(line[0] != '-' && line[1] != '-') query.append(line + "\n");
+            }
+        }
+        myfile.close();
+      }
+
+      else cout << "Create Database Error: Unable to open SQL-file";
+
+
+    mysql_close(&mysql);
+    bool result = true;
+    return result;
+}
 
 vector<int> ChessDatabase::getEventIDs() {
     vector<int> eventIDs;

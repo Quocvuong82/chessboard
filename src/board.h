@@ -52,8 +52,12 @@ class Board {
 
     /* Database */
     bool DBwrite = false;
+    string host;
+    string user;
+    string password;
+    string database;
 	bool connectwithDB();
-    ChessDatabase DB = ChessDatabase("localhost", "root", "floppy", "schach");
+    ChessDatabase* DB; //ChessDatabase(host, user, password, database);
 
     /* Database Methods */
     bool writePlayerToDB(string name, int elo);
@@ -79,6 +83,8 @@ protected:
     vector<Fen*> positions;
     Fen* currentPosition = NULL;
 public:
+    void setupDatabaseConnection(string host, string user, string password, string database);
+    void setDatabase(ChessDatabase* db);
     void loadFile(string filename);
     int GameID = 0;
     QGridLayout *Grid;
