@@ -307,3 +307,20 @@ void QBoard::highlightSquares() {
         squares[j]->highlight(true);
     }
 }
+
+void QBoard::hint(string move) {
+    if(move.length() > 0) {
+        for(int i = 0; i < squares.size(); i++) {
+            //squares[i]->highlight(false);
+            squares[i]->clearHighlight("border: 2px solid #00ff00");
+        }
+        int x = static_cast<int>(move[2]) - 97;
+        int y = 8 - (static_cast<int>(move[3]) - 48);
+        int x_origin = static_cast<int>(move[0]) - 97;
+        int y_origin = 8 - (static_cast<int>(move[1]) - 48);
+        int i = (7-y) * 8 + x;
+        int j = (7-y_origin) * 8 + x_origin;
+        squares[i]->highlight(true, "#00ff00");
+        squares[j]->highlight(true, "#00ff00");
+    }
+}

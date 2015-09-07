@@ -117,3 +117,7 @@ void DBdialog::mySetResult() {
     cout << "done" << endl;
     emit done(gameID);
 }
+
+void DBdialog::setDatabase(ChessDatabase chessDB) {
+    myChessDB = chessDB;
+}

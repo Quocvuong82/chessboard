@@ -160,6 +160,7 @@ void EngineController::showBestmove() {
         if(ui->checkBox_white->isChecked() && game->getActiveColor() == 'w') play();
     } else
     ui->playButton->setEnabled(true);
+    emit newBestmove(engine->getBestmove());
 }
 
 void EngineController::showDepth(int depth) {

@@ -72,8 +72,9 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
         game.push_back(new Game());
         ChessDatabase *db = myChessDB;
         game[i]->board->setDatabase(db);
-        game[i]->board->setupDatabaseConnection("localhost", "root", "", "myChessDB");
+        game[i]->board->setupDatabaseConnection("localhost", "root", "floppy", "schach");
         connect(game[i]->board, SIGNAL(madeMove()), engineController, SLOT(go()));
+        connect(engineController, SIGNAL(newBestmove(string)), game[i]->board, SLOT(hint(string)));
     }
 
     posID = 1;

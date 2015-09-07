@@ -63,7 +63,8 @@ void QChessBase::setDatabase(QString database) {
 void QChessBase::showGameSelectDialog() {
     /* Create Game Select Dialog */
     ChessDatabase *db = this;
-    dialog = new DBdialog(*db);
+    //dialog = new DBdialog(*db);
+    dialog->setDatabase(*db); // workaround for signal-slot connection problem with board in mainwindow
     dialog->exec();
 }
 

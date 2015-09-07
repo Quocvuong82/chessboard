@@ -22,7 +22,17 @@ QSquare::QSquare()
 
 void QSquare::highlight(bool activate) {
     if(activate) this->QLabel::setStyleSheet("border: 2px solid #ffff00"); else
-        this->QLabel::setStyleSheet("border: 0px solid #ffff00");
+        this->QLabel::setStyleSheet("border: 0px solid #000000");
+}
+
+void QSquare::highlight(bool activate, QString color) {
+    if(activate) this->QLabel::setStyleSheet("border: 2px solid " + color); else
+        this->QLabel::setStyleSheet("border: 0px solid #000000");
+}
+
+/* Resets the Squares style to its original state if it matches the style pattern */
+void QSquare::clearHighlight(QString style) {
+    if(this->QLabel::styleSheet().compare(style) == 0) this->QLabel::setStyleSheet("border: 0px solid #ffff00");
 }
 
 void QSquare::setPixmap(QPixmap p) {

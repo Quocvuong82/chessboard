@@ -33,6 +33,7 @@ public slots:
     void turnOn();
 signals:
     void madeMove();
+    void newBestmove(string);
 private:
     Ui::EngineController *ui;
     UCIEngine* engine;

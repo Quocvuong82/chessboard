@@ -20,6 +20,7 @@ class DBdialog : public QDialog
 Q_OBJECT
 public:
     DBdialog(ChessDatabase chessDB);
+    void setDatabase(ChessDatabase chessDB);
 private:
     ChessDatabase myChessDB;
 

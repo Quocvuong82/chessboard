@@ -71,6 +71,7 @@ vector<int> ChessDatabase::getPosIDsByGameID(int gameID) {
     {
         cout << "Failed to connect to database: Error: " << mysql_error(&mysql);
     }
+    cout << host << " " << user << " " << password << " " << database << endl;
     MYSQL_RES *res;
     mysql_real_query(&mysql, query.c_str(), query.length());
     res = mysql_use_result(&mysql);

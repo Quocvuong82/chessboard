@@ -49,6 +49,7 @@ public slots:
     void setPosition(int id);
     void squareClicked(int);
     void squareDropped(int, int);
+    void hint(string); // Can be used to visualize move hints
 };
 
 #endif // QBOARD_H
