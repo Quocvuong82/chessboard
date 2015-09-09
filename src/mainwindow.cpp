@@ -52,10 +52,12 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     engineMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Play &White"), this, SLOT(EnginePlayWhite()), QKeySequence(tr("Ctrl+B", "Engine|Play White")));
 
     databaseMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Load Game From &Database"), myChessDB, SLOT(showGameSelectDialog()), QKeySequence(tr("Ctrl+D", "File|Database")));
+    databaseMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Show Position Tree"), this, SLOT(showPositionTree()), QKeySequence(tr("Ctrl+D", "File|Database")));
     databaseMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Setup Database"), myChessDB, SLOT(setupDB()));
 
     icsMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Connect with Internet Chess Server"), this, SLOT(ICSconnect()), QKeySequence(tr("Ctrl+S", "ICS|Server")));
     icsMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Games on Server"), this, SLOT(ICSgameList()), QKeySequence(tr("Ctrl+S", "ICS|Server")));
+    icsMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Scan Internet Chess Server"), this, SLOT(scanICS()), QKeySequence(tr("Ctrl+S", "ICS|Server")));
 
     gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Flip View"), this, SLOT(), QKeySequence(tr("Ctrl+F", "Game|Flip View")));
     gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Next Move"), this, SLOT(nextPos()));
@@ -90,15 +92,15 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     input = new QLineEdit();
     for(int i = 0; i < NrOfButtons; i++) {
         button.push_back(new QPushButton(QString("B").append(QString(QString::fromStdString(boost::lexical_cast<string>(i))))));
-        if(i != 2) button[i]->setFixedSize(40,25);
+        button[i]->setMaximumWidth(50);
     };
-    button[4]->setText("<");
-    button[5]->setText(">");
-    button[0]->setText("R ICS");
-    button[1]->setText("games");
-    button[2]->setText("Pos Tree");
-    button[3]->setText("Scan ICS");
-    button[6]->setText("Bestmove");
+    button[0]->setText("<");
+    button[1]->setText(">");
+    //button[0]->setText("R ICS");
+    //button[1]->setText("games");
+    //button[2]->setText("Pos Tree");
+    //button[3]->setText("Scan ICS");
+    //button[6]->setText("Bestmove");
 
 
     /* Signal - Slot Connections */  
@@ -107,13 +109,13 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     /* Buttons */
     connect(next, SIGNAL(clicked()), this, SLOT(nextPos()));
     connect(back, SIGNAL(clicked()), this, SLOT(prevPos()));
-    connect(button[0], SIGNAL(clicked()), this, SLOT(readICServer()));
-    connect(button[1], SIGNAL(clicked()), this, SLOT(ICSgameList()));
-    connect(button[2], SIGNAL(clicked()), this, SLOT(showPositionTree()));
-    connect(button[3], SIGNAL(clicked()), this, SLOT(scanICS()));
-    connect(button[4], SIGNAL(clicked()), this, SLOT(prevPos()));
-    connect(button[5], SIGNAL(clicked()), this, SLOT(nextPos()));
-    connect(button[6], SIGNAL(clicked()), &engine, SLOT(showOutput()));
+    //connect(button[0], SIGNAL(clicked()), this, SLOT(readICServer()));
+    //connect(button[1], SIGNAL(clicked()), this, SLOT(ICSgameList()));
+    //connect(button[2], SIGNAL(clicked()), this, SLOT(showPositionTree()));
+    //connect(button[3], SIGNAL(clicked()), this, SLOT(scanICS()));
+    connect(button[0], SIGNAL(clicked()), this, SLOT(prevPos()));
+    connect(button[1], SIGNAL(clicked()), this, SLOT(nextPos()));
+    //connect(button[6], SIGNAL(clicked()), &engine, SLOT(showOutput()));
 
     /* Status Updates */
     connect(button[4], SIGNAL(clicked()), this, SLOT(updateStatusBar()));
