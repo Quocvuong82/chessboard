@@ -1,6 +1,7 @@
 #include "enginecontroller.h"
 #include "ui_enginecontroller.h"
 #include "qdialvalue.h"
+#include <QListWidgetItem>
 
 EngineController::EngineController(QWidget *parent) :
     QWidget(parent),
@@ -39,7 +40,7 @@ EngineController::EngineController(QWidget *parent) :
     connect(ui->radio_power, SIGNAL(pressed()), this, SLOT(turnOff()));
 
     ui->searchdepth->setMinimum(0);
-    ui->searchdepth->setMaximum(50);
+    ui->searchdepth->setMaximum(25);
     ui->movetime->setMinimum(0);
     //ui->movetime->setMaximum(100000);
     ui->nodes->setMinimum(0);
@@ -70,7 +71,7 @@ void EngineController::turnOff() {
     ui->nodes->setEnabled(false);
     ui->progressBar->setEnabled(false);
     ui->bestmove->setEnabled(false);
-    ui->otherMoves->setEnabled(false);
+    ui->listOtherMoves->setEnabled(false);
     engine->output->setEnabled(false);
 }
 
@@ -85,7 +86,7 @@ void EngineController::turnOn() {
     ui->nodes->setEnabled(true);
     ui->progressBar->setEnabled(true);
     ui->bestmove->setEnabled(true);
-    ui->otherMoves->setEnabled(true);
+    ui->listOtherMoves->setEnabled(true);
     engine->output->setEnabled(true);
 }
 
@@ -146,7 +147,16 @@ void EngineController::play() {
 }
 
 void EngineController::showOtherMoves() {
-    ui->otherMoves->setText(QString::fromStdString(engine->getOtherMoves()));
+    vector<vector<string>> moves = engine->getOtherMoves();
+    string txt;
+    /* Add moves to listOtherMoves widget */
+    ui->listOtherMoves->clear();
+    for(int i = 0; i < moves.size(); i++) {
+        //string line = "<b>" + moves[i].substr(0, 4) + "</b>" + moves[i].substr(4) + "<br />";
+        //txt.append(line);
+        new QListWidgetItem(QString::fromStdString(moves[i][0].substr(0, 5*8) + " " + moves[i][1]), ui->listOtherMoves);
+    }
+    //ui->otherMoves->setText(QString::fromStdString(txt));
 }
 
 void EngineController::showBestmove() {
@@ -160,7 +170,11 @@ void EngineController::showBestmove() {
         if(ui->checkBox_white->isChecked() && game->getActiveColor() == 'w') play();
     } else
     ui->playButton->setEnabled(true);
-    emit newBestmove(engine->getBestmove());
+    string bestmove = engine->getBestmove();
+    cout << "bestmove " << bestmove << endl;
+    if(bestmove != "(none)\n") {
+        emit newBestmove(bestmove);
+    }
 }
 
 void EngineController::showDepth(int depth) {

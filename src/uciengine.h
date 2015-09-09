@@ -20,7 +20,7 @@ public:
     int writeToEngine(string message);
     string readFromEngine(int ReaderID);
     string getBestmove();
-    string getOtherMoves();
+    vector<vector<string>> getOtherMoves();
     vector<string> getMultiPV();
     QTextEdit* output;
     bool isThinking();
@@ -42,7 +42,10 @@ private:
 
     bool stopping;
     int currnr = 0;
+    int depth = 0; // current search depth
     vector<string> multipvs;
+    vector<int> scores;
+    vector<int> uniqueScores;
     vector<string> getUniqueMultiPV(int depth);
 
     /* Pipes to and from engine */

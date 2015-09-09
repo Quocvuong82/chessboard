@@ -266,42 +266,34 @@ string UCIEngine::readFromEngine(int ReaderID) {
 
 vector<string> UCIEngine::getUniqueMultiPV(int depth) {
     vector<string> uniqueMultiPV;
-    for(int i = 0; i < multipvs.size(); i++) {
+    for(int i = multipvs.size() - 1; i >= 0; i--) {
         bool unique = true;
         for(int j = 0; j < uniqueMultiPV.size(); j++) {
-            if(uniqueMultiPV[j] == multipvs[i].substr(0, depth * 4)) unique = false;
+            if(uniqueMultiPV[j] == multipvs[i].substr(0, depth * 4)) unique = false; // we have this move already
         }
         if(unique) {
             uniqueMultiPV.push_back(multipvs[i].substr(0, depth * 4));
+            uniqueScores.push_back(scores[i]); // Get the score in centi-pawns of the move
         }
     }
     return uniqueMultiPV;
 }
 
 string UCIEngine::getBestmove() {
-    //cout << "bestmove: " << bestmove << endl;
     if(bestmove == "") return "";
     return bestmove;
-
-    /* Get the first move of multipvs only once */
-    vector<string> uniqueMultiPV = getUniqueMultiPV(1);
-    string multipvstr = "\nother moves: ";
-    for(int i = 0; i < uniqueMultiPV.size(); i++) {
-        multipvstr += uniqueMultiPV[i];
-        multipvstr += ", ";
-    }
-    return bestmove + multipvstr;
 }
 
-string UCIEngine::getOtherMoves() {
-    /* Get the first move of multipvs only once */
-    vector<string> uniqueMultiPV = getUniqueMultiPV(1);
-    string multipvstr = "\nother moves: ";
-    for(int i = 0; i < uniqueMultiPV.size(); i++) {
-        multipvstr += uniqueMultiPV[i];
-        multipvstr += ", ";
+vector<vector<string>> UCIEngine::getOtherMoves() {
+    vector<vector<string>> scoredMultiPVs;
+    for(int i = 0; i < multipvs.size(); i++) {
+        vector<string> scoredMultiPV;
+        scoredMultiPV.push_back(multipvs[i]);
+        scoredMultiPV.push_back(boost::lexical_cast<string>(scores[i]));
+        //multipvs[i] + " (" + boost::lexical_cast<string>(scores[i]) + ")"
+        scoredMultiPVs.push_back(scoredMultiPV);
     }
-    return multipvstr;
+    return scoredMultiPVs;
 }
 
 void UCIEngine::printBestmove() {
@@ -331,7 +323,11 @@ void UCIEngine::getValues() {
         e = outstr.find(" ", p + 6);
         if(p != string::npos) {
             int depth = boost::lexical_cast<int>(outstr.substr(p + 6, e- p - 6));
-            emit newDepth(depth);
+            if(depth > this->depth) {
+                this->depth = depth;
+                multipvs.clear(); scores.clear(); // Clear Multi-PV Moves
+                emit newDepth(depth);
+            }
         }
 
         /* Collect MultiPV-Data (get possible moves) */
@@ -340,20 +336,34 @@ void UCIEngine::getValues() {
         if(pv != string::npos && multipv != string::npos) {
             size_t sp = outstr.find(" ", multipv + 10);
             string multipvstr = outstr.substr(multipv + 9, sp - (multipv + 9));
-            //multipvstr.erase(multipvstr.size() - 1);
-            //cout << multipvstr << endl;
             bool toggle = false;
             if(boost::lexical_cast<int>(multipvstr) > currnr) {
-                //currmoves.push_back(outstr.substr(pv + 4));
                 currnr++;
+
+                /* Get the score of the MulitPV-Move */
+                size_t sc = outstr.find(" score ");
+                size_t sp = outstr.find(" ", sc + 10);
+                string score_str = outstr.substr(sc + 10, sp - sc - 10);
+                cout << outstr;
+                //cout << "multipv: " << m << "multipv-score: " << sc << " " << sp << " " << score_str << endl;
+                int score;
+                if(outstr.substr(sc + 7, 4) == "mate")
+                    score = numeric_limits<int>::max();
+                else
+                    score = boost::lexical_cast<int>(score_str);
+
+                /* Check if we have a multipv-move to update */
                 bool newMultiPv = true;
                 for(int i = 0; i < multipvs.size(); i++) {
                     //cout << multipvs[i] << " == " << outstr.substr(pv + 4, multipvs[i].size()) << endl;
                     if(multipvs[i] == outstr.substr(pv + 4, multipvs[i].size())) {
                         multipvs[i] = outstr.substr(pv + 4, outstr.substr(pv + 4).size() - 1);
+                        scores[i] = score;
                         newMultiPv = false;
                     }
                 }
+
+                /* Create a new multipv-move */
                 if(newMultiPv) {
                     size_t nl = outstr.substr(pv + 4).find("\n");
                     string str = outstr.substr(pv + 4, nl);
@@ -362,8 +372,9 @@ void UCIEngine::getValues() {
                             multipvs.push_back(outstr.substr(pv + 4, outstr.substr(pv + 4).size() - 1));
                         else
                             multipvs.push_back(outstr.substr(pv + 4, nl));
+                        scores.push_back(score);
                     } else {
-                        cout << "no newline" << endl;
+                        cout << "multipv: no newline" << endl;
                     }
                 }
                 //cout << outstr;
