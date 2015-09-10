@@ -4,6 +4,7 @@
 #include "fen.h"
 #include <QAction>
 #include"uciengine.h"
+#include "ui_playerwidget.h"
 
 MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(parent, flags) {
 
@@ -33,7 +34,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     fileMenu = new QMenu(tr("&File"), this);
     menuBar()->addMenu(fileMenu);
     editMenu = new QMenu(tr("&Edit"), this);
-    menuBar()->addMenu(editMenu);
+    //menuBar()->addMenu(editMenu);
     gameMenu = new QMenu(tr("&Game"), this);
     menuBar()->addMenu(gameMenu);
     engineMenu = new QMenu(tr("&Engine"), this);
@@ -45,7 +46,6 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     viewMenu = new QMenu(tr("&View"), this);
     menuBar()->addMenu(viewMenu);
 
-    fileMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("New Game"), this, SLOT(newGame()), QKeySequence(tr("Ctrl+N", "File|New Game")));
     fileMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Quit"), this, SLOT(quit()), QKeySequence(tr("Ctrl+Q", "Quit")));
     engineMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Think on position"), this, SLOT(think()), QKeySequence(tr("Ctrl+T", "Engine|Think")));
     engineMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Play &Black"), this, SLOT(EnginePlayBlack()), QKeySequence(tr("Ctrl+B", "Engine|Play Black")));
@@ -59,6 +59,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     icsMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Games on Server"), this, SLOT(ICSgameList()), QKeySequence(tr("Ctrl+S", "ICS|Server")));
     icsMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Scan Internet Chess Server"), this, SLOT(scanICS()), QKeySequence(tr("Ctrl+S", "ICS|Server")));
 
+    gameMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("New Game"), this, SLOT(newGame()), QKeySequence(tr("Ctrl+N", "File|New Game")));
     gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Flip View"), this, SLOT(), QKeySequence(tr("Ctrl+F", "Game|Flip View")));
     gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Next Move"), this, SLOT(nextPos()));
     gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Previous Move"), this, SLOT(prevPos()));
@@ -158,18 +159,19 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
         score.push_back(new QLabel);
 
         /* Player Photo */
-        QLabel* playerPhoto = new QLabel();
-        playerPhoto->setAlignment(Qt::AlignCenter);
+        playerPhoto.push_back(new QLabel());
+        playerPhoto[i]->setAlignment(Qt::AlignCenter);
         if(i == 0)
-            playerPhoto->setPixmap(QPixmap::fromImage(img2.scaledToWidth(64)));
+            playerPhoto[i]->setPixmap(QPixmap::fromImage(img2.scaledToWidth(64)));
         else
-            playerPhoto->setPixmap(QPixmap::fromImage(img.scaledToWidth(64)));
-        //playerPhoto->setStyleSheet("border: 2px solid #ffff00");
-        playerLayout[i]->addWidget(playerPhoto);
+            playerPhoto[i]->setPixmap(QPixmap::fromImage(img.scaledToWidth(64)));
+        //playerPhoto[i]->setStyleSheet("border: 2px solid #ffff00");
+        playerLayout[i]->addWidget(playerPhoto[i]);
 
         playerLayout[i]->addWidget(player[i]);
         playerLayout[i]->addWidget(time[i]);
         playerLayout[i]->addWidget(score[i]);
+        playerLayout[i]->setSpacing(0); // remove spacing between playerlabel and timelabel
         playerFrame[i]->setLayout(playerLayout[i]);  
     }
 
@@ -210,17 +212,13 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     playersLayout->addWidget(playerFrame[0]);
     playersLayout->addWidget(playerFrame[1]);
 
+
     GameInfoLayout = new QVBoxLayout;
     GameInfoLayout->addLayout(playersLayout);
-    //GameInfoLayout->addWidget(playerFrame[0]);
-    //GameInfoLayout->addWidget(playerFrame[1]);
     GameInfoLayout->addLayout(ButtonBoxLayout);
-    /*for(int i = 0; i < NrOfBoards; i++) {
-        GameInfoLayout->addWidget(game[i]->board->Slider); // Game-Progress-Slider
-        game[i]->board->Slider->hide();
-    }*/
     //GameInfoLayout->addWidget(input);
     GameInfoLayout->addWidget(output);
+
     QGroupBox* engineControllerGroup = new QGroupBox();
     QVBoxLayout* engineControllerLayout = new QVBoxLayout();
     engineControllerGroup->setLayout(engineControllerLayout);
@@ -452,7 +450,7 @@ bool MainWindow::ICSconnect() {
     fics.connect();
     output->setParent(0);
     output->clear();
-    output->setFixedSize(400, 300);
+    output->resize(571, 321);
     output->show();
     icgamelist = new ICGameList();
     QObject::connect(icgamelist->list, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(onICGameListItemclicked(QListWidgetItem*)));
@@ -690,7 +688,18 @@ void MainWindow::clocks() {
         int i = 0;
         if(game[j]->getActiveColor() == 'w') i = 1;
         t[j * 2 + i]--;
-        if(j == activeBoard) time[i]->setTime(t[j * 2 + i]);
+
+        if(j == activeBoard && time[i]->isEnabled()) {
+            time[i]->setTime(t[j * 2 + i]);
+            for(int i = 0; i < 2; i++) {
+                player[i]->activate(false);
+                time[i]->activate(false);
+                playerPhoto[i]->setStyleSheet("");
+            }
+            time[i]->activate(true);
+            player[i]->activate(true);
+            playerPhoto[i]->setStyleSheet("background-color:#ebf3fc; border-top-left-radius: 9px; border-bottom-left-radius: 9px;");
+        }
         //cout << (j * 2 + i) << endl;
     }
     /*for(int i = 0; i < 2* Game::getNrOfGames(); i++) {

@@ -22,6 +22,7 @@ SOURCES += \
 QT += core gui widgets
 QT += svg
 QT += webkitwidgets
+QT += widgets multimedia
 
 HEADERS += \
     board.h \

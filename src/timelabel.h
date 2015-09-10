@@ -8,14 +8,22 @@
 using namespace std;
 class TimeLabel : public QLabel
 {
+Q_OBJECT
 public:
     TimeLabel();
     void setTime(int seconds);
     void setColor(string color);
+    bool isEnabled(); // Returns true if the clock is switched on
+    void activate(bool enable);
+protected:
+  void mousePressEvent(QMouseEvent *event);
 private:
     QString color;
     int time; // time in seconds
+    bool enabled;
     QString makeTime(int seconds);
+signals:
+    void clicked();
 };
 
 

@@ -10,6 +10,8 @@ Game::Game()
     movehistory = new QTreeWidget();
     movehistory->setWindowTitle("move list");
     //movehistory->setFixedWidth(150);
+    movehistory->setMinimumWidth(150);
+    movehistory->setMaximumWidth(150);
     movehistory->setColumnCount(3);
     movehistory->setColumnWidth(0, 25);
     for(int i = 1; i < movehistory->columnCount(); i++) {

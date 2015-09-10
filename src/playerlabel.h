@@ -13,6 +13,7 @@ public:
     void setID(int ID);
     void setText(QString name);
     void setColor(string color);
+    void activate(bool);
     QString getName();
 protected:
   void mousePressEvent(QMouseEvent *event);

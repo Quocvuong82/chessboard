@@ -7,24 +7,31 @@ PlayerLabel::PlayerLabel()
 {
     color = "black";
     //connect( this, SIGNAL( clicked() ), this, SLOT( edit() ) );
+    setStyleSheet("padding-right: 2px;");
 }
+
+void PlayerLabel::activate(bool enable) {
+    if(enable) setStyleSheet("padding-right: 2px; background-color:#ebf3fc;");
+    else setStyleSheet("padding-right: 2px;");
+}
+
 PlayerLabel::PlayerLabel(QString text) {
     this->QLabel::setText(text);
 }
 
 void PlayerLabel::setText(string name) {
     this->name = QString::fromStdString(name);
-    this->QLabel::setText("<font size=20 color=" + color + "><b>" + this->name + "</b></font>");
+    this->QLabel::setText("<font size=20 color=" + color + "><b>" + this->name + "</b></font> ");
 }
 
 void PlayerLabel::setText(QString name) {
     this->name = name;
-    this->QLabel::setText("<font size=20 color=" + color + "><b>" + this->name + "</b></font>");
+    this->QLabel::setText("<font size=20 color=" + color + "><b>" + this->name + "</b></font> ");
 }
 
 void PlayerLabel::setColor(string color) {
     this->color = QString::fromStdString(color);
-    this->QLabel::setText("<font size=20 color=" + this->color + "><b>" + name + "</b></font>");
+    this->QLabel::setText("<font size=20 color=" + this->color + "><b>" + name + "</b></font> ");
 }
 
 QString PlayerLabel::getName() {

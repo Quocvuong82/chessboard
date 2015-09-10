@@ -50,6 +50,7 @@ public slots:
     void squareClicked(int);
     void squareDropped(int, int);
     void hint(string); // Can be used to visualize move hints
+    void playMoveSound();
 };
 
 #endif // QBOARD_H

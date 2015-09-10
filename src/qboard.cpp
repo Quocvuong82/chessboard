@@ -1,5 +1,6 @@
 #include "qboard.h"
 #include <QPainter>
+#include <QSound>
 #include <string>
 #include <boost/lexical_cast.hpp>
 #include "qsquare.h"
@@ -20,6 +21,8 @@ QBoard::QBoard(QWidget *parent) : QWidget(parent), Board()
     Slider = new QSlider(Qt::Horizontal);
     Slider->setMinimum(0);
     connect(Slider, SIGNAL(sliderMoved(int)), this, SLOT(setPosition(int)));
+
+    connect(this, SIGNAL(madeMove()), this, SLOT(playMoveSound()));
 
     /* Board Labeling */
 
@@ -207,6 +210,7 @@ void QBoard::nextPos() {
 void QBoard::nextPos(int index) {
     Board::nextPos(index);
     Slider->setValue(moveNr);
+    emit madeMove();
     highlightSquares();
 }
 
@@ -214,6 +218,7 @@ void QBoard::prevPos() {
     Board::prevPos();
     writePositionTosquares();
     Slider->setValue(moveNr);
+    emit madeMove();
     highlightSquares();
 }
 
@@ -323,4 +328,8 @@ void QBoard::hint(string move) {
         squares[i]->highlight(true, "#00ff00");
         squares[j]->highlight(true, "#00ff00");
     }
+}
+
+void QBoard::playMoveSound() {
+    QSound::play("./sounds/woodthunk.wav");
 }

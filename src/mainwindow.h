@@ -128,6 +128,7 @@ private:
     QVBoxLayout* playersLayout;
     vector<QFrame*> playerFrame;
     vector<PlayerLabel*> player;
+    vector<QLabel*> playerPhoto;
     vector<QLabel*> score;
     vector<TimeLabel*> time;
     vector<QHBoxLayout*> playerLayout;
