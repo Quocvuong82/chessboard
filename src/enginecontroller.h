@@ -2,6 +2,7 @@
 #define ENGINECONTROLLER_H
 
 #include <QWidget>
+#include <QListWidgetItem>
 #include "uciengine.h"
 #include "board.h"
 #include "game.h"
@@ -25,6 +26,8 @@ public slots:
     void toggleGoStop();
     void showBestmove();
     void showOtherMoves();
+    void showMove(string move);
+    void showMove(QListWidgetItem* item);
     void showDepth(int);
     void updateController(int state);
     void undock();

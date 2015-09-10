@@ -47,6 +47,7 @@ private:
     vector<int> scores;
     vector<int> uniqueScores;
     vector<string> getUniqueMultiPV(int depth);
+    static bool isBigger(vector<string> m,vector<string> n);
 
     /* Pipes to and from engine */
     int	writepipe[2] = {-1,-1},	/* parent -> child */

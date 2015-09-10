@@ -292,8 +292,14 @@ vector<vector<string>> UCIEngine::getOtherMoves() {
         scoredMultiPV.push_back(boost::lexical_cast<string>(scores[i]));
         //multipvs[i] + " (" + boost::lexical_cast<string>(scores[i]) + ")"
         scoredMultiPVs.push_back(scoredMultiPV);
+        cout << i << endl;
     }
+    sort(scoredMultiPVs.begin(), scoredMultiPVs.end(), isBigger);
     return scoredMultiPVs;
+}
+
+bool UCIEngine::isBigger (vector<string> m,vector<string> n) {
+    return (boost::lexical_cast<int>(m[1]) > boost::lexical_cast<int>(n[1]));
 }
 
 void UCIEngine::printBestmove() {
@@ -442,6 +448,10 @@ void UCIEngine::go() {
     }
     output->clear();
     bestmove = "";
+    multipvs.clear(); scores.clear();
+    depth = 0;
+
+    writeToEngine("stop");
 
     /* Create Command with Fen-String */
     string command;

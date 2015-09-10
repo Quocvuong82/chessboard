@@ -156,7 +156,16 @@ void EngineController::showOtherMoves() {
         //txt.append(line);
         new QListWidgetItem(QString::fromStdString(moves[i][0].substr(0, 5*8) + " " + moves[i][1]), ui->listOtherMoves);
     }
+    connect(ui->listOtherMoves, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(showMove(QListWidgetItem*)));
     //ui->otherMoves->setText(QString::fromStdString(txt));
+}
+
+void EngineController::showMove(QListWidgetItem* item) {
+    string str = item->text().toStdString();
+    emit newBestmove(str.substr(0,4));
+}
+
+void EngineController::showMove(string move) {
 }
 
 void EngineController::showBestmove() {
