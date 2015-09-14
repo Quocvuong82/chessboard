@@ -10,7 +10,8 @@
 UCIEngine::UCIEngine(QObject *parent) : QObject(parent) {
 
     engine2 = new QProcess();
-    engine2->start("/bin/stockfish");
+    engine2->start("./stockfish-6-32.exe");
+    engine2->waitForStarted();
     buffer = "";
     for(int i = 0; i < 2; i++) {
         pos.push_back(0);
@@ -125,100 +126,11 @@ bool UCIEngine::isThinking() {
 }
 
 bool UCIEngine::stockfish() {
-    pid_t	childpid;
-    pos.push_back(0); pos.push_back(0);
-    /*------------------------------------------------------------------------
-     * CREATE THE PAIR OF PIPES
-     *
-     * Pipes have two ends but just one direction: to get a two-way
-     * conversation you need two pipes. It's an error if we cannot make
-     * them both, and we define these macros for easy reference.
-     */
-    writepipe[0] = -1;
-
-    if ( pipe(readpipe) < 0  ||  pipe(writepipe) < 0 )
-    {
-        /* FATAL: cannot create pipe */
-        /* close readpipe[0] & [1] if necessary */
-    }
-
-    #define	PARENT_READ	readpipe[0]
-    #define	CHILD_WRITE	readpipe[1]
-    #define CHILD_READ	writepipe[0]
-    #define PARENT_WRITE	writepipe[1]
-
-    if ( (childpid = fork()) < 0)
-    {
-        /* FATAL: cannot fork child */
-    }
-    else if ( childpid == 0 )	/* in the child */
-    {
-        ::close(PARENT_WRITE);
-        ::close(PARENT_READ);
-
-        dup2(CHILD_READ,  0);  ::close(CHILD_READ); // Redirect stdin
-        dup2(CHILD_WRITE, 1);  ::close(CHILD_WRITE); // Redirect stdout
-
-        /* do child stuff */
-        char msg[128];
-
-        //cout << read(0,msg, 10);
-        /*cout << b << " Bytes read" << endl;
-        cout << msg;*/
-        fcntl(CHILD_WRITE, F_SETPIPE_SZ, 1048576);
-        execl("/bin/stockfish", (char*) "", NULL);
-    }
-    else				/* in the parent */
-    {
-        ::close(CHILD_READ);
-        ::close(CHILD_WRITE);
-
-        /* do parent stuff */
-        writeToEngine("setoption name Threads value 4");
-        writeToEngine("setoption name MultiPV value 5");
-        connect(this, SIGNAL(newOutput()), this, SLOT(showOutput()));
-        output->setWindowTitle("stockfish 6");
-    }
     return true;
 }
 
 void UCIEngine::readPipe() {
-    //setbuf(stdout, NULL);
-    //setbuf(stdin, NULL);
 
-
-
-    //read(PARENT_READ, buf, 20);
-    //printf("Received: %s\n", buf);
-
-    int flags = fcntl(PARENT_READ, F_GETFL, 0);
-    fcntl(PARENT_READ, F_SETFL, flags | O_NONBLOCK);
-    int b = 1; int c;
-    while(1) {
-        char buf[8192];
-        memset(buf, 0, sizeof buf);
-        b = read(PARENT_READ, buf, sizeof buf);
-        if(b > 0) {
-            //cout << buf << " | ";
-            /*for(int i = 0; i < b; i++) {
-                buffer.append(static_cast<string>(&buf[i]));
-            }*/
-            buffer.append(buf);
-            //buffer.erase(buffer.size()-1);
-            usleep(100000);
-            size_t newline;
-            //newline = buffer.find("\n");
-            //cout << buf;
-        }
-        while(buffer.size() > 0 && pos[0] < buffer.size() - 1) {
-            cout << pos[0] << " " << buffer.size() - 1 << endl;
-            getValues();
-        }
-
-        //cout << " " << b << endl;
-        //cout << " (" << b << " Bytes read)" << endl;
-        if(b <= 0) usleep(10000);
-    }
 }
 
 int UCIEngine::writeToEngine(string message) {

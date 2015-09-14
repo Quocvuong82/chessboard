@@ -5,7 +5,6 @@ SOURCES += \
     move.cpp \
     database.cpp \
     chessdatabase.cpp \
-    icclient.cpp \
     dbdialog.cpp \
     game.cpp \
     qsquare.cpp \
@@ -30,7 +29,6 @@ HEADERS += \
     move.h \
     database.h \
     chessdatabase.h \
-    icclient.h \
     dbdialog.h \
     game.h \
     qsquare.h \
@@ -44,13 +42,18 @@ HEADERS += \
     qdialvalue.h \
     qboard.h \
     qchessbase.h
-LIBS += -L/usr/lib/mysql -lmysqlclient
-LIBS += -L/usr/lib/mysql -lboost_regex
-LIBS += -L/usr/lib/mysql -lboost_thread
-LIBS += -L/usr/lib/mysql -lboost_system
-INCLUDEPATH += /usr/include/mysql
-INCLUDEPATH += /usr/include
+INCLUDEPATH += "C:/Program Files (x86)/MySQL/MySQL Connector C 6.1/include"
+INCLUDEPATH += "C:/Program Files/Boost/boost_1_59_0"
+LIBS += "-LC:/Program Files (x86)/MySQL/MySQL Connector C 6.1/lib" -lmysql
+LIBS += "C:/Windows/System32/ws2_32.dll"
+LIBS += "-LC:/Program Files/Boost/boost_1_59_0/stage/lib/" -lboost_thread-mgw49-mt-d-1_59
+LIBS += "-LC:/Program Files/Boost/boost_1_59_0/stage/lib/" -lboost_system-mgw49-mt-d-1_59
+LIBS += "-LC:/Program Files/Boost/boost_1_59_0/stage/lib/" -lboost_regex-mgw49-mt-d-1_59
+LIBS += "-LC:/Program Files (x86)/Tools/mingw492_32/lib/gcc/i686-w64-mingw32/4.9.2" -lstdc++
+#LIBS += "-LC:/Program Files (x86)/5.5/mingw492_32/bin" -l
 CONFIG   += c++11
+CONFIG += static
+QMAKE_CXXFLAGS += -march=i686
 
 FORMS += \
     icgamelist.ui \

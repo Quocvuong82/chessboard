@@ -1,7 +1,8 @@
 #include "game.h"
 #include <boost/lexical_cast.hpp>
+#include <iostream>
 size_t Game::NrOfGames = 0;
-
+using namespace std;
 Game::Game()
 {
     //board = new Board(Fen ());

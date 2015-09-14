@@ -1,4 +1,5 @@
 #include "timelabel.h"
+#include <iostream>
 
 TimeLabel::TimeLabel()
 {

@@ -18,6 +18,7 @@
 #include "qsquare.h"
 #include "chessdatabase.h"
 #include "player.h"
+#include <boost/regex.hpp>
 
 class Board {
     Player White;

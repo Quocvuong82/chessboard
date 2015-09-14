@@ -51,7 +51,6 @@
 
 #include "qchessbase.h"
 #include "uciengine.h"
-#include "icclient.h"
 #include "icgamelist.h"
 #include "game.h"
 #include "playerlabel.h"
@@ -155,7 +154,7 @@ private:
     vector<string> multipvs;
     vector<int> currmovenr;
     int currnr = 0;
-    ICclient fics; // = ICclient("freechess.org", 5000);
+    //ICclient fics; // = ICclient("freechess.org", 5000);
     string outstr;
 
     QTreeWidget* posTree;

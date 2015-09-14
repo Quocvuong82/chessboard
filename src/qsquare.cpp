@@ -8,7 +8,7 @@
 using namespace boost;
 using namespace std;
 
-QString QSquare::PATH = "/home/alex/build-chessboard-Desktop_Qt_5_4_2_GCC_64bit-Debug/";
+QString QSquare::PATH = "./";
 
 int QSquare::ID = 0;
 QSquare::QSquare()

@@ -3,8 +3,9 @@
 #include <QtGui>
 #include "fen.h"
 #include <QAction>
-#include"uciengine.h"
-#include "ui_playerwidget.h"
+#include "uciengine.h"
+#include <boost/regex.hpp>
+using namespace boost;
 
 MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(parent, flags) {
 
@@ -282,7 +283,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     engineController->show();
     engineController->setGame(game[0]);
 
-    QObject::connect(&fics, SIGNAL(unread()), this, SLOT(readICServer()));
+    //QObject::connect(&fics, SIGNAL(unread()), this, SLOT(readICServer()));
 
 }  
 void MainWindow::setBoardActive(int index) {
@@ -355,7 +356,7 @@ void MainWindow::keyPressEvent(QKeyEvent *e)
 
 void MainWindow::nextPos() {
     if(chessserver && examining && !localboard) {
-       fics.writeSocket("forward\n");
+       //fics.writeSocket("forward\n");
     } else {
         game[activeBoard]->nextPos(nextPosIndex);
         getNextPositions();
@@ -384,7 +385,7 @@ void MainWindow::getNextPositions() {
 
 void MainWindow::prevPos() {
     if(chessserver && examining && !localboard) {
-       fics.writeSocket("backward\n");
+       //fics.writeSocket("backward\n");
     } else {
         unsetEngine(0);
         unsetEngine(1);
@@ -447,7 +448,7 @@ void MainWindow::readInput() {
 bool MainWindow::ICSconnect() {
     chessserver = true;
     localboard = false;
-    fics.connect();
+    //fics.connect();
     output->setParent(0);
     output->clear();
     output->resize(571, 321);
@@ -490,7 +491,7 @@ void MainWindow::sendToServer(string msg) {
         BoardTab->setTabText(activeBoard, QString::fromStdString("#" + boost::lexical_cast<string>(gameID)));
         cout << "set gameID to " << msg.substr(sp, sp2) << endl;
     }
-    fics.writeSocket(msg);//.append("\n"));
+    //fics.writeSocket(msg);//.append("\n"));
     //fics.writeSocket("help\n");
 }
 
@@ -513,10 +514,10 @@ void MainWindow::setActiveColor() {
 }
 
 void MainWindow::readICServer() {
-    string line = fics.readFromServer();
+    string line = ""; //fics.readFromServer();
     parseICSOutput(line);
     outstr += line;
-    if(!fics.isunread()) {
+    if(false) {
         output->setText(QString::fromStdString(outstr));
         output->verticalScrollBar()->setValue(output->verticalScrollBar()->maximum());
     }
@@ -826,7 +827,7 @@ void MainWindow::undock() {
 }
 
 void MainWindow::scanICS() {
-    fics.scanFics();
+    //fics.scanFics();
 }
 
 void MainWindow::showPositionTree() {
