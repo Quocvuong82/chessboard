@@ -1,4 +1,5 @@
 #include "timelabel.h"
+#include <QFile>
 
 TimeLabel::TimeLabel()
 {
@@ -14,7 +15,10 @@ bool TimeLabel::isEnabled() {
 }
 
 void TimeLabel::activate(bool enable) {
-    if(enable) setStyleSheet("background-color:#ebf3fc; border-top-right-radius: 9px; border-bottom-right-radius: 9px;");
+    QFile File("style/timelabel.css");
+    File.open(QFile::ReadOnly);
+    QString StyleSheet = QLatin1String(File.readAll());
+    if(enable) setStyleSheet(StyleSheet);
     else setStyleSheet("");
 }
 

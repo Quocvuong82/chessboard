@@ -13,7 +13,6 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     getICGameList = false;
     chessengine = false;
     localboard = true;
-    thinkOnMove = false;
     engineB = false;
     engineW = false;
     moved = false;
@@ -47,9 +46,8 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     menuBar()->addMenu(viewMenu);
 
     fileMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Quit"), this, SLOT(quit()), QKeySequence(tr("Ctrl+Q", "Quit")));
-    engineMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Think on position"), this, SLOT(think()), QKeySequence(tr("Ctrl+T", "Engine|Think")));
-    engineMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Play &Black"), this, SLOT(EnginePlayBlack()), QKeySequence(tr("Ctrl+B", "Engine|Play Black")));
-    engineMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Play &White"), this, SLOT(EnginePlayWhite()), QKeySequence(tr("Ctrl+B", "Engine|Play White")));
+    /*engineMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Play &Black"), this, SLOT(EnginePlayBlack()), QKeySequence(tr("Ctrl+B", "Engine|Play Black")));
+    engineMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Play &White"), this, SLOT(EnginePlayWhite()), QKeySequence(tr("Ctrl+B", "Engine|Play White")));*/
 
     databaseMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Load Game From &Database"), myChessDB, SLOT(showGameSelectDialog()), QKeySequence(tr("Ctrl+D", "File|Database")));
     databaseMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Show Position Tree"), this, SLOT(showPositionTree()), QKeySequence(tr("Ctrl+D", "File|Database")));
@@ -66,6 +64,8 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Set Game ID"), this, SLOT(setGameID()));
     gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Set Active Color"), this, SLOT(setActiveColor()));
     gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Duplicate Game"), this, SLOT());
+    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Quit Game"), this, SLOT(quitGame()));
+
     engineMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Undock Engine-Controller"), engineController, SLOT(undock()));
 
     viewMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Undock Gameinfo"), this, SLOT(undock()));
@@ -131,9 +131,8 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     BoardTab = new QTabWidget();
     QGroupBox* b = new QGroupBox;
     b->setFixedSize(300,300);
-    for(int i = 0; i < Game::getNrOfGames(); i++) {
-        BoardBox.push_back(new QGroupBox);
-        BoardBox[i]->setFixedSize(576,576);
+    for(int i = 0; i < game.size(); i++) {
+        BoardBox.push_back(new QFrame);
         BoardTab->addTab(BoardBox[i], "Game " + QString::fromStdString(boost::lexical_cast<string>(i + 1)));
         BoardBox[i]->setLayout(game[i]->board->Grid);
     }
@@ -165,6 +164,9 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
             playerPhoto[i]->setPixmap(QPixmap::fromImage(img2.scaledToWidth(64)));
         else
             playerPhoto[i]->setPixmap(QPixmap::fromImage(img.scaledToWidth(64)));
+        QFile File("style/playerphoto.css");
+        File.open(QFile::ReadOnly);
+        StyleSheet = QLatin1String(File.readAll());
         //playerPhoto[i]->setStyleSheet("border: 2px solid #ffff00");
         playerLayout[i]->addWidget(playerPhoto[i]);
 
@@ -185,7 +187,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     time[0]->setColor("black");
     time[1]->setColor("white");
     time[0]->setTime(1800);
-    for(int i = 0; i < 2 * Game::getNrOfGames(); i++) {
+    for(int i = 0; i < 2 * game.size(); i++) {
         players.push_back("Player " + boost::lexical_cast<string>(i));
         t.push_back(1800);
     }
@@ -229,7 +231,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     GameInfoLayout->addWidget(engineControllerGroup);
     GameInfoBox = new QGroupBox("Game Info");
     GameInfoBox->setLayout(GameInfoLayout);
-    QVBoxLayout* boardSliderBox = new QVBoxLayout();
+    boardSliderBox = new QVBoxLayout();
     boardSliderBox->addWidget(BoardTab);
     for(int i = 0; i < NrOfBoards; i++) {
         boardSliderBox->addWidget(game[i]->board->Slider); // Game-Progress-Slider
@@ -267,7 +269,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
 
 
     /* Get position data from Database and display it on the GUI board */
-    for(int i = 0; i < Game::getNrOfGames(); i++) {
+    for(int i = 0; i < game.size(); i++) {
         //game[i]->board->getPositionFromDBByID(posID);
         game[i]->board->show(); // Write position to squares (QLabels)
         posIDs.push_back(vector<int> ());
@@ -286,6 +288,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
 
 }  
 void MainWindow::setBoardActive(int index) {
+    if(index < 0) return;
     cout << "board " + boost::lexical_cast<string>(index) + " set active" << endl;
     //game[activeBoard]->movehistory->setParent(0);
     activeBoard = index;
@@ -304,7 +307,7 @@ void MainWindow::setBoardActive(int index) {
     engineController->setGame(game[index]);
 
     /* Hide Movehistory and Slider of inactive games */
-    for(int i = 0; i < NrOfBoards; i++) {
+    for(int i = 0; i < game.size(); i++) {
         game[i]->board->Slider->hide(); /* Game-Progress-Slider */
         game[i]->movehistory->hide();
     }
@@ -365,7 +368,6 @@ void MainWindow::nextPos() {
             updateBoard();
         }*/
     }
-    if(thinkOnMove) think();
 }
 
 void MainWindow::getNextPositions() {
@@ -395,36 +397,6 @@ void MainWindow::prevPos() {
             updateBoard();
         }*/
     }
-    if(thinkOnMove) think();
-}
-
-/* Engine Slots                                                               */
-/* -------------------------------------------------------------------------- */
-
-void MainWindow::EnginePlayBlack() {
-   engineB = true;
-   if(game[activeBoard]->getActiveColor() == 'b') think();
-}
-
-void MainWindow::EnginePlayWhite() {
-   engineW = true;
-   if(game[activeBoard]->getActiveColor() == 'w') think();
-}
-
-void MainWindow::think() {
-    /* Create Command with Fen-String */
-    string command;
-    command = "position fen " + game[activeBoard]->board->getFenstring();
-    command.append("\ngo infinite");
-    cout << command << endl;
-
-    scores.clear();
-    moves.clear();
-    bestmove.clear();
-    moved = false;
-    multipvs.clear();
-    engine.writeToEngine(command); //writeToStockfish(command);
-    //engineView->show();
 }
 
 void MainWindow::readInput() {
@@ -434,9 +406,6 @@ void MainWindow::readInput() {
         /* Make a move */
         game[activeBoard]->move(input->text().toStdString());
         updateStatusBar();
-
-        /* Aktivate oppent (chess engine) */
-        if((engineB && game[activeBoard]->getActiveColor() == 'b') || (engineW && game[activeBoard]->getActiveColor() == 'w')) think();
     }
     input->clear();
 }
@@ -625,7 +594,7 @@ void MainWindow::parseICSOutput(string outstr) {
         //cout << "gameID: " << values[16] << endl;
         //cout << fenstrings[0] << " " << fenstrings[1] << fenstrings[2] << endl;
         bool isSet = false;
-        for(int i = 0; i < Game::getNrOfGames(); i++) {
+        for(int i = 0; i < game.size(); i++) {
             cout << game[i]->getGameID() << " " << values[16] << endl;
             if(game[i]->getGameID() == boost::lexical_cast<int>(values[16])) {
                 cout << "set position" << endl;
@@ -659,7 +628,6 @@ void MainWindow::parseICSOutput(string outstr) {
             player[1]->setText(values[17]);
             player[0]->setText(values[18]);
             game[activeBoard]->board->show();
-            if(thinkOnMove) think();
         }
         updateStatusBar();
 
@@ -684,7 +652,7 @@ void MainWindow::parseICSOutput(string outstr) {
 
 void MainWindow::clocks() {
     /* Update time for every game every second */
-    for(int j = 0; j < Game::getNrOfGames(); j++) {
+    for(int j = 0; j < game.size(); j++) {
         int i = 0;
         if(game[j]->getActiveColor() == 'w') i = 1;
         t[j * 2 + i]--;
@@ -698,11 +666,11 @@ void MainWindow::clocks() {
             }
             time[i]->activate(true);
             player[i]->activate(true);
-            playerPhoto[i]->setStyleSheet("background-color:#ebf3fc; border-top-left-radius: 9px; border-bottom-left-radius: 9px;");
+            playerPhoto[i]->setStyleSheet(StyleSheet);
         }
         //cout << (j * 2 + i) << endl;
     }
-    /*for(int i = 0; i < 2* Game::getNrOfGames(); i++) {
+    /*for(int i = 0; i < 2* game.size(); i++) {
         cout << boost::lexical_cast<string>(t[i]) << " ";
     }
     cout << endl;*/
@@ -718,29 +686,31 @@ void MainWindow::updateBoard() {
 void MainWindow::newGame() {
     cout << "new game " << endl;
     game.push_back(new Game());
-    game[Game::getNrOfGames() - 1]->board->getPositionFromDBByID(1);
+    game[game.size() - 1]->board->getPositionFromDBByID(1);
 
     /* Connect Square-Signals to MainWindow-Slots */
-    /*for(int j = 0; j < game[Game::getNrOfGames() - 1]->board->squares.size(); j++) {
-        QObject::connect(game[Game::getNrOfGames() - 1]->board->squares[j], SIGNAL(clicked(int)), this, SLOT(SquareClicked(int)));
-        QObject::connect(game[Game::getNrOfGames() - 1]->board->squares[j], SIGNAL(dropped(int, int)), this, SLOT(SquareDropped(int, int)));
+    /*for(int j = 0; j < game[game.size() - 1]->board->squares.size(); j++) {
+        QObject::connect(game[game.size() - 1]->board->squares[j], SIGNAL(clicked(int)), this, SLOT(SquareClicked(int)));
+        QObject::connect(game[game.size() - 1]->board->squares[j], SIGNAL(dropped(int, int)), this, SLOT(SquareDropped(int, int)));
     }*/
-    game[Game::getNrOfGames() - 1]->board->show(); // Write position to squares (QLabels)
-    game[Game::getNrOfGames() - 1]->board->setPlayer(0, "Player " + lexical_cast<string>(players.size()), 0);
-    game[Game::getNrOfGames() - 1]->board->setPlayer(1, "Player " + lexical_cast<string>(players.size() + 1), 0);
-    game[Game::getNrOfGames() - 1]->board->newGame();
+    game[game.size() - 1]->board->show(); // Write position to squares (QLabels)
+    game[game.size() - 1]->board->setPlayer(0, "Player " + lexical_cast<string>(players.size()), 0);
+    game[game.size() - 1]->board->setPlayer(1, "Player " + lexical_cast<string>(players.size() + 1), 0);
+    game[game.size() - 1]->board->newGame();
     posIDs.push_back(vector<int> ());
     posIndex.push_back(0);
-    BoardBox.push_back(new QGroupBox);
-    BoardBox[BoardBox.size() - 1]->setFixedSize(576,576);
+    BoardBox.push_back(new QFrame);
+    //BoardBox[BoardBox.size() - 1]->setFixedSize(576,576);
     BoardTab->addTab(BoardBox[BoardBox.size() - 1], "Game " + QString::fromStdString(boost::lexical_cast<string>(BoardBox.size())));
     BoardBox[BoardBox.size() - 1]->setLayout(game[BoardBox.size() - 1]->board->Grid);
     for(int i = 0; i < 2; i++) {
-        players.push_back("Player " + boost::lexical_cast<string>(2 * (Game::getNrOfGames() - 1) + i));
+        players.push_back("Player " + boost::lexical_cast<string>(2 * (game.size() - 1) + i));
         t.push_back(0);
     }
-    BoardTab->setCurrentIndex(Game::getNrOfGames() - 1);
-    setBoardActive(Game::getNrOfGames() - 1);
+    BoardTab->setCurrentIndex(game.size() - 1);
+    layout->addWidget(game[activeBoard]->movehistory);
+    boardSliderBox->addWidget(game[activeBoard]->board->Slider);
+    setBoardActive(game.size() - 1);
 }
 
 void MainWindow::SquareClicked(int id) {
@@ -789,7 +759,6 @@ void MainWindow::SquareDropped(int target, int source) {
         //game[activeBoard]->showMoveHistory();
         /* Aktivate oppent (chess engine) */
         engineController->go();
-        if((engineB && game[activeBoard]->getActiveColor() == 'b') || (engineW && game[activeBoard]->getActiveColor() == 'w')) think();
     }
 }
 
@@ -941,4 +910,18 @@ void MainWindow::setNextPosition(int i) {
 void MainWindow::unsetEngine(int i) {
     if(i % 2 == 0) engineW = false;
     else engineB = false;
+}
+
+void MainWindow::quitGame() {
+    /* Remove Board */
+    int deleteBoard = activeBoard;
+    BoardTab->removeTab(deleteBoard);
+    delete game[deleteBoard]; // free memory
+    game.erase(game.begin()+deleteBoard); // remove game from game array
+    BoardBox.erase(BoardBox.begin()+deleteBoard); // remove from BoardBox array
+
+    /* Show another board */
+    activeBoard = BoardTab->currentIndex(); // set new active board
+    game[activeBoard]->board->Slider->show();
+    game[activeBoard]->movehistory->show();
 }

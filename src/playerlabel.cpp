@@ -1,6 +1,7 @@
 #include "playerlabel.h"
 #include <iostream>
 #include <QInputDialog>
+#include <QFile>
 
 using namespace std;
 PlayerLabel::PlayerLabel()
@@ -11,7 +12,11 @@ PlayerLabel::PlayerLabel()
 }
 
 void PlayerLabel::activate(bool enable) {
-    if(enable) setStyleSheet("padding-right: 2px; background-color:#ebf3fc;");
+
+    QFile File("style/playerlabel.css");
+    File.open(QFile::ReadOnly);
+    QString StyleSheet = QLatin1String(File.readAll());
+    if(enable) setStyleSheet(StyleSheet);
     else setStyleSheet("padding-right: 2px;");
 }
 

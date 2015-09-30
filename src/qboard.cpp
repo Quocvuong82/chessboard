@@ -50,12 +50,14 @@ QBoard::QBoard(QWidget *parent) : QWidget(parent), Board()
         QLabel* l = new QLabel;
         l->setText(QString::fromStdString(boost::lexical_cast<string>(9 - i)));
         l->setAlignment(Qt::AlignCenter);
+        l->setMinimumWidth(20);
         Grid->addWidget(l, i, 0);
     }
     for (int i = 1; i < 9; i++) {
         QLabel* l = new QLabel;
         l->setText(QString::fromStdString(boost::lexical_cast<string>(9 - i)));
         l->setAlignment(Qt::AlignCenter);
+        l->setMinimumWidth(20);
         Grid->addWidget(l, i, 9);
     }
 
@@ -82,16 +84,25 @@ QBoard::QBoard(QWidget *parent) : QWidget(parent), Board()
     writePositionTosquares();
 }
 
+QBoard::~QBoard() {
+    cout << "destroy QBoard" << endl;
+    delete Slider;
+    delete Grid;
+    for(int i = 0; i < painter.size(); i++) delete painter[i];
+    for(int i = 0; i < 12; i++) delete pieces[i];
+    for(int i = 0; i < 12; i++) delete piecesSVG[i];
+    for(int i = 0; i < squares.size(); i++) delete squares[i];
+}
+
 void QBoard::initSquares() {
     square_d = QPixmap(QSquare::PATH + "textures/wood_d.png");
     square_l = QPixmap(QSquare::PATH + "textures/wood_l.png");
-
     int scale = 64;
 
     for(int i = 0; i < 12; i++) {
-        pieces[i] = QPixmap::fromImage(QImage(scale,scale, QImage::Format_ARGB32));
-        pieces[i].fill(Qt::transparent);
-        pieces[i].scaled(scale,scale);
+        pieces[i] = new QPixmap(QPixmap::fromImage(QImage(scale,scale, QImage::Format_ARGB32)));
+        pieces[i]->fill(Qt::transparent);
+        pieces[i]->scaled(scale,scale);
     }
 
     for(int i = 0; i < 12; i++) {
@@ -113,7 +124,7 @@ void QBoard::initSquares() {
 
     for(int i = 0; i < 12; i++) {
         piecesSVG[i]->resize(scale,scale);
-        painter.push_back(new QPainter(&pieces[i]));
+        painter.push_back(new QPainter(pieces[i]));
         piecesSVG[i]->render(painter[i], QPoint(), QRegion(), QWidget::DrawChildren);
     }
     int i;
@@ -150,40 +161,40 @@ void QBoard::writePositionTosquares() {
             i = y * 8 + x;
             switch(fenstr[i].unicode()) {
             case static_cast<int>('P'):
-                squares[i]->setPixmap(pieces[0]);
+                squares[i]->setPixmap(*pieces[0]);
                 break;
             case static_cast<int>('R'):
-                squares[i]->setPixmap(pieces[1]);
+                squares[i]->setPixmap(*pieces[1]);
                 break;
             case static_cast<int>('N'):
-                squares[i]->setPixmap(pieces[2]);
+                squares[i]->setPixmap(*pieces[2]);
                 break;
             case static_cast<int>('B'):
-                squares[i]->setPixmap(pieces[3]);
+                squares[i]->setPixmap(*pieces[3]);
                 break;
             case static_cast<int>('Q'):
-                squares[i]->setPixmap(pieces[4]);
+                squares[i]->setPixmap(*pieces[4]);
                 break;
             case static_cast<int>('K'):
-                squares[i]->setPixmap(pieces[5]);
+                squares[i]->setPixmap(*pieces[5]);
                 break;
             case static_cast<int>('p'):;
-                squares[i]->setPixmap(pieces[6]);
+                squares[i]->setPixmap(*pieces[6]);
                 break;
             case static_cast<int>('r'):
-                squares[i]->setPixmap(pieces[7]);
+                squares[i]->setPixmap(*pieces[7]);
                 break;
             case static_cast<int>('n'):;
-                squares[i]->setPixmap(pieces[8]);
+                squares[i]->setPixmap(*pieces[8]);
                 break;
             case static_cast<int>('b'):
-                squares[i]->setPixmap(pieces[9]);
+                squares[i]->setPixmap(*pieces[9]);
                 break;
             case static_cast<int>('q'):
-                squares[i]->setPixmap(pieces[10]);
+                squares[i]->setPixmap(*pieces[10]);
                 break;
             case static_cast<int>('k'):
-                squares[i]->setPixmap(pieces[11]);
+                squares[i]->setPixmap(*pieces[11]);
                 break;
             default:;
                 if(fenstr[i] == '0' || fenstr[i] == '-') {

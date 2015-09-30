@@ -18,6 +18,7 @@ QSquare::QSquare()
     setAcceptDrops(true);
     piece = new QLabel(this);
     if(id % 2 == 1 - (id / 8 % 2)) this->QLabel::setPixmap(square_l); else this->QLabel::setPixmap(square_d);
+    piece->setStyleSheet("background:transparent");
 }
 
 void QSquare::highlight(bool activate) {

@@ -25,6 +25,12 @@ Game::Game()
     connect(board, SIGNAL(madeMove()), this, SLOT(showMoveHistory()));
 }
 
+Game::~Game() {
+    cout << "destroy Game " << gameID << endl;
+    delete movehistory;
+    delete board;
+}
+
 size_t Game::getNrOfGames() {
     return NrOfGames;
 }

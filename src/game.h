@@ -9,6 +9,7 @@ class Game : public QObject
 Q_OBJECT
 public:
     Game();
+    ~Game();
     QBoard* board;
     static size_t getNrOfGames();
     int getGameID();

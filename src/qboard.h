@@ -18,7 +18,7 @@ class QBoard : public QWidget, public Board
 {
 private:
     Q_OBJECT
-    QPixmap pieces[12];
+    QPixmap* pieces[12];
     QSvgWidget* piecesSVG[12];
     QVector<QPainter*> painter;
     QPixmap square_d;
@@ -33,12 +33,13 @@ protected:
       //void swipeTriggered(QSwipeGesture *gesture);
 public:
     explicit QBoard(QWidget *parent = 0);
+    ~QBoard();
     QGridLayout* Grid;
+    QSlider* Slider;
     static QString PATH;
     void nextPos();
     void nextPos(int index);
     void prevPos();
-    QSlider* Slider;
     void loadFile(string filename);
     bool setPosition(Fen pos);
     void show();

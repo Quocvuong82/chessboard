@@ -72,7 +72,6 @@ private:
     bool examining = false;
     bool chessengine;
     bool localboard;
-    bool thinkOnMove;
     bool engineW; // Engine plays white
     bool engineB; // Engine plays black
     bool moved; // Has the active player already made a move?
@@ -117,10 +116,11 @@ private:
 
     QVBoxLayout* GameInfoLayout;
     QHBoxLayout* ButtonBoxLayout;
-    int NrOfBoards = 4;
-    vector<QGroupBox*> BoardBox;
+    int NrOfBoards = 4; // how many boards will be initialized
+    vector<QFrame*> BoardBox;
     QTabWidget* BoardTab;
     QGroupBox* GameInfoBox;
+    QVBoxLayout* boardSliderBox;
 
     /* Player Info */
     vector<string> players;
@@ -164,6 +164,9 @@ private:
 
     void getNextPositions();
 
+    /* Style */
+    QString StyleSheet;
+
 protected:
   void keyPressEvent(QKeyEvent *e);
   void mousePressEvent(QMouseEvent *event);
@@ -173,11 +176,8 @@ public slots:
     void nextPos();
     void prevPos();
 
-    //void setEvent(int value);
-    //void setGame(int value);
     void readInput();
-    void think();
-    //void printEngineOutput();
+
     void readICServer();
     void parseICSOutput(string);
     bool ICSconnect();
@@ -185,6 +185,7 @@ public slots:
     void onICGameListItemclicked(QListWidgetItem*);
     void sendInputToServer();
     void sendToServer(string);
+
     void checkInputDialog();
     void checkInputDialog(int);
     void clocks();
@@ -192,8 +193,6 @@ public slots:
     void newGame();
     void SquareClicked(int);
     void SquareDropped(int, int);
-    void EnginePlayBlack();
-    void EnginePlayWhite();
     void quit();
     void setGameID();
     void setActiveColor();
@@ -208,6 +207,7 @@ public slots:
     void setPlayerName(int playerID);
     void setNextPosition(int);
     void unsetEngine(int i);
+    void quitGame();
 };
 
 #endif // MAINWINDOW
