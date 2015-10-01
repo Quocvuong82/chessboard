@@ -324,6 +324,7 @@ void QBoard::squareDropped(int target, int source) {
     /* Make a move */
     move(cmd);
     emit madeMove();
+    emit madeMove(cmd);
 }
 
 void QBoard::squareClicked(int id) {

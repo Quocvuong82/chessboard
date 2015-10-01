@@ -41,7 +41,7 @@ bool ICclient::connect() {
         error("ERROR connecting");
 
     cout << "Connecting with " << host << "..." << endl;
-
+    connected = true;
     // Print continuously incoming messages from the server
     boost::thread output ( &ICclient::readSocket, this );
     boost::thread bufferManager ( &ICclient::bufferManager, this );
@@ -508,4 +508,8 @@ void ICclient::bufferManager() {
 void ICclient::clearBuffer() {
     pos = 0; Rpos = 0;
     buffer.clear();
+}
+
+bool ICclient::isConnected() {
+    return connected;
 }

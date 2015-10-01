@@ -122,6 +122,9 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     connect(button[5], SIGNAL(clicked()), this, SLOT(updateStatusBar()));
     connect(engineController, SIGNAL(madeMove()), this, SLOT(updateStatusBar()));
     connect(game[activeBoard]->board, SIGNAL(madeMove()), this, SLOT(updateStatusBar()));
+    for(int i = 0; i < game.size(); i++) {
+        connect(game[i]->board, SIGNAL(madeMove(string)), this, SLOT(sendToServer(string)));
+    }
 
 /* -------------------------------------------------------------------------------------- */
 /*   D e f i n e  L a y o u t                                                             */
@@ -184,7 +187,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     GameInfoLayout = new QVBoxLayout;
     GameInfoLayout->addLayout(playersLayout);
     GameInfoLayout->addLayout(ButtonBoxLayout);
-    //GameInfoLayout->addWidget(input);
+    GameInfoLayout->addWidget(input);
     GameInfoLayout->addWidget(output);
 
     QGroupBox* engineControllerGroup = new QGroupBox();
@@ -350,8 +353,6 @@ void MainWindow::prevPos() {
 }
 
 void MainWindow::readInput() {
-    /*engine.writeToEngine(input->text().toStdString());
-    return;*/
     if(chessserver) sendInputToServer(); else {
         /* Make a move */
         game[activeBoard]->move(input->text().toStdString());
@@ -409,7 +410,7 @@ void MainWindow::sendToServer(string msg) {
         BoardTab->setTabText(activeBoard, QString::fromStdString("#" + boost::lexical_cast<string>(gameID)));
         cout << "set gameID to " << msg.substr(sp, sp2) << endl;
     }
-    fics.writeSocket(msg);//.append("\n"));
+    if(fics.isConnected()) fics.writeSocket(msg);
     //fics.writeSocket("help\n");
 }
 
@@ -451,7 +452,6 @@ void MainWindow::readICServer() {
 }
 
 void MainWindow::parseICSOutput(string outstr) {
-    //string outstr = fics.readFromServer();
     string position;
     vector<string> fenstrings(13);
 
@@ -462,35 +462,10 @@ void MainWindow::parseICSOutput(string outstr) {
 
     boost::smatch m;
     if(boost::regex_search(outstr, m, expr)) {
-        //cout << "REGEX MATCH" << endl;
         getICGameList = true;
-        /*size_t gEnd = outstr.find("games displayed.");
-        if(gEnd != string::npos) {
-            getICGameList = false;
-            icgamelist->show();
-        } else {*/
-            item.push_back(new QListWidgetItem);
-            //cout << outstr << "|";
-            item[item.size() - 1]->setText(QString::fromStdString(outstr.substr(0, outstr.size() - 1)));
-            icgamelist->addItem(item[item.size() - 1]);
-            //icgamelist->show();
-            /*size_t newline = outstr.find("\n");
-            size_t begin = g;
-            size_t end = outstr.find("games displayed.");
-
-            int i = 0;
-            while(newline < end) {
-                item.push_back(new QListWidgetItem);
-                cout << outstr.substr(begin, newline - begin) << endl;
-                item[i]->setText(QString::fromStdString(outstr.substr(begin, newline - begin)));
-                icgamelist->addItem(item[i]);
-                begin = newline + 1;
-                newline = outstr.find("\n", newline + 1);
-                i++;
-                if(i > 1000) break;
-            }*/
-            //ICSgameList();
-        //}
+        item.push_back(new QListWidgetItem);
+        item[item.size() - 1]->setText(QString::fromStdString(outstr.substr(0, outstr.size() - 1)));
+        icgamelist->addItem(item[item.size() - 1]);
     } else if(getICGameList) {
         cout << "game list end" << endl;
         icgamelist->show(); getICGameList = false;
@@ -541,8 +516,6 @@ void MainWindow::parseICSOutput(string outstr) {
         }
         cout << endl;
         */
-        //cout << "gameID: " << values[16] << endl;
-        //cout << fenstrings[0] << " " << fenstrings[1] << fenstrings[2] << endl;
         bool isSet = false;
         for(int i = 0; i < game.size(); i++) {
             cout << game[i]->getGameID() << " " << values[16] << endl;
@@ -601,38 +574,17 @@ void MainWindow::newGame() {
     BoardTab->setCurrentIndex(game.size() - 1);
     layout->addWidget(game[activeBoard]->movehistory);
     boardSliderBox->addWidget(game[activeBoard]->board->Slider);
-    setBoardActive(game.size() - 1);
-}
 
-void MainWindow::SquareDropped(int target, int source) {
-    int y = source / 8 + 1;
-    int x = source % 8;
-    string cmd;
-    cmd.push_back(static_cast<char>(x + 97));
-    cmd.push_back(static_cast<char>(y + 48));
-    y = target / 8 + 1;
-    x = target % 8;
-    cmd.push_back(static_cast<char>(x + 97));
-    cmd.push_back(static_cast<char>(y + 48));
-    //Board b; b.move(); b.sh
-    cout << "SquareDropped: " << cmd << endl;
-    //if(chessserver) game[activeBoard]->move(cmd);
-    //input->setText(QString::fromStdString(cmd));
-    //readInput();
-    if(chessserver) {
-        output->setText(output->toPlainText().append(QString::fromStdString(cmd)));
-        output->verticalScrollBar()->setValue(output->verticalScrollBar()->maximum());
-        sendToServer(cmd);
-        game[activeBoard]->move(cmd);
-        updateStatusBar();
-    } else {
-        /* Make a move */
-        game[activeBoard]->move(cmd);
-        updateStatusBar();
-        //game[activeBoard]->showMoveHistory();
-        /* Aktivate oppent (chess engine) */
-        engineController->go();
-    }
+    playerLayout[1]->insertWidget(0, game[game.size() - 1]->board->playerPhotoW);
+    playerLayout[1]->insertWidget(1, game[game.size() - 1]->board->playerW);
+    playerLayout[1]->insertWidget(2, game[game.size() - 1]->board->timeLabelW);
+    playerLayout[0]->insertWidget(0, game[game.size() - 1]->board->playerPhotoB);
+    playerLayout[0]->insertWidget(1, game[game.size() - 1]->board->playerB);
+    playerLayout[0]->insertWidget(2, game[game.size() - 1]->board->timeLabelB);
+
+    connect(game[game.size() - 1]->board, SIGNAL(madeMove(string)), this, SLOT(sendToServer(string)));
+
+    //setBoardActive(game.size() - 1);
 }
 
 void MainWindow::quit() {

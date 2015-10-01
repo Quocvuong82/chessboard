@@ -41,8 +41,9 @@ public:
     int pos;
     bool isunread();
     bool isunread2();
+    bool isConnected();
 private:
-    bool connected = true;
+    bool connected = false;
     unsigned int latency = 10000;
     ChessDatabase myChessDB;
     int p = 0; // new positions added to database

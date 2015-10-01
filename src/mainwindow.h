@@ -183,7 +183,6 @@ public slots:
     void checkInputDialog(int);
     void setBoardActive(int);
     void newGame();
-    void SquareDropped(int, int);
     void quit();
     void setGameID();
     void setActiveColor();

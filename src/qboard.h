@@ -63,6 +63,7 @@ public:
     void setTimeB(int time);
 signals:
     void madeMove();
+    void madeMove(string move);
 public slots:
     void setPosition(int id);
     void squareClicked(int);
