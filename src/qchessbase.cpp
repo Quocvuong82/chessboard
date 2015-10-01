@@ -1,7 +1,7 @@
 #include "qchessbase.h"
 #include "ui_setupdb.h"
 #include "ui_createdatabase.h"
-
+#include <QFile>
 using namespace std;
 
 QChessBase::QChessBase(string host, string user, string password, string database):
@@ -17,11 +17,23 @@ QChessBase::QChessBase(QWidget *parent) :
     Ui::SetupDB ui;
     ui.setupUi(setupDBDialog);
 
-    /* Database Default Values */
-    host = "localhost";
-    user = "root";
-    password = "";
-    database = "myChessDB";
+    /* Load Database Default Values from File */
+    QFile File(".settings");
+    File.open(QFile::ReadOnly);
+
+    QString host = File.readLine().trimmed();
+    this->host = host.toStdString(); //"localhost";
+    QString user = File.readLine().trimmed();
+    this->user = user.toStdString(); //"root";
+    QString password = File.readLine().trimmed();
+    this->password = password.toStdString(); //"";
+    QString database = File.readLine().trimmed();
+    this->database = database.toStdString(); //"myChessDB";
+
+    ui.host->setText(host);
+    ui.user->setText(user);
+    ui.password->setText(password);
+    ui.database->setText(database);
 
     /* Setup Database Connection */
     connect(ui.host, SIGNAL(textChanged(QString)), this, SLOT(setHost(QString)));
@@ -40,6 +52,8 @@ QChessBase::QChessBase(QWidget *parent) :
     /* Create Game Select Dialog */
     ChessDatabase *db = this;
     dialog = new DBdialog(*db);
+    QObject::connect(dialog, SIGNAL(finished(int)), this, SLOT(handleGameSelection(int)));
+    //QObject::connect(dialog, SIGNAL(rejected()), this, SLOT(checkInputDialog()));
 }
 
 void QChessBase::setHost(QString host) {
@@ -63,8 +77,8 @@ void QChessBase::setDatabase(QString database) {
 void QChessBase::showGameSelectDialog() {
     /* Create Game Select Dialog */
     ChessDatabase *db = this;
-    //dialog = new DBdialog(*db);
-    dialog->setDatabase(*db); // workaround for signal-slot connection problem with board in mainwindow
+    dialog = new DBdialog(*db);
+    QObject::connect(dialog, SIGNAL(finished(int)), this, SLOT(handleGameSelection(int)));
     dialog->exec();
 }
 
@@ -78,4 +92,8 @@ void QChessBase::createNewDB() {
 
 void QChessBase::setupDB() {
     setupDBDialog->exec();
+}
+
+void QChessBase::handleGameSelection(int ID) {
+    emit GameSelected(ID);
 }

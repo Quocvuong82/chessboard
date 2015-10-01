@@ -28,6 +28,9 @@ public slots:
     void showGameSelectDialog();
     void createNewDB();
     void setupDB();
+    void handleGameSelection(int ID);
+signals:
+    void GameSelected(int ID);
 };
 
 #endif // QCHESSBASE_H

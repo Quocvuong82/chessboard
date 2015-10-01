@@ -26,8 +26,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
 
     /* Init Chess Database */
     myChessDB = new QChessBase();
-    QObject::connect(myChessDB->dialog, SIGNAL(finished(int)), this, SLOT(checkInputDialog(int)));
-    QObject::connect(myChessDB->dialog, SIGNAL(rejected()), this, SLOT(checkInputDialog()));
+    QObject::connect(myChessDB, SIGNAL(GameSelected(int)), this, SLOT(checkInputDialog(int)));
 
     /* Create Menu */
     fileMenu = new QMenu(tr("&File"), this);
