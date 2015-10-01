@@ -34,8 +34,6 @@ class Board {
 	string site;
 	string date;
 	int round;
-	string white = "Player White";
-	string black = "Player Black";
     string handleW;
     string handleB;
     bool ficsScanW;
@@ -78,6 +76,8 @@ class Board {
     vector<string> movehistory;
     vector<string> getSplittedPGN(string pgn_raw);
 protected:
+    string white = "Player White";
+    string black = "Player Black";
     int NrofMoves = 0;
     int moveNr = 0;
     vector<Fen*> positions;

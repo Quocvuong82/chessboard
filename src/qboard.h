@@ -61,6 +61,7 @@ public:
     void move(string movecmd);
     void setTimeW(int time);
     void setTimeB(int time);
+    void loadGame(int GameID);
 signals:
     void madeMove();
     void madeMove(string move);

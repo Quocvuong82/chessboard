@@ -291,8 +291,6 @@ void MainWindow::checkInputDialog(int gameID) {
         localboard = true;
         game[activeBoard]->board->loadGame(gameID);
         cout << "game loaded" << endl;
-
-        vector<string> p = myChessDB->getPlayersByGameID(gameID);
     }
 }
 

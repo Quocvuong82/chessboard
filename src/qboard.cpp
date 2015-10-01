@@ -438,3 +438,9 @@ void QBoard::updateTime() {
     }
     //cout << "Time White: " << timeW << ", Time Black: " << timeB << endl;
 }
+
+void QBoard::loadGame(int GameID) {
+    Board::loadGame(GameID);
+    playerW->setText(white);
+    playerB->setText(black);
+}

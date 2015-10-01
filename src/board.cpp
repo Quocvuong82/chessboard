@@ -449,6 +449,10 @@ void Board::loadGame(int GameID) {
         movehistory = halfmoves;
         movehistory.erase(movehistory.begin());
     }
+    /* Get Player Names */
+    vector<string> p = DB->getPlayersByGameID(GameID);
+    white = p[0];
+    black = p[1];
 }
 
 vector<string> Board::getSplittedPGN(string pgn_raw) {
