@@ -23,6 +23,8 @@ public:
     void prevPos();
     QTreeWidget* movehistory;
     void saveGame();
+    void setTimeW(int time);
+    void setTimeB(int time);
 private:
     static size_t NrOfGames;
     int gameID;
@@ -31,5 +33,7 @@ private:
 public slots:
     void showMoveHistory();
     void HistoryItemClicked(QTreeWidgetItem*, int);
+    void show();
+    void hide();
 };
 #endif // GAME_H

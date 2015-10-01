@@ -11,6 +11,7 @@ class TimeLabel : public QLabel
 Q_OBJECT
 public:
     TimeLabel();
+    TimeLabel(string color);
     void setTime(int seconds);
     void setColor(string color);
     bool isEnabled(); // Returns true if the clock is switched on
@@ -19,7 +20,7 @@ protected:
   void mousePressEvent(QMouseEvent *event);
 private:
     QString color;
-    int time; // time in seconds
+    int time = 0; // time in seconds
     bool enabled;
     QString makeTime(int seconds);
 signals:

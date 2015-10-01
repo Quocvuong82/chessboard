@@ -123,17 +123,10 @@ private:
     QVBoxLayout* boardSliderBox;
 
     /* Player Info */
-    vector<string> players;
-    vector<int> t;
     QVBoxLayout* playersLayout;
     vector<QFrame*> playerFrame;
-    vector<PlayerLabel*> player;
-    vector<QLabel*> playerPhoto;
     vector<QLabel*> score;
-    vector<TimeLabel*> time;
     vector<QHBoxLayout*> playerLayout;
-    QTimer* timer;
-    //string makeTime(int seconds);
 
     QLineEdit* input;
     QTextEdit* output;
@@ -188,10 +181,8 @@ public slots:
 
     void checkInputDialog();
     void checkInputDialog(int);
-    void clocks();
     void setBoardActive(int);
     void newGame();
-    void SquareClicked(int);
     void SquareDropped(int, int);
     void quit();
     void setGameID();
@@ -204,7 +195,6 @@ public slots:
     void linkClicked(QUrl);
     void updateStatusBar();
     void showBestmoveMessage();
-    void setPlayerName(int playerID);
     void setNextPosition(int);
     void unsetEngine(int i);
     void quitGame();

@@ -5,6 +5,11 @@ TimeLabel::TimeLabel()
 {
     enabled = true; // Make this timelabel available for the board's clock
 }
+TimeLabel::TimeLabel(string color)
+{
+    enabled = true; // Make this timelabel available for the board's clock
+    setColor(color);
+}
 void TimeLabel::setTime(int seconds) {
     time = seconds;
     this->QLabel::setText("<font size=20 color=" + color + ">" + makeTime(seconds) + "</font>");

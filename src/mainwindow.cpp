@@ -121,6 +121,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     connect(button[4], SIGNAL(clicked()), this, SLOT(updateStatusBar()));
     connect(button[5], SIGNAL(clicked()), this, SLOT(updateStatusBar()));
     connect(engineController, SIGNAL(madeMove()), this, SLOT(updateStatusBar()));
+    connect(game[activeBoard]->board, SIGNAL(madeMove()), this, SLOT(updateStatusBar()));
 
 /* -------------------------------------------------------------------------------------- */
 /*   D e f i n e  L a y o u t                                                             */
@@ -144,62 +145,28 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     }
     ButtonBoxLayout->addWidget(nextCombo);
 
-    QImage img("./textures/person.png");
-    QImage img2("./textures/person.png");
-
     /* Player Info */
     for(int i = 0; i < 2; i++) {
         playerFrame.push_back(new QFrame());
         playerLayout.push_back(new QHBoxLayout);
-        player.push_back(new PlayerLabel);
-        player[i]->setText("Player " + boost::lexical_cast<string>(1-i));
-        time.push_back(new TimeLabel);
         score.push_back(new QLabel);
 
-        /* Player Photo */
-        playerPhoto.push_back(new QLabel());
-        playerPhoto[i]->setAlignment(Qt::AlignCenter);
-        if(i == 0)
-            playerPhoto[i]->setPixmap(QPixmap::fromImage(img2.scaledToWidth(64)));
-        else
-            playerPhoto[i]->setPixmap(QPixmap::fromImage(img.scaledToWidth(64)));
-        QFile File("style/playerphoto.css");
-        File.open(QFile::ReadOnly);
-        StyleSheet = QLatin1String(File.readAll());
-        //playerPhoto[i]->setStyleSheet("border: 2px solid #ffff00");
-        playerLayout[i]->addWidget(playerPhoto[i]);
-
-        playerLayout[i]->addWidget(player[i]);
-        playerLayout[i]->addWidget(time[i]);
+        /* Player Label, Player Photo and Time Label */
+        for(int j = 0; j < game.size(); j++) {
+            if(i == 1) {
+                playerLayout[i]->addWidget(game[j]->board->playerPhotoW);
+                playerLayout[i]->addWidget(game[j]->board->playerW);
+                playerLayout[i]->addWidget(game[j]->board->timeLabelW);
+           } else {
+                playerLayout[i]->addWidget(game[j]->board->playerPhotoB);
+                playerLayout[i]->addWidget(game[j]->board->playerB);
+                playerLayout[i]->addWidget(game[j]->board->timeLabelB);
+            }
+        }
         playerLayout[i]->addWidget(score[i]);
         playerLayout[i]->setSpacing(0); // remove spacing between playerlabel and timelabel
         playerFrame[i]->setLayout(playerLayout[i]);  
     }
-
-    for(int i = 0; i < player.size(); i++) {
-        connect(player[i], SIGNAL( clicked(int) ), this, SLOT( setPlayerName(int) ) );
-    }
-
-    /* Style Player and Time Labels */
-    player[0]->setColor("black");
-    player[1]->setColor("white");
-    time[0]->setColor("black");
-    time[1]->setColor("white");
-    time[0]->setTime(1800);
-    for(int i = 0; i < 2 * game.size(); i++) {
-        players.push_back("Player " + boost::lexical_cast<string>(i));
-        t.push_back(1800);
-    }
-
-    player[0]->setText(players[activeBoard * 2 + 1]);
-    player[0]->setID(activeBoard * 2 + 1);
-    player[1]->setText(players[activeBoard * 2]);
-    player[1]->setID(activeBoard * 2);
-
-    timer = new QTimer;
-    connect(timer, SIGNAL(timeout()), this, SLOT(clocks()));
-
-    timer->start(1000);
 
     /* Output - Boxes */
     output = new QTextEdit();
@@ -261,8 +228,8 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     statusBar()->addPermanentWidget(statusMoveNr);
     statusBar()->addPermanentWidget(statusActiveColor);
 
-    game[activeBoard]->board->Slider->show();
-    game[activeBoard]->movehistory->show();
+    /* Show Player Names, Time Labels, Player Photos, Slider and Movehistory */
+    game[activeBoard]->show();
 
 /* -------------------------------------------------------------------------------------- */
 
@@ -276,10 +243,6 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     }
 
     /* Connect Engine-Thread with Output-TextEdit Object */
-    //QObject::connect(&engine, SIGNAL(newOutput()), this, SLOT(printEngineOutput()));
-
-    //engine.start();
-    //engine.stockfish();
     engineController->show();
     engineController->setGame(game[0]);
 
@@ -289,19 +252,13 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
 void MainWindow::setBoardActive(int index) {
     if(index < 0) return;
     cout << "board " + boost::lexical_cast<string>(index) + " set active" << endl;
-    //game[activeBoard]->movehistory->setParent(0);
-    activeBoard = index;
-    //cout << players[activeBoard * 2] << endl;
-    //cout << players[activeBoard * 2 + 1] << endl;
 
-    player[0]->setText(players[activeBoard * 2 + 1]);
-    //player[0]->setID(activeBoard * 2);
-    player[1]->setText(players[activeBoard * 2]);
-    //player[1]->setID(activeBoard * 2 + 1);
-    time[1]->setTime(t[activeBoard * 2 + 1]);
-    time[0]->setTime(t[activeBoard * 2]);
-    /*time[0]->setText("<font size=20 color=black><b>" + QString::fromStdString(makeTime(t[activeBoard * 2 + 1])) + "</b></font>");
-    time[1]->setText("<font size=20 color=white><b>" + QString::fromStdString(makeTime(t[activeBoard * 2])) + "</b></font>");*/
+    /* Hide old Board and show the new one */
+    game[activeBoard]->hide();
+    game[index]->show();
+
+    activeBoard = index; // Activeate new Board
+
     game[activeBoard]->board->show();
     engineController->setGame(game[index]);
 
@@ -312,6 +269,7 @@ void MainWindow::setBoardActive(int index) {
     }
     game[activeBoard]->board->Slider->show();
     game[activeBoard]->movehistory->show();
+    connect(game[activeBoard]->board, SIGNAL(madeMove()), this, SLOT(updateStatusBar()));
     updateStatusBar();
 }
 
@@ -332,13 +290,6 @@ void MainWindow::checkInputDialog(int gameID) {
         cout << "game loaded" << endl;
 
         vector<string> p = myChessDB->getPlayersByGameID(gameID);
-        for(int i = 0; i < p.size(); i++) {
-            players[activeBoard * 2 + i] = p[i];
-        }
-        player[0]->setText(players[activeBoard * 2]);
-        player[1]->setText(players[activeBoard * 2 + 1]);
-
-        //updateBoard();
     }
 }
 
@@ -617,62 +568,15 @@ void MainWindow::parseICSOutput(string outstr) {
         /* Set time and player names */
         if(game[activeBoard]->getGameID() == boost::lexical_cast<int>(values[16])) {
             /* write data to playerinfo labels */
-            for(int i = 0; i < 2; i++){
-                players[activeBoard * 2 + i] = values[17 + i];
-                t[activeBoard * 2 + i] = boost::lexical_cast<int>(values[24 + 1 - i]);
-
-            }
-            time[1]->setTime(boost::lexical_cast<int>(values[24]));
-            time[0]->setTime(boost::lexical_cast<int>(values[25]));
-            player[1]->setText(values[17]);
-            player[0]->setText(values[18]);
+            game[activeBoard]->setTimeW(boost::lexical_cast<int>(values[24]));
+            game[activeBoard]->setTimeB(boost::lexical_cast<int>(values[25]));
+            game[activeBoard]->board->playerW->setText(values[17]);
+            game[activeBoard]->board->playerB->setText(values[18]);
             game[activeBoard]->board->show();
         }
         updateStatusBar();
 
     }
-
-    //output->setText(output->toPlainText().append(QString::fromStdString(outstr)));
-    //output->verticalScrollBar()->setValue(output->verticalScrollBar()->maximum());
-}
-
-/*string MyWindow::makeTime(int seconds) {
-    int m;
-    string timestr;
-    m = seconds / 60;
-    seconds = seconds - m * 60;
-    if(m < 10) timestr.append("0");
-    timestr.append(boost::lexical_cast<string>(m));
-    timestr.append(":");
-    if(seconds < 10) timestr.append("0");
-    timestr.append(boost::lexical_cast<string>(seconds));
-    return timestr;
-}*/
-
-void MainWindow::clocks() {
-    /* Update time for every game every second */
-    for(int j = 0; j < game.size(); j++) {
-        int i = 0;
-        if(game[j]->getActiveColor() == 'w') i = 1;
-        t[j * 2 + i]--;
-
-        if(j == activeBoard && time[i]->isEnabled()) {
-            time[i]->setTime(t[j * 2 + i]);
-            for(int i = 0; i < 2; i++) {
-                player[i]->activate(false);
-                time[i]->activate(false);
-                playerPhoto[i]->setStyleSheet("");
-            }
-            time[i]->activate(true);
-            player[i]->activate(true);
-            playerPhoto[i]->setStyleSheet(StyleSheet);
-        }
-        //cout << (j * 2 + i) << endl;
-    }
-    /*for(int i = 0; i < 2* game.size(); i++) {
-        cout << boost::lexical_cast<string>(t[i]) << " ";
-    }
-    cout << endl;*/
 }
 
 void MainWindow::updateBoard() {
@@ -686,15 +590,7 @@ void MainWindow::newGame() {
     cout << "new game " << endl;
     game.push_back(new Game());
     game[game.size() - 1]->board->getPositionFromDBByID(1);
-
-    /* Connect Square-Signals to MainWindow-Slots */
-    /*for(int j = 0; j < game[game.size() - 1]->board->squares.size(); j++) {
-        QObject::connect(game[game.size() - 1]->board->squares[j], SIGNAL(clicked(int)), this, SLOT(SquareClicked(int)));
-        QObject::connect(game[game.size() - 1]->board->squares[j], SIGNAL(dropped(int, int)), this, SLOT(SquareDropped(int, int)));
-    }*/
     game[game.size() - 1]->board->show(); // Write position to squares (QLabels)
-    game[game.size() - 1]->board->setPlayer(0, "Player " + lexical_cast<string>(players.size()), 0);
-    game[game.size() - 1]->board->setPlayer(1, "Player " + lexical_cast<string>(players.size() + 1), 0);
     game[game.size() - 1]->board->newGame();
     posIDs.push_back(vector<int> ());
     posIndex.push_back(0);
@@ -702,32 +598,10 @@ void MainWindow::newGame() {
     //BoardBox[BoardBox.size() - 1]->setFixedSize(576,576);
     BoardTab->addTab(BoardBox[BoardBox.size() - 1], "Game " + QString::fromStdString(boost::lexical_cast<string>(BoardBox.size())));
     BoardBox[BoardBox.size() - 1]->setLayout(game[BoardBox.size() - 1]->board->Grid);
-    for(int i = 0; i < 2; i++) {
-        players.push_back("Player " + boost::lexical_cast<string>(2 * (game.size() - 1) + i));
-        t.push_back(0);
-    }
     BoardTab->setCurrentIndex(game.size() - 1);
     layout->addWidget(game[activeBoard]->movehistory);
     boardSliderBox->addWidget(game[activeBoard]->board->Slider);
     setBoardActive(game.size() - 1);
-}
-
-void MainWindow::SquareClicked(int id) {
-    /*int y = id / 8 + 1;
-    int x = id % 8;
-    string cmd;
-    cmd.push_back(static_cast<char>(x + 97));
-    cmd.push_back(static_cast<char>(y + 48));
-    cout << "Square " << cmd << " clicked " << endl;
-    if(clickcmd) {
-        QString txt = input->text();
-        input->setText(txt.append(QString::fromStdString(cmd)));
-        clickcmd = false;
-        readInput();
-    } else {
-        input->setText(QString::fromStdString(cmd));
-        clickcmd = true;
-    }*/
 }
 
 void MainWindow::SquareDropped(int target, int source) {
@@ -891,17 +765,6 @@ void MainWindow::closeEvent(QCloseEvent *event)
     }
 }
 
-void MainWindow::setPlayerName(int playerID) {
-    bool ok;
-    int color = 1 - playerID % 2;
-    QString txt = QInputDialog::getText(this, "Renaming " + player[color]->getName(), "Enter a new name", QLineEdit::Normal, player[color]->getName(), &ok);
-    if(ok && !txt.isEmpty()) {
-        player[color]->setText(txt);
-        players[playerID] = txt.toStdString();
-        game[activeBoard]->board->setPlayer(color, txt.toStdString(), 0);
-    }
-}
-
 void MainWindow::setNextPosition(int i) {
     nextPosIndex = i;
 }
@@ -921,6 +784,5 @@ void MainWindow::quitGame() {
 
     /* Show another board */
     activeBoard = BoardTab->currentIndex(); // set new active board
-    game[activeBoard]->board->Slider->show();
-    game[activeBoard]->movehistory->show();
+    game[activeBoard]->show();
 }

@@ -1,6 +1,7 @@
 #include "qboard.h"
 #include <QPainter>
 #include <QSound>
+#include <QInputDialog>
 #include <string>
 #include <boost/lexical_cast.hpp>
 #include "qsquare.h"
@@ -82,10 +83,47 @@ QBoard::QBoard(QWidget *parent) : QWidget(parent), Board()
     castleBQ = true;*/
     //currentPosition = new Position();
     writePositionTosquares();
+    playerW = new PlayerLabel("Player White");
+    playerB = new PlayerLabel("Player Black");
+    playerW->hide(); playerB->hide();
+    connect(playerW, SIGNAL( clicked() ), this, SLOT( setPlayerWName()) );
+    connect(playerB, SIGNAL( clicked() ), this, SLOT( setPlayerBName()) );
+    timeLabelW = new TimeLabel("white");
+    timeLabelB = new TimeLabel("black");
+    timeLabelW->hide(); timeLabelB->hide(); // Hide timelabels to avoid multiple timelabels of several games in mainwindow
+    connect(this, SIGNAL(madeMove()), this, SLOT(updateStyle()));
+
+    /* Board Clock */
+    timer = new QTimer;
+    timer->setInterval(1000); // fire evey Second
+    connect(this, SIGNAL(madeMove()), timer, SLOT(start()));
+    connect(timer, SIGNAL(timeout()), this, SLOT(updateTime()));
+    timeLabelW->setTime(timeW);
+    timeLabelB->setTime(timeB);
+
+    QImage img("./textures/person.png");
+    playerPhotoW = new QLabel();
+    playerPhotoB = new QLabel();
+    playerPhotoW->setAlignment(Qt::AlignCenter);
+    playerPhotoB->setAlignment(Qt::AlignCenter);
+    playerPhotoW->setPixmap(QPixmap::fromImage(img.scaledToWidth(64)));
+    playerPhotoB->setPixmap(QPixmap::fromImage(img.scaledToWidth(64)));
+    playerPhotoW->hide(); playerPhotoB->hide();
+    QFile File("style/playerphoto.css");
+    File.open(QFile::ReadOnly);
+    StyleSheet = QLatin1String(File.readAll());
+
+    /* Set Player White active */
+    timeLabelW->activate(true);
+    playerW->activate(true);
+    playerPhotoW->setStyleSheet(StyleSheet);
 }
 
 QBoard::~QBoard() {
     cout << "destroy QBoard" << endl;
+    delete timeLabelW; delete timeLabelB;
+    delete playerW; delete playerB;
+    delete playerPhotoW; delete playerPhotoB;
     delete Slider;
     delete Grid;
     for(int i = 0; i < painter.size(); i++) delete painter[i];
@@ -264,6 +302,7 @@ void QBoard::move(string movecmd) {
     Board::move(movecmd);
     highlightSquares();
     show();
+    updateStyle();
 
     Slider->setMaximum(NrofMoves);
     Slider->setValue(NrofMoves);
@@ -342,5 +381,59 @@ void QBoard::hint(string move) {
 }
 
 void QBoard::playMoveSound() {
-    QSound::play("./sounds/woodthunk.wav");
+    QSound::play("./sounds/move.wav");
+}
+
+void QBoard::setPlayerWName() {
+    setPlayerName(0);
+}
+void QBoard::setPlayerBName() {
+    setPlayerName(1);
+}
+void QBoard::setPlayerName(int playerID) {
+    bool ok;
+    int color = 1 - playerID % 2;
+    PlayerLabel* player;
+    if(color == 1) player = playerW; else player = playerB;
+    QString txt = QInputDialog::getText(this, "Renaming " + player->getName(), "Enter a new name", QLineEdit::Normal, player->getName(), &ok);
+    if(ok && !txt.isEmpty()) {
+        player->setText(txt);
+        //players[playerID] = txt.toStdString();
+        setPlayer(color, txt.toStdString(), 0);
+    }
+}
+
+void QBoard::setTimeW(int time) {
+    timeW = time;
+    timeLabelW->setTime(time);
+}
+
+void QBoard::setTimeB(int time) {
+    timeB = time;
+    timeLabelB->setTime(time);
+}
+
+void QBoard::updateStyle() {
+    if(getActiveColor() == 'w') {
+        timeLabelB->activate(false); playerB->activate(false);
+        timeLabelW->activate(true); playerW->activate(true);
+        playerPhotoB->setStyleSheet("");
+        playerPhotoW->setStyleSheet(StyleSheet);
+    } else {
+        timeLabelW->activate(false); playerW->activate(false);
+        timeLabelB->activate(true); playerB->activate(true);
+        playerPhotoW->setStyleSheet("");
+        playerPhotoB->setStyleSheet(StyleSheet);
+    }
+}
+
+void QBoard::updateTime() {
+    if(getActiveColor() == 'w') {
+        timeW--;
+        timeLabelW->setTime(timeW);
+    } else {
+        timeB--;
+        timeLabelB->setTime(timeB);
+    }
+    //cout << "Time White: " << timeW << ", Time Black: " << timeB << endl;
 }

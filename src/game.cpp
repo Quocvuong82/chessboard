@@ -121,3 +121,31 @@ void Game::saveGame() {
 int Game::getCurrentMoveNr() {
     return currmoveNr;
 }
+
+void Game::setTimeW(int time) {
+    board->setTimeW(time);
+}
+
+void Game::setTimeB(int time) {
+    board->setTimeB(time);
+}
+
+void Game::show() {
+    board->playerW->show();
+    board->playerB->show();
+    board->playerPhotoW->show();
+    board->playerPhotoB->show();
+    board->timeLabelW->show();
+    board->timeLabelB->show();
+    board->Slider->show();
+    movehistory->show();
+}
+
+void Game::hide() {
+    board->timeLabelW->hide();
+    board->timeLabelB->hide();
+    board->playerW->hide();
+    board->playerB->hide();
+    board->playerPhotoW->hide();
+    board->playerPhotoB->hide();
+}

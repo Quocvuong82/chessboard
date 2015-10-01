@@ -45,7 +45,7 @@ QString PlayerLabel::getName() {
 
 void PlayerLabel::mousePressEvent(QMouseEvent *event) {
     std::cout << ID << " clicked" << endl;
-    emit clicked(ID);
+    emit clicked(ID); emit clicked();
 }
 
 void PlayerLabel::edit() {

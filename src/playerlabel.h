@@ -25,6 +25,7 @@ public slots:
     void edit();
 signals:
     void clicked(int);
+    void clicked();
 };
 
 #endif // PLAYERLABEL_H
