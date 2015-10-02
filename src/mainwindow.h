@@ -64,9 +64,10 @@ class MainWindow : public QMainWindow {
 public:
     MainWindow(QMainWindow *parent = 0, Qt::WindowFlags flags = 0);
 private:
+    void createMenu();
+    void connectWidgets();
     vector<Game*> game;
     int activeBoard = 0;
-    //QChessBase myChessDB = QChessBase("localhost", "root", "floppy", "schach");
     QChessBase* myChessDB;// = QChessBase();
     bool chessserver;
     bool examining = false;
@@ -79,11 +80,8 @@ private:
     ICGameList* icgamelist;
     vector<QListWidgetItem*> item;
 
-    int posID;
     vector<int> posIndex; //Selected position index
     int nextPosIndex = 0;
-    //vector<int> eventIDs;
-    //vector<int> gameIDs;
     vector<vector<int>> posIDs;
     char activeColor;
     vector<string> values;
@@ -128,12 +126,6 @@ private:
     vector<QLabel*> score;
     vector<QHBoxLayout*> playerLayout;
 
-    QLineEdit* input;
-    QTextEdit* output;
-    QTextEdit* output2;
-    QTextEdit* engineOutput;
-    QWebView* engineView;
-
     QSlider* slider;
 
     void updateBoard();
@@ -169,14 +161,10 @@ public slots:
     void nextPos();
     void prevPos();
 
-    void readInput();
-
-    void readICServer();
-    void parseICSOutput(string);
+    void parseICSOutput(QString);
     bool ICSconnect();
     void ICSgameList();
     void onICGameListItemclicked(QListWidgetItem*);
-    void sendInputToServer();
     void sendToServer(string);
 
     void checkInputDialog();

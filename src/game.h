@@ -13,7 +13,6 @@ public:
     QBoard* board;
     static size_t getNrOfGames();
     int getGameID();
-    void setGameID(int id);
     char getActiveColor();
     int getCurrentMoveNr();
     void setActiveColor(char c);
@@ -33,6 +32,7 @@ private:
 public slots:
     void showMoveHistory();
     void HistoryItemClicked(QTreeWidgetItem*, int);
+    void setGameID(int id);
     void show();
     void hide();
 };

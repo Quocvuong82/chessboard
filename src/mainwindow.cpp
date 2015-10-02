@@ -17,132 +17,68 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     engineW = false;
     moved = false;
 
-
-    this->setWindowTitle("Chessboard 0.6");
-    this->resize(1200, 400);
-
-    /* Init Engine Controller */
+    /* Init Modules */
     engineController = new EngineController();
-
-    /* Init Chess Database */
     myChessDB = new QChessBase();
-    QObject::connect(myChessDB, SIGNAL(GameSelected(int)), this, SLOT(checkInputDialog(int)));
 
-    /* Create Menu */
-    fileMenu = new QMenu(tr("&File"), this);
-    menuBar()->addMenu(fileMenu);
-    editMenu = new QMenu(tr("&Edit"), this);
-    //menuBar()->addMenu(editMenu);
-    gameMenu = new QMenu(tr("&Game"), this);
-    menuBar()->addMenu(gameMenu);
-    engineMenu = new QMenu(tr("&Engine"), this);
-    menuBar()->addMenu(engineMenu);
-    databaseMenu = new QMenu(tr("&Database"), this);
-    menuBar()->addMenu(databaseMenu);
-    icsMenu = new QMenu(tr("&ICS"), this);
-    menuBar()->addMenu(icsMenu);
-    viewMenu = new QMenu(tr("&View"), this);
-    menuBar()->addMenu(viewMenu);
-
-    fileMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Quit"), this, SLOT(quit()), QKeySequence(tr("Ctrl+Q", "Quit")));
-    /*engineMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Play &Black"), this, SLOT(EnginePlayBlack()), QKeySequence(tr("Ctrl+B", "Engine|Play Black")));
-    engineMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Play &White"), this, SLOT(EnginePlayWhite()), QKeySequence(tr("Ctrl+B", "Engine|Play White")));*/
-
-    databaseMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Load Game From &Database"), myChessDB, SLOT(showGameSelectDialog()), QKeySequence(tr("Ctrl+D", "File|Database")));
-    databaseMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Show Position Tree"), this, SLOT(showPositionTree()), QKeySequence(tr("Ctrl+D", "File|Database")));
-    databaseMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Setup Database"), myChessDB, SLOT(setupDB()));
-
-    icsMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Connect with Internet Chess Server"), this, SLOT(ICSconnect()), QKeySequence(tr("Ctrl+S", "ICS|Server")));
-    icsMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Games on Server"), this, SLOT(ICSgameList()), QKeySequence(tr("Ctrl+S", "ICS|Server")));
-    icsMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Scan Internet Chess Server"), this, SLOT(scanICS()), QKeySequence(tr("Ctrl+S", "ICS|Server")));
-
-    gameMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("New Game"), this, SLOT(newGame()), QKeySequence(tr("Ctrl+N", "File|New Game")));
-    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Flip View"), this, SLOT(), QKeySequence(tr("Ctrl+F", "Game|Flip View")));
-    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Next Move"), this, SLOT(nextPos()));
-    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Previous Move"), this, SLOT(prevPos()));
-    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Set Game ID"), this, SLOT(setGameID()));
-    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Set Active Color"), this, SLOT(setActiveColor()));
-    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Duplicate Game"), this, SLOT());
-    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Quit Game"), this, SLOT(quitGame()));
-
-    engineMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Undock Engine-Controller"), engineController, SLOT(undock()));
-
-    viewMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Undock Gameinfo"), this, SLOT(undock()));
-
-    /* Initialize Games and Boards */
-    for(int i = 0; i < NrOfBoards; i++) {
-        game.push_back(new Game());
-        ChessDatabase *db = myChessDB;
-        game[i]->board->setDatabase(db);
-        game[i]->board->setupDatabaseConnection("localhost", "root", "floppy", "schach");
-        connect(game[i]->board, SIGNAL(madeMove()), engineController, SLOT(go()));
-        connect(engineController, SIGNAL(newBestmove(string)), game[i]->board, SLOT(hint(string)));
-    }
-
-    posID = 1;
-
-    /* Buttons */
+    /* Init Layout */
+    GameInfoBox = new QGroupBox();
     next = new QPushButton("next");
-    nextCombo = new QComboBox;
-    nextCombo->setSizeAdjustPolicy(QComboBox::AdjustToContents);
-    nextCombo->hide();
-    QObject::connect(nextCombo, SIGNAL(activated(int)), this, SLOT(setNextPosition(int)));
     back = new QPushButton("back");
-
-    input = new QLineEdit();
+    nextCombo = new QComboBox;
     for(int i = 0; i < NrOfButtons; i++) {
         button.push_back(new QPushButton(QString("B").append(QString(QString::fromStdString(boost::lexical_cast<string>(i))))));
         button[i]->setMaximumWidth(50);
     };
+    layout = new QHBoxLayout;
+    ButtonBoxLayout = new QHBoxLayout;
+    boardSliderBox = new QVBoxLayout();
+    playersLayout = new QVBoxLayout;
+    GameInfoLayout = new QVBoxLayout;
+    QVBoxLayout* engineControllerLayout = new QVBoxLayout();
+
+    BoardTab = new QTabWidget();
+
+    /* Statusbar */
+    statusActiveColor = new QLabel();
+    statusMoveNr = new QLabel();
+
+    /* Player Layout (Name, Time, Color, Score,...) */
+    for(int i = 0; i < 2; i++) {
+        playerFrame.push_back(new QFrame());
+        playerLayout.push_back(new QHBoxLayout);
+        score.push_back(new QLabel);
+    }
+
+    QGroupBox* engineControllerGroup = new QGroupBox();
+    centralWidget = new QWidget;
+
+    createMenu();  
+    connectWidgets(); // Set up Signal-Slot-Connections
+
+    /* Buttons */
+    nextCombo->setSizeAdjustPolicy(QComboBox::AdjustToContents);
+    nextCombo->hide();
+
     button[0]->setText("<");
     button[1]->setText(">");
-    //button[0]->setText("R ICS");
-    //button[1]->setText("games");
-    //button[2]->setText("Pos Tree");
-    //button[3]->setText("Scan ICS");
-    //button[6]->setText("Bestmove");
 
+    boardSliderBox->addWidget(BoardTab);
 
-    /* Signal - Slot Connections */  
-    connect(input, SIGNAL(returnPressed()), this, SLOT(readInput()));
+    statusBar();
+    statusBar()->addPermanentWidget(statusMoveNr);
+    statusBar()->addPermanentWidget(statusActiveColor);
+
+    layout->addLayout(boardSliderBox);
+    layout->addWidget(GameInfoBox);
+
+    /* Create Games and Boards */
+    for(int i = 0; i < NrOfBoards; i++) {
+        newGame();
+    }
+    BoardTab->setCurrentIndex(0); // Show first Tab
 
     /* Buttons */
-    connect(next, SIGNAL(clicked()), this, SLOT(nextPos()));
-    connect(back, SIGNAL(clicked()), this, SLOT(prevPos()));
-    //connect(button[0], SIGNAL(clicked()), this, SLOT(readICServer()));
-    //connect(button[1], SIGNAL(clicked()), this, SLOT(ICSgameList()));
-    //connect(button[2], SIGNAL(clicked()), this, SLOT(showPositionTree()));
-    //connect(button[3], SIGNAL(clicked()), this, SLOT(scanICS()));
-    connect(button[0], SIGNAL(clicked()), this, SLOT(prevPos()));
-    connect(button[1], SIGNAL(clicked()), this, SLOT(nextPos()));
-    //connect(button[6], SIGNAL(clicked()), &engine, SLOT(showOutput()));
-
-    /* Status Updates */
-    connect(button[4], SIGNAL(clicked()), this, SLOT(updateStatusBar()));
-    connect(button[5], SIGNAL(clicked()), this, SLOT(updateStatusBar()));
-    connect(engineController, SIGNAL(madeMove()), this, SLOT(updateStatusBar()));
-    connect(game[activeBoard]->board, SIGNAL(madeMove()), this, SLOT(updateStatusBar()));
-    for(int i = 0; i < game.size(); i++) {
-        connect(game[i]->board, SIGNAL(madeMove(string)), this, SLOT(sendToServer(string)));
-    }
-
-/* -------------------------------------------------------------------------------------- */
-/*   D e f i n e  L a y o u t                                                             */
-/* -------------------------------------------------------------------------------------- */
-
-    /* Tabbed Board - Layout */
-    BoardTab = new QTabWidget();
-    QGroupBox* b = new QGroupBox;
-    b->setFixedSize(300,300);
-    for(int i = 0; i < game.size(); i++) {
-        BoardBox.push_back(new QFrame);
-        BoardTab->addTab(BoardBox[i], "Game " + QString::fromStdString(boost::lexical_cast<string>(i + 1)));
-        BoardBox[i]->setLayout(game[i]->board->Grid);
-    }
-    QObject::connect(BoardTab, SIGNAL(currentChanged(int)), this, SLOT(setBoardActive(int)));
-
-    /* Buttons */
-    ButtonBoxLayout = new QHBoxLayout;
     for(int i = 0; i < NrOfButtons; i++) {
         ButtonBoxLayout->addWidget(button[i]);
     }
@@ -150,108 +86,49 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
 
     /* Player Info */
     for(int i = 0; i < 2; i++) {
-        playerFrame.push_back(new QFrame());
-        playerLayout.push_back(new QHBoxLayout);
-        score.push_back(new QLabel);
-
-        /* Player Label, Player Photo and Time Label */
-        for(int j = 0; j < game.size(); j++) {
-            if(i == 1) {
-                playerLayout[i]->addWidget(game[j]->board->playerPhotoW);
-                playerLayout[i]->addWidget(game[j]->board->playerW);
-                playerLayout[i]->addWidget(game[j]->board->timeLabelW);
-           } else {
-                playerLayout[i]->addWidget(game[j]->board->playerPhotoB);
-                playerLayout[i]->addWidget(game[j]->board->playerB);
-                playerLayout[i]->addWidget(game[j]->board->timeLabelB);
-            }
-        }
         playerLayout[i]->addWidget(score[i]);
         playerLayout[i]->setSpacing(0); // remove spacing between playerlabel and timelabel
         playerFrame[i]->setLayout(playerLayout[i]);  
     }
 
-    /* Output - Boxes */
-    output = new QTextEdit();
-    output->setReadOnly(true);
-    output->hide();
-    engineView = new QWebView();
-    QObject::connect(engineView, SIGNAL(linkClicked(QUrl)), this, SLOT(linkClicked(QUrl)));
-
     /* Game Info */
-    playersLayout = new QVBoxLayout;
     playersLayout->addWidget(playerFrame[0]);
     playersLayout->addWidget(playerFrame[1]);
 
-
-    GameInfoLayout = new QVBoxLayout;
     GameInfoLayout->addLayout(playersLayout);
     GameInfoLayout->addLayout(ButtonBoxLayout);
-    GameInfoLayout->addWidget(input);
-    GameInfoLayout->addWidget(output);
 
-    QGroupBox* engineControllerGroup = new QGroupBox();
-    QVBoxLayout* engineControllerLayout = new QVBoxLayout();
     engineControllerGroup->setLayout(engineControllerLayout);
     QString style = "QGroupBox {border: 1px solid gray;border-radius: 9px;margin-top: 0.5em;} QGroupBox::title {subcontrol-origin: margin;left: 10px;padding: 0 3px 0 3px;}";
     engineControllerGroup->setStyleSheet(style);
     engineControllerGroup->setTitle("Engine Controller");
     engineControllerLayout->addWidget(engineController);
     GameInfoLayout->addWidget(engineControllerGroup);
-    GameInfoBox = new QGroupBox("Game Info");
     GameInfoBox->setLayout(GameInfoLayout);
-    boardSliderBox = new QVBoxLayout();
-    boardSliderBox->addWidget(BoardTab);
-    for(int i = 0; i < NrOfBoards; i++) {
-        boardSliderBox->addWidget(game[i]->board->Slider); // Game-Progress-Slider
-        game[i]->board->Slider->hide();
-    }
-
-
-    /* Main Layout */
-    layout = new QHBoxLayout;
-    layout->addLayout(boardSliderBox);
-    layout->addWidget(GameInfoBox);
-    for(int i = 0; i < game.size(); i++) {
-        layout->addWidget(game[i]->movehistory);
-        game[i]->movehistory->hide();
-    }
-
-    layout->setMargin(0);
-
-    centralWidget = new QWidget;
-    centralWidget->setLayout(layout);
-    this->setCentralWidget(centralWidget);
-    this->setFocusPolicy(Qt::StrongFocus);
-    statusBar();
-    statusActiveColor = new QLabel();
-    statusActiveColor->setText(QString::fromStdString(boost::lexical_cast<string>(game[activeBoard]->getActiveColor())));
-    statusMoveNr = new QLabel();
-    statusMoveNr->setText(QString::fromStdString(boost::lexical_cast<string>(game[activeBoard]->getCurrentMoveNr())));
-    statusBar()->addPermanentWidget(statusMoveNr);
-    statusBar()->addPermanentWidget(statusActiveColor);
 
     /* Show Player Names, Time Labels, Player Photos, Slider and Movehistory */
     game[activeBoard]->show();
 
-/* -------------------------------------------------------------------------------------- */
-
-
     /* Get position data from Database and display it on the GUI board */
     for(int i = 0; i < game.size(); i++) {
-        //game[i]->board->getPositionFromDBByID(posID);
         game[i]->board->show(); // Write position to squares (QLabels)
         posIDs.push_back(vector<int> ());
         posIndex.push_back(0);
     }
 
-    /* Connect Engine-Thread with Output-TextEdit Object */
+    /* Set up EngineController */
     engineController->show();
     engineController->setGame(game[0]);
 
-    QObject::connect(&fics, SIGNAL(unread()), this, SLOT(readICServer()));
+    layout->setMargin(0);
+    centralWidget->setLayout(layout);
 
+    this->setCentralWidget(centralWidget);
+    this->setFocusPolicy(Qt::StrongFocus);
+    this->setWindowTitle("Chessboard 0.6");
+    this->resize(1200, 400);
 }  
+
 void MainWindow::setBoardActive(int index) {
     if(index < 0) return;
     cout << "board " + boost::lexical_cast<string>(index) + " set active" << endl;
@@ -350,15 +227,6 @@ void MainWindow::prevPos() {
     }
 }
 
-void MainWindow::readInput() {
-    if(chessserver) sendInputToServer(); else {
-        /* Make a move */
-        game[activeBoard]->move(input->text().toStdString());
-        updateStatusBar();
-    }
-    input->clear();
-}
-
 /* Internet Chess Server Slots                                                */
 /* -------------------------------------------------------------------------- */
 
@@ -366,21 +234,12 @@ bool MainWindow::ICSconnect() {
     chessserver = true;
     localboard = false;
     fics.connect();
-    output->setParent(0);
-    output->clear();
-    output->resize(571, 321);
-    output->show();
     icgamelist = new ICGameList();
     QObject::connect(icgamelist->list, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(onICGameListItemclicked(QListWidgetItem*)));
-    //QObject::connect(icgamelist, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(onICGameListItemclicked(QListWidgetItem*)));
-    //output->setText(QString::fromStdString(fics.readSocket()));
-}
-
-void MainWindow::sendInputToServer() {
-    //readICServer();
-    output->setText(output->toPlainText().append(input->text()));
-    output->verticalScrollBar()->setValue(output->verticalScrollBar()->maximum());
-    sendToServer(input->text().toStdString());
+    button[2]->disconnect();
+    button[2]->setText("Get Game");
+    connect(button[2], SIGNAL(clicked()), &fics, SLOT(getGame()));
+    connect(&fics, SIGNAL(newLine(QString)), this, SLOT(parseICSOutput(QString)));
 }
 
 void MainWindow::sendToServer(string msg) {
@@ -430,26 +289,10 @@ void MainWindow::setActiveColor() {
     }
 }
 
-void MainWindow::readICServer() {
-    string line = fics.readFromServer();
-    parseICSOutput(line);
-    outstr += line;
-    if(!fics.isunread()) {
-        output->setText(QString::fromStdString(outstr));
-        output->verticalScrollBar()->setValue(output->verticalScrollBar()->maximum());
-    }
-    /*while(chessserver) {
-       string outstr = fics.readFromServer();
-       while(outstr.size() > 0) {
-           //parseICSOutput(outstr);
-           cout << outstr;
-           outstr = fics.readFromServer();
-        }
-       usleep(1000);
-    }*/
-}
+void MainWindow::parseICSOutput(QString s) {
+    /* Convert QString to String */
+    string outstr  = s.toStdString();
 
-void MainWindow::parseICSOutput(string outstr) {
     string position;
     vector<string> fenstrings(13);
 
@@ -570,8 +413,9 @@ void MainWindow::newGame() {
     BoardTab->addTab(BoardBox[BoardBox.size() - 1], "Game " + QString::fromStdString(boost::lexical_cast<string>(BoardBox.size())));
     BoardBox[BoardBox.size() - 1]->setLayout(game[BoardBox.size() - 1]->board->Grid);
     BoardTab->setCurrentIndex(game.size() - 1);
-    layout->addWidget(game[activeBoard]->movehistory);
-    boardSliderBox->addWidget(game[activeBoard]->board->Slider);
+    boardSliderBox->addWidget(game[game.size() - 1]->board->Slider);
+    game[game.size() - 1]->board->Slider->hide();
+    game[game.size() - 1]->movehistory->hide();
 
     playerLayout[1]->insertWidget(0, game[game.size() - 1]->board->playerPhotoW);
     playerLayout[1]->insertWidget(1, game[game.size() - 1]->board->playerW);
@@ -580,6 +424,17 @@ void MainWindow::newGame() {
     playerLayout[0]->insertWidget(1, game[game.size() - 1]->board->playerB);
     playerLayout[0]->insertWidget(2, game[game.size() - 1]->board->timeLabelB);
 
+    layout->addWidget(game[game.size() - 1]->movehistory);
+
+    ChessDatabase *db = myChessDB;
+    game[game.size() - 1]->board->setDatabase(db);
+
+    connect(game[game.size() - 1]->board, SIGNAL(madeMove()), engineController, SLOT(go()));
+    connect(engineController, SIGNAL(newBestmove(string)), game[game.size() - 1]->board, SLOT(hint(string)));
+    connect(game[game.size() - 1]->board, SIGNAL(madeMove(string)), this, SLOT(sendToServer(string)));
+    connect(&fics, SIGNAL(newGameID(int)), game[game.size() - 1], SLOT(setGameID(int)));
+
+    connect(game[game.size() - 1]->board, SIGNAL(madeMove()), this, SLOT(updateStatusBar()));
     connect(game[game.size() - 1]->board, SIGNAL(madeMove(string)), this, SLOT(sendToServer(string)));
 
     //setBoardActive(game.size() - 1);
@@ -591,9 +446,8 @@ void MainWindow::quit() {
 }
 
 void MainWindow::ICSgameList() {
-    input->setText(QString::fromStdString("games"));
     sendToServer("games");
-    cout << "sent to server games " << endl;
+    cout << "sent to server cmd \'games\' " << endl;
     //icgamelist->show();
 }
 
@@ -607,9 +461,7 @@ void MainWindow::onICGameListItemclicked(QListWidgetItem* item) {
         i++;
     }
     idstr.erase(0, i);
-    cout <<  idstr << endl;
-    input->setText(QString::fromStdString("observe " + idstr));
-    sendInputToServer();
+    sendToServer("observe " + idstr);
     int gameID = boost::lexical_cast<int>(idstr);
 }
 
@@ -735,4 +587,63 @@ void MainWindow::quitGame() {
     /* Show another board */
     activeBoard = BoardTab->currentIndex(); // set new active board
     game[activeBoard]->show();
+}
+
+void MainWindow::createMenu() {
+    /* Create Menu */
+    fileMenu = new QMenu(tr("&File"), this);
+    menuBar()->addMenu(fileMenu);
+    editMenu = new QMenu(tr("&Edit"), this);
+    //menuBar()->addMenu(editMenu);
+    gameMenu = new QMenu(tr("&Game"), this);
+    menuBar()->addMenu(gameMenu);
+    engineMenu = new QMenu(tr("&Engine"), this);
+    menuBar()->addMenu(engineMenu);
+    databaseMenu = new QMenu(tr("&Database"), this);
+    menuBar()->addMenu(databaseMenu);
+    icsMenu = new QMenu(tr("&ICS"), this);
+    menuBar()->addMenu(icsMenu);
+    viewMenu = new QMenu(tr("&View"), this);
+    menuBar()->addMenu(viewMenu);
+
+    fileMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Quit"), this, SLOT(quit()), QKeySequence(tr("Ctrl+Q", "Quit")));
+
+    databaseMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Load Game From &Database"), myChessDB, SLOT(showGameSelectDialog()), QKeySequence(tr("Ctrl+D", "File|Database")));
+    databaseMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Show Position Tree"), this, SLOT(showPositionTree()), QKeySequence(tr("Ctrl+D", "File|Database")));
+    databaseMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Setup Database"), myChessDB, SLOT(setupDB()));
+
+    icsMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Connect with Internet Chess Server"), this, SLOT(ICSconnect()), QKeySequence(tr("Ctrl+S", "ICS|Server")));
+    icsMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Games on Server"), this, SLOT(ICSgameList()), QKeySequence(tr("Ctrl+S", "ICS|Server")));
+    icsMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Scan Internet Chess Server"), this, SLOT(scanICS()), QKeySequence(tr("Ctrl+S", "ICS|Server")));
+
+    gameMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("New Game"), this, SLOT(newGame()), QKeySequence(tr("Ctrl+N", "File|New Game")));
+    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Flip View"), this, SLOT(), QKeySequence(tr("Ctrl+F", "Game|Flip View")));
+    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Next Move"), this, SLOT(nextPos()));
+    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Previous Move"), this, SLOT(prevPos()));
+    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Set Game ID"), this, SLOT(setGameID()));
+    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Set Active Color"), this, SLOT(setActiveColor()));
+    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Duplicate Game"), this, SLOT());
+    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Quit Game"), this, SLOT(quitGame()));
+
+    engineMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Undock Engine-Controller"), engineController, SLOT(undock()));
+
+    viewMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Undock Gameinfo"), this, SLOT(undock()));
+}
+
+/* Set up Signal-Slot Connections */
+void MainWindow::connectWidgets() {
+    connect(BoardTab, SIGNAL(currentChanged(int)), this, SLOT(setBoardActive(int)));
+    connect(myChessDB, SIGNAL(GameSelected(int)), this, SLOT(checkInputDialog(int)));
+    connect(nextCombo, SIGNAL(activated(int)), this, SLOT(setNextPosition(int)));
+
+    /* Buttons */
+    connect(next, SIGNAL(clicked()), this, SLOT(nextPos()));
+    connect(back, SIGNAL(clicked()), this, SLOT(prevPos()));
+    connect(button[0], SIGNAL(clicked()), this, SLOT(prevPos()));
+    connect(button[1], SIGNAL(clicked()), this, SLOT(nextPos()));
+
+    /* Status Updates */
+    connect(button[4], SIGNAL(clicked()), this, SLOT(updateStatusBar()));
+    connect(button[5], SIGNAL(clicked()), this, SLOT(updateStatusBar()));
+    connect(engineController, SIGNAL(madeMove()), this, SLOT(updateStatusBar()));
 }

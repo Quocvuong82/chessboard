@@ -20,6 +20,8 @@
 #include "chessdatabase.h"
 #include <fcntl.h>
 #include <QObject>
+#include <QTextEdit>
+#include <QLineEdit>
 #ifndef ICCLIENT
 #define ICCLIENT
 using namespace std;
@@ -56,6 +58,10 @@ private:
     string host;
     int portno;
     string buffer;
+    QString outstr;
+    QTextEdit* output;
+    QWidget* browser;
+    QLineEdit* input;
 
     string readSocket();
     string readLine();
@@ -68,8 +74,13 @@ private:
 signals:
    void newOutput();
    void unread();
+   void newLine(QString);
+   void newGameID(int);
 public slots:
    void emitSignal();
+   void getGame();
+   void readInput();
+   void printOutput(QString line);
 };
 
 #endif // ICCLIENT

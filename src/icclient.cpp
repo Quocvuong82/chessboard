@@ -1,4 +1,6 @@
 #include"icclient.h"
+#include <QScrollBar>
+#include <QLineEdit>
 
 ICclient::ICclient(QObject *parent) : QObject(parent){
     host = "freechess.org";
@@ -41,10 +43,26 @@ bool ICclient::connect() {
         error("ERROR connecting");
 
     cout << "Connecting with " << host << "..." << endl;
+
     connected = true;
+
+    browser = new QWidget();
+    output = new QTextEdit();
+    QVBoxLayout* browserLayout = new QVBoxLayout();
+    input = new QLineEdit();
+    browserLayout->addWidget(output);
+    browserLayout->addWidget(input);
+    browser->setLayout(browserLayout);
+    browser->resize(571, 321);
+    browser->setWindowTitle("Internet Chess Server - Chessboard");
+    browser->show();
+
+    QObject::connect(input, SIGNAL(returnPressed()), this, SLOT(readInput()));
+    QObject::connect(this, SIGNAL(newLine(QString)), this, SLOT(printOutput(QString)));
+
     // Print continuously incoming messages from the server
-    boost::thread output ( &ICclient::readSocket, this );
-    boost::thread bufferManager ( &ICclient::bufferManager, this );
+    boost::thread outputThread ( &ICclient::readSocket, this );
+    //boost::thread bufferManager ( &ICclient::bufferManager, this );
 
     // Entering Username
     cout << "Entering username " << endl;
@@ -73,29 +91,17 @@ void ICclient::emitSignal(){
 }
 
 string ICclient::readFromServer(){
-    //cout << "pos: " << pos << endl;
-    /*if (pos > buffer.size()) return "";
-    string s = buffer.substr(pos, string::npos);
-    pos = buffer.size();
-    return s;*/
+
     /* Returns Server Outout Line By Line */
-    //pos++;
     if (pos > buffer.size() || pos == string::npos) return "";
     size_t newline = buffer.find("\n", pos);
-    //cout << "newline: " << newline << " pos: " << pos << endl;
     string s = buffer.substr(pos, newline - pos + 1);
     if(newline != string::npos) pos = newline + 1; else
     pos = buffer.size() + 1;
-    //pos = buffer.size();
     size_t n = s.find("\n");
     while(n != string::npos) {
-        //s.erase(n, 1);
-        //cout << n << " ";
         n = s.find("\n", n + 1);
     }
-    //cout << " pos: " << pos << " buffersize: " << buffer.size();
-    //cout << endl;
-    //cout << s << endl;
     s.erase(0, 1); // remove newline character at the beginning
     return s;
 }
@@ -164,6 +170,7 @@ string ICclient::readSocket() {
     int flags = fcntl(sockfd, F_GETFL, 0);
     fcntl(sockfd, F_SETFL, flags | O_NONBLOCK);
     int b = 1; int c;
+    size_t newline; size_t newline_old = 0;
     while(AUTOLOAD) {
         char buf[68];
         memset(buf, 0, sizeof buf);
@@ -173,11 +180,12 @@ string ICclient::readSocket() {
             size_t bsize = buffer.size();
             buffer.append(buf);
             usleep(50);
-            size_t newline;
             newline = buffer.find("\n", bsize);
             if(newline != string::npos) {
                 //emit newOutput();
+                emit newLine(QString::fromStdString(buffer.substr(newline_old + 2, newline - newline_old - 1)));
                 newServerData = true;
+                newline_old = newline;
             }
             if(latency > 501) latency -= 500; // make reading faster
         }
@@ -512,4 +520,38 @@ void ICclient::clearBuffer() {
 
 bool ICclient::isConnected() {
     return connected;
+}
+
+void ICclient::getGame() {
+    writeSocket("getgame");
+}
+
+void ICclient::printOutput(QString line) {
+    outstr += line;
+    output->setText(outstr);
+    output->verticalScrollBar()->setValue(output->verticalScrollBar()->maximum());
+}
+
+void ICclient::readInput() {
+    string msg = input->text().toStdString();
+    size_t o = msg.find("observe ");
+    size_t ex = msg.find("examine ");
+    //cout << "o: " << o << endl;
+    if(o != string::npos) {
+        size_t sp = msg.find(" ", o + 8);
+        int gameID = boost::lexical_cast<int>(msg.substr(o + 8, sp - o - 8));
+        emit newGameID(gameID); // --> active Board can set new game id to identify game data from server
+        //BoardTab->setTabText(activeBoard, QString::fromStdString("#" + boost::lexical_cast<string>(gameID)));
+        cout << "set gameID to " << msg.substr(o + 8, sp - o - 8) << endl;
+    }
+    if(ex != string::npos) {
+        size_t sp = msg.find(" ", ex + 8);
+        size_t sp2 = msg.find(" ", sp + 1);
+        sp++;
+        int gameID = boost::lexical_cast<int>(msg.substr(sp, sp2));
+        //game[activeBoard]->setGameID(gameID); // will not work, cause this is not the real game id (it's the ID from history)
+        //BoardTab->setTabText(activeBoard, QString::fromStdString("#" + boost::lexical_cast<string>(gameID)));
+        cout << "set gameID to " << msg.substr(sp, sp2) << endl;
+    }
+    writeSocket(msg);
 }
