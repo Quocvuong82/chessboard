@@ -149,6 +149,19 @@ void MainWindow::setBoardActive(int index) {
     }
     game[activeBoard]->board->Slider->show();
     game[activeBoard]->movehistory->show();
+
+    /* Update File Menu */
+    fileMenu->removeAction(openFile);
+    fileMenu->removeAction(saveToFile);
+    openFile = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Open File"), this);
+    saveToFile = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Save Game to File"), this);
+    connect(openFile, SIGNAL(triggered()), game[activeBoard]->board, SLOT(openFile()));
+    connect(saveToFile, SIGNAL(triggered()), game[activeBoard]->board, SLOT(saveGameToFile()));
+    fileMenu->addAction(openFile);
+    fileMenu->addAction(saveToFile);
+    fileMenu->insertAction(quitMain, openFile);
+    fileMenu->insertAction(quitMain, saveToFile);
+
     connect(game[activeBoard]->board, SIGNAL(madeMove()), this, SLOT(updateStatusBar()));
     updateStatusBar();
 }
@@ -606,7 +619,13 @@ void MainWindow::createMenu() {
     viewMenu = new QMenu(tr("&View"), this);
     menuBar()->addMenu(viewMenu);
 
-    fileMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Quit"), this, SLOT(quit()), QKeySequence(tr("Ctrl+Q", "Quit")));
+    openFile = new QAction(this);
+    saveToFile = new QAction(this);
+    fileMenu->addAction(openFile);
+    fileMenu->addAction(saveToFile);
+    quitMain = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Quit"), this);
+    connect(quitMain, SIGNAL(triggered()), this, SLOT(quit()));
+    fileMenu->addAction(quitMain);
 
     databaseMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Load Game From &Database"), myChessDB, SLOT(showGameSelectDialog()), QKeySequence(tr("Ctrl+D", "File|Database")));
     databaseMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Show Position Tree"), this, SLOT(showPositionTree()), QKeySequence(tr("Ctrl+D", "File|Database")));

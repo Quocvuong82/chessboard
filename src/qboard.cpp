@@ -2,6 +2,7 @@
 #include <QPainter>
 #include <QSound>
 #include <QInputDialog>
+#include <QFileDialog>
 #include <string>
 #include <boost/lexical_cast.hpp>
 #include "qsquare.h"
@@ -443,4 +444,19 @@ void QBoard::loadGame(int GameID) {
     Board::loadGame(GameID);
     playerW->setText(white);
     playerB->setText(black);
+}
+
+void QBoard::openFile() {
+    QString fileName = QFileDialog::getOpenFileName(this,
+        tr("Open File"), "/home/alex", tr("Chess Files (*.chx *.pgn)"));
+    Board::loadFile(fileName.toStdString());
+    playerW->setText(white);
+    playerB->setText(black);
+}
+
+void QBoard::saveGameToFile() {
+    QString fileName = QFileDialog::getOpenFileName(this,
+        tr("Save Game to File"), "/home/alex", tr("Chess Files (*.chx *.pgn)"));
+    cout << "Save to File " << fileName.toStdString() << endl;
+    Board::saveGameToFile(fileName.toStdString());
 }

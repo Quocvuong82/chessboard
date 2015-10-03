@@ -406,11 +406,6 @@ void Board::setPosition(int index) {
 }
 
 void Board::loadGame(int GameID) {
-    ofstream chessfile;
-
-    chessfile.open("chessfile.chx", ios_base::app);
-    if(!chessfile.is_open())
-        cerr << "Chess-File could not be created" << endl;
 
     cout << "load game " << GameID << endl;
     vector<int> posIDs = DB->getPosIDsByGameID(GameID);
@@ -424,7 +419,6 @@ void Board::loadGame(int GameID) {
     initialPosition = DB->getPositionFromDBByID(posIDs[0]);
     currentPosition = &initialPosition;
     for(int i = 1; i < posIDs.size(); i++) {
-        chessfile << currentPosition->getFenString() << endl;
         currentPosition->addChild(DB->getPositionFromDBByID(posIDs[i]));
         positions.push_back(currentPosition);
         currentPosition = currentPosition->getLastChild();
@@ -454,6 +448,73 @@ void Board::loadGame(int GameID) {
     white = p[0];
     black = p[1];
 }
+
+void Board::loadFile(string filename) {
+    cout << "Board::loadFile " << filename << endl;
+    /* Init positions */
+    initialPosition = Fen();
+    currentPosition = &initialPosition;
+    NrofMoves = 0;
+    positions.clear();
+    positions.push_back(currentPosition);
+
+    /* Open File */
+    ifstream chessfile;
+    chessfile.open(filename, ios_base::in);
+    string buffer;
+
+    std::vector<string> values; int i = 0;
+    while(getline (chessfile, buffer, ' ')) {
+        if(i > 1) break;
+        values.push_back(buffer); i++;
+    }
+    white = values[0]; black = values[1];
+
+    /* Read Positions */
+    int c = 0;
+    getline (chessfile, buffer);
+    while(getline (chessfile, buffer)) {
+        size_t sp = 0, b = 0;
+        std::vector<string> pos;
+        while(sp != string::npos) {
+            sp = buffer.find(" ", b);
+            pos.push_back(buffer.substr(b, sp - b));
+            b = sp + 1;
+        }
+        Fen p = Fen(pos);
+        currentPosition->addChild(p);
+        NrofMoves++;
+        currentPosition = currentPosition->getLastChild();
+        positions.push_back(currentPosition);
+        c++;
+        buffer.clear();
+    }
+    currentPosition = &initialPosition;
+}
+
+bool Board::saveGameToFile(string file) {
+    ofstream chessfile;
+
+    chessfile.open(file, ios_base::app);
+    if(!chessfile.is_open()) {
+        cerr << "Chess-File could not be created" << endl;
+        return false;
+    }
+
+    cout << "Save game to File" << file << endl;
+
+    /* Create chessfile header */
+    chessfile << white << " " << black << " " << endl;
+
+    /* Write positions to file */
+    Fen* p = &initialPosition;
+    while(p->hasChildren()) {
+        chessfile << p->getFenString() << endl;
+        p = p->getLastChild();
+    }
+    return true;
+}
+
 
 vector<string> Board::getSplittedPGN(string pgn_raw) {
     if(pgn_raw.size() == 0) {
@@ -886,7 +947,7 @@ void Board::writePositionsToDB() {
 }
 
 void Board::saveGame() {
-    cout << "Saving Game ";
+    cout << "Saving Game to Database ";
     writePlayersToDB();
 
     /* Get current date */
@@ -896,37 +957,6 @@ void Board::saveGame() {
     writeGameToDB();
     cout << GameID << endl;
     writePositionsToDB();
-}
-
-void Board::loadFile(string filename) {
-    initialPosition = Fen();
-    currentPosition = &initialPosition;
-    NrofMoves = 0;
-    positions.clear();
-    positions.push_back(currentPosition);
-    ifstream chessfile;
-    chessfile.open(filename, ios_base::in);
-    string buffer;
-    int c = 0;
-    getline (chessfile, buffer);
-    while(getline (chessfile, buffer)) {
-        size_t sp = 0, b = 0;
-        std::vector<string> pos;
-        while(sp != string::npos) {
-            sp = buffer.find(" ", b);
-            pos.push_back(buffer.substr(b, sp - b));
-            //QMessageBox::information(0, "Reading File", QString::fromStdString(buffer.substr(b, sp - b)), QMessageBox::Ok);
-            b = sp + 1;
-        }
-        Fen p = Fen(pos);
-        currentPosition->addChild(p);
-        NrofMoves++;
-        currentPosition = currentPosition->getLastChild();
-        positions.push_back(currentPosition);
-        c++;
-        buffer.clear();
-    }
-    currentPosition = &initialPosition;
 }
 
 bool Board::hasChildren() {

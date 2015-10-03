@@ -127,6 +127,7 @@ public:
     bool setPosition(Fen pos);
     void setPosition(int index);
     void loadGame(int GameID);
+    bool saveGameToFile(string file);
     //void setPosition(int posID);
     bool writePositionToDB();
     bool writePlayersToDB();

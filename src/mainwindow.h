@@ -94,6 +94,9 @@ private:
     QMenu *icsMenu;
     QMenu *viewMenu;
     QMenu *databaseMenu;
+    QAction* openFile;
+    QAction* saveToFile;
+    QAction* quitMain;
 
     /* Status Bar */
     QLabel* statusActiveColor;

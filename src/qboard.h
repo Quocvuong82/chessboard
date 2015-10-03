@@ -76,6 +76,8 @@ public slots:
     void setPlayerBName();
     void updateStyle(); // Apply style changes
     void updateTime();
+    void openFile();
+    void saveGameToFile();
 };
 
 #endif // QBOARD_H
