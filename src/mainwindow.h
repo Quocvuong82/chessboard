@@ -96,7 +96,8 @@ private:
     QMenu *databaseMenu;
     QAction* openFile;
     QAction* saveToFile;
-    QAction* quitMain;
+    QAction* quitAction;
+    QAction* quitGameAction;
 
     /* Status Bar */
     QLabel* statusActiveColor;
@@ -187,7 +188,7 @@ public slots:
     void showBestmoveMessage();
     void setNextPosition(int);
     void unsetEngine(int i);
-    void quitGame();
+    void quitGame(int);
 };
 
 #endif // MAINWINDOW

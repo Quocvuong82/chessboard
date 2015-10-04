@@ -76,6 +76,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     for(int i = 0; i < NrOfBoards; i++) {
         newGame();
     }
+    BoardTab->setTabsClosable(true);
     BoardTab->setCurrentIndex(0); // Show first Tab
 
     /* Buttons */
@@ -127,6 +128,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     this->setFocusPolicy(Qt::StrongFocus);
     this->setWindowTitle("Chessboard 0.6");
     this->resize(1200, 400);
+    this->adjustSize();
 }  
 
 void MainWindow::setBoardActive(int index) {
@@ -157,10 +159,11 @@ void MainWindow::setBoardActive(int index) {
     saveToFile = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Save Game to File"), this);
     connect(openFile, SIGNAL(triggered()), game[activeBoard]->board, SLOT(openFile()));
     connect(saveToFile, SIGNAL(triggered()), game[activeBoard]->board, SLOT(saveGameToFile()));
+
     fileMenu->addAction(openFile);
     fileMenu->addAction(saveToFile);
-    fileMenu->insertAction(quitMain, openFile);
-    fileMenu->insertAction(quitMain, saveToFile);
+    fileMenu->insertAction(quitAction, openFile);
+    fileMenu->insertAction(quitAction, saveToFile);
 
     connect(game[activeBoard]->board, SIGNAL(madeMove()), this, SLOT(updateStatusBar()));
     updateStatusBar();
@@ -427,8 +430,8 @@ void MainWindow::newGame() {
     BoardBox[BoardBox.size() - 1]->setLayout(game[BoardBox.size() - 1]->board->Grid);
     BoardTab->setCurrentIndex(game.size() - 1);
     boardSliderBox->addWidget(game[game.size() - 1]->board->Slider);
-    game[game.size() - 1]->board->Slider->hide();
-    game[game.size() - 1]->movehistory->hide();
+    game[game.size() - 1]->board->Slider->show();
+    game[game.size() - 1]->movehistory->show();
 
     playerLayout[1]->insertWidget(0, game[game.size() - 1]->board->playerPhotoW);
     playerLayout[1]->insertWidget(1, game[game.size() - 1]->board->playerW);
@@ -438,10 +441,10 @@ void MainWindow::newGame() {
     playerLayout[0]->insertWidget(2, game[game.size() - 1]->board->timeLabelB);
 
     layout->addWidget(game[game.size() - 1]->movehistory);
+    adjustSize();
 
     ChessDatabase *db = myChessDB;
     game[game.size() - 1]->board->setDatabase(db);
-
     connect(game[game.size() - 1]->board, SIGNAL(madeMove()), engineController, SLOT(go()));
     connect(engineController, SIGNAL(newBestmove(string)), game[game.size() - 1]->board, SLOT(hint(string)));
     connect(game[game.size() - 1]->board, SIGNAL(madeMove(string)), this, SLOT(sendToServer(string)));
@@ -589,9 +592,9 @@ void MainWindow::unsetEngine(int i) {
     else engineB = false;
 }
 
-void MainWindow::quitGame() {
+void MainWindow::quitGame(int index) {
     /* Remove Board */
-    int deleteBoard = activeBoard;
+    int deleteBoard = index;
     BoardTab->removeTab(deleteBoard);
     delete game[deleteBoard]; // free memory
     game.erase(game.begin()+deleteBoard); // remove game from game array
@@ -600,6 +603,7 @@ void MainWindow::quitGame() {
     /* Show another board */
     activeBoard = BoardTab->currentIndex(); // set new active board
     game[activeBoard]->show();
+    adjustSize();
 }
 
 void MainWindow::createMenu() {
@@ -614,18 +618,20 @@ void MainWindow::createMenu() {
     menuBar()->addMenu(engineMenu);
     databaseMenu = new QMenu(tr("&Database"), this);
     menuBar()->addMenu(databaseMenu);
-    icsMenu = new QMenu(tr("&ICS"), this);
+    icsMenu = new QMenu(tr("&Chess Server"), this);
     menuBar()->addMenu(icsMenu);
     viewMenu = new QMenu(tr("&View"), this);
     menuBar()->addMenu(viewMenu);
 
     openFile = new QAction(this);
     saveToFile = new QAction(this);
+    quitGameAction = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Quit Game"), this);
+    quitAction = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Quit ChessBoard"), this);
+    fileMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("New Game"), this, SLOT(newGame()), QKeySequence(tr("Ctrl+N", "File|New Game")));
     fileMenu->addAction(openFile);
     fileMenu->addAction(saveToFile);
-    quitMain = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Quit"), this);
-    connect(quitMain, SIGNAL(triggered()), this, SLOT(quit()));
-    fileMenu->addAction(quitMain);
+    //fileMenu->addAction(quitGameAction);
+    fileMenu->addAction(quitAction);
 
     databaseMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Load Game From &Database"), myChessDB, SLOT(showGameSelectDialog()), QKeySequence(tr("Ctrl+D", "File|Database")));
     databaseMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Show Position Tree"), this, SLOT(showPositionTree()), QKeySequence(tr("Ctrl+D", "File|Database")));
@@ -635,14 +641,12 @@ void MainWindow::createMenu() {
     icsMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Games on Server"), this, SLOT(ICSgameList()), QKeySequence(tr("Ctrl+S", "ICS|Server")));
     icsMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Scan Internet Chess Server"), this, SLOT(scanICS()), QKeySequence(tr("Ctrl+S", "ICS|Server")));
 
-    gameMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("New Game"), this, SLOT(newGame()), QKeySequence(tr("Ctrl+N", "File|New Game")));
     gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Flip View"), this, SLOT(), QKeySequence(tr("Ctrl+F", "Game|Flip View")));
-    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Next Move"), this, SLOT(nextPos()));
-    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Previous Move"), this, SLOT(prevPos()));
+    //gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Next Move"), this, SLOT(nextPos()));
+    //gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("&Previous Move"), this, SLOT(prevPos()));
     gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Set Game ID"), this, SLOT(setGameID()));
     gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Set Active Color"), this, SLOT(setActiveColor()));
     gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Duplicate Game"), this, SLOT());
-    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Quit Game"), this, SLOT(quitGame()));
 
     engineMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Undock Engine-Controller"), engineController, SLOT(undock()));
 
@@ -651,7 +655,9 @@ void MainWindow::createMenu() {
 
 /* Set up Signal-Slot Connections */
 void MainWindow::connectWidgets() {
+    connect(quitAction, SIGNAL(triggered()), this, SLOT(quit()));
     connect(BoardTab, SIGNAL(currentChanged(int)), this, SLOT(setBoardActive(int)));
+    connect(BoardTab, SIGNAL(tabCloseRequested(int)), this, SLOT(quitGame(int)));
     connect(myChessDB, SIGNAL(GameSelected(int)), this, SLOT(checkInputDialog(int)));
     connect(nextCombo, SIGNAL(activated(int)), this, SLOT(setNextPosition(int)));
 
