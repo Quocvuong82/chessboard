@@ -448,15 +448,21 @@ void QBoard::loadGame(int GameID) {
 
 void QBoard::openFile() {
     QString fileName = QFileDialog::getOpenFileName(this,
-        tr("Open File"), "/home/alex", tr("Chess Files (*.chx *.pgn)"));
+        tr("Open File"), "/home/alex/schach/chessfiles", tr("Chess Files (*.chx *.pgn)"));
     Board::loadFile(fileName.toStdString());
     playerW->setText(white);
     playerB->setText(black);
 }
 
 void QBoard::saveGameToFile() {
-    QString fileName = QFileDialog::getOpenFileName(this,
-        tr("Save Game to File"), "/home/alex", tr("Chess Files (*.chx *.pgn)"));
+    QFileDialog dialog(this);
+    dialog.setNameFilter(tr("Images (*.png *.xpm *.jpg)"));
+    dialog.setAcceptMode( QFileDialog::AcceptSave );
+    dialog.setDirectory("/home/alex/schach/chessfiles");
+    QString fileName = dialog.getSaveFileName();
+    //QString fileName = QFileDialog::getOpenFileName(this,
+        //tr("Save Game to File"), "/home/alex", tr("Chess Files (*.chx *.pgn)"));
+
     cout << "Save to File " << fileName.toStdString() << endl;
     Board::saveGameToFile(fileName.toStdString());
 }
