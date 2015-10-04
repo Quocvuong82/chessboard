@@ -154,20 +154,25 @@ void MainWindow::setBoardActive(int index) {
     game[activeBoard]->movehistory->show();
 
     /* Update File Menu */
-    fileMenu->removeAction(openFile);
+    fileMenu->removeAction(openFileAction);
     fileMenu->removeAction(saveToFile);
-    openFile = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Open File"), this);
+    mainToolBar->removeAction(openFileAction);
+
+    openFileAction = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/icons/openfile.png")), tr("Open File"), this);
     saveToFile = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Save Game to File"), this);
-    connect(openFile, SIGNAL(triggered()), game[activeBoard]->board, SLOT(openFile()));
+
+    connect(openFileAction, SIGNAL(triggered()), game[activeBoard]->board, SLOT(openFile()));
     connect(saveToFile, SIGNAL(triggered()), game[activeBoard]->board, SLOT(saveGameToFile()));
 
-    fileMenu->addAction(openFile);
+    fileMenu->addAction(openFileAction);
     fileMenu->addAction(saveToFile);
-    fileMenu->insertAction(quitAction, openFile);
+    fileMenu->insertAction(quitAction, openFileAction);
     fileMenu->insertAction(quitAction, saveToFile);
+    mainToolBar->insertAction(prevMoveAction, openFileAction);
 
     connect(game[activeBoard]->board, SIGNAL(madeMove()), this, SLOT(updateStatusBar()));
     updateStatusBar();
+    adjustSize();
 }
 
 void MainWindow::checkInputDialog() {
@@ -624,12 +629,12 @@ void MainWindow::createMenu() {
     viewMenu = new QMenu(tr("&View"), this);
     menuBar()->addMenu(viewMenu);
 
-    openFile = new QAction(this);
+    openFileAction = new QAction(this);
     saveToFile = new QAction(this);
     quitGameAction = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/icons/close.png")), tr("Quit Game"), this);
     quitAction = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Quit ChessBoard"), this);
     fileMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("New Game"), this, SLOT(newGame()), QKeySequence(tr("Ctrl+N", "File|New Game")));
-    fileMenu->addAction(openFile);
+    fileMenu->addAction(openFileAction);
     fileMenu->addAction(saveToFile);
     //fileMenu->addAction(quitGameAction);
     fileMenu->addAction(quitAction);
@@ -654,10 +659,27 @@ void MainWindow::createMenu() {
     viewMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Undock Gameinfo"), this, SLOT(undock()));
 }
 
+
+void MainWindow::createToolBars() {
+    newGameAction = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/icons/newgame.png")), tr("New Game"), this);
+    nextMoveAction = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/icons/next.png")), tr("Next Move"), this);
+    prevMoveAction = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/icons/prev.png")), tr("Previous Move"), this);
+    loadFromDBAction = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/icons/searchdatabase.png")), tr("Load Game from Database"), this);
+
+    mainToolBar = new QToolBar();
+    addToolBar(Qt::LeftToolBarArea, mainToolBar);
+    mainToolBar->addAction(newGameAction);
+    mainToolBar->addAction(prevMoveAction);
+    mainToolBar->addAction(nextMoveAction);
+    mainToolBar->addAction(loadFromDBAction);
+}
+
 /* Set up Signal-Slot Connections */
 void MainWindow::connectWidgets() {
+    connect(newGameAction, SIGNAL(triggered()), this, SLOT(newGame()));
     connect(nextMoveAction, SIGNAL(triggered()), this, SLOT(nextPos()));
     connect(prevMoveAction, SIGNAL(triggered()), this, SLOT(prevPos()));
+    connect(loadFromDBAction, SIGNAL(triggered()), myChessDB, SLOT(showGameSelectDialog()));
     connect(quitAction, SIGNAL(triggered()), this, SLOT(quit()));
 
     connect(BoardTab, SIGNAL(currentChanged(int)), this, SLOT(setBoardActive(int)));
@@ -675,12 +697,4 @@ void MainWindow::connectWidgets() {
     connect(button[4], SIGNAL(clicked()), this, SLOT(updateStatusBar()));
     connect(button[5], SIGNAL(clicked()), this, SLOT(updateStatusBar()));
     connect(engineController, SIGNAL(madeMove()), this, SLOT(updateStatusBar()));
-}
-
-void MainWindow::createToolBars() {
-    nextMoveAction = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/icons/next.png")), tr("Next Move"), this);
-    prevMoveAction = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/icons/prev.png")), tr("Previous Move"), this);
-    QToolBar* fileToolBar = addToolBar(tr("File"));
-    fileToolBar->addAction(prevMoveAction);
-    fileToolBar->addAction(nextMoveAction);
 }

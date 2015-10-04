@@ -64,7 +64,11 @@ class MainWindow : public QMainWindow {
 public:
     MainWindow(QMainWindow *parent = 0, Qt::WindowFlags flags = 0);
 private:
+    const int NrOfButtons = 7;
+    int NrOfBoards = 1; // how many boards will be initialized
+
     void createMenu();
+    void createToolBars();
     void connectWidgets();
     vector<Game*> game;
     int activeBoard = 0;
@@ -94,17 +98,22 @@ private:
     QMenu *icsMenu;
     QMenu *viewMenu;
     QMenu *databaseMenu;
-    QAction* openFile;
+    QAction* openFileAction;
     QAction* saveToFile;
     QAction* quitAction;
     QAction* quitGameAction;
+    QAction* nextMoveAction;
+    QAction* prevMoveAction;
+    QAction* newGameAction;
+    QAction* loadFromDBAction;
+
+    QToolBar* mainToolBar;
 
     /* Status Bar */
     QLabel* statusActiveColor;
     QLabel* statusMoveNr;
 
     QWidget* centralWidget;
-    const int NrOfButtons = 7;
     QPushButton* myButton;
     QPushButton* EngineButton;
     QPushButton* RefreshButton;
@@ -118,7 +127,6 @@ private:
 
     QVBoxLayout* GameInfoLayout;
     QHBoxLayout* ButtonBoxLayout;
-    int NrOfBoards = 4; // how many boards will be initialized
     vector<QFrame*> BoardBox;
     QTabWidget* BoardTab;
     QGroupBox* GameInfoBox;
