@@ -2,6 +2,7 @@
 #include "ui_enginecontroller.h"
 #include "qdialvalue.h"
 #include <QListWidgetItem>
+#include <QDebug>
 
 EngineController::EngineController(QWidget *parent) :
     QWidget(parent),
@@ -9,6 +10,7 @@ EngineController::EngineController(QWidget *parent) :
 {
     ui->setupUi(this);
     connect(ui->engineSelect, SIGNAL(activated(int)), this, SLOT(selectEngine(int)));
+    selectEngine(0); // set default engine
 
     connect(ui->goButton, SIGNAL(pressed()), this, SLOT(toggleGoStop()));
     goButtonPressed = false;
@@ -87,6 +89,16 @@ void EngineController::setGame(Game* game) {
 }
 
 void EngineController::go() {
+    qDebug() << "go";
+    if(isOn()) qDebug() << "is on";
+    if(goButtonPressed) qDebug() << "Go-Button is pressed";
+    if(ui->radio_play->isChecked()) qDebug() << "Radio Play is checked";
+    if(ui->checkBox_black->isChecked()) qDebug() << "Black-Checkbox is checked";
+    if(ui->checkBox_black->isChecked() && !ui->checkBox_white->isChecked() && game->getActiveColor() == 'w') qCritical() << "go error";
+    if(engine->isThinking()) qDebug() << "is thinking";
+    /*engine->setPosition(game->board->getFenstring());
+    engine->go();
+    return;*/
     if(isOn()) {
         if(!goButtonPressed) {
             if(ui->radio_play->isChecked()) {
@@ -124,11 +136,15 @@ void EngineController::play() {
         game->move(engine->getBestmove());
 
         /* Let other widgets know, that we made a move */
+        cout << "Made move" << endl;
         emit madeMove();
         ui->playButton->setDisabled(true);
 
         /* Think on next move if radiobutton play and color checkbox are checked */
+        cout << "Think on next move" << endl;
         if(ui->radio_play->isChecked() || ui->radio_think->isChecked()) {
+            if(game->getActiveColor() == 'b') selectEngine(1);
+            else selectEngine(0);
             if((ui->checkBox_black->isChecked() && game->getActiveColor() == 'b')
                     || (ui->checkBox_white->isChecked() && game->getActiveColor() == 'w')) go();
         }

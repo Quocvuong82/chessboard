@@ -29,9 +29,9 @@ private:
     QString pathToEngine;
     bool thinking;
 signals:
-    void stateChanged(int);
+    virtual void stateChanged(int);
     void newOutput(QString);
-    void newBestmove();
+    virtual void newBestmove();
 public slots:
     void showOutput(QString);
     virtual void getValues(QString) = 0;

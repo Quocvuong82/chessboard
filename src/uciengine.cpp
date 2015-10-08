@@ -113,9 +113,11 @@ void UCIEngine::getValues(QString line) {
         int e = outstr.find(" ", p + 9);
         if(p != string::npos) {
             bestmove = outstr.substr(p + 9, e- p - 9);
-            cout << "Engine::getValues: bestmove " << bestmove << endl;
-            emit newBestmove();
+            cout << "UCIEngine::getValues: bestmove " << bestmove << endl;
+            cout << "set thinking false" << endl;
             setThinking(false);
+            emit newBestmove();
+            return;
         }
 
         //qDebug() << "Oldline: " << oldline << "Newline:" << newline << endl;
@@ -279,12 +281,14 @@ void UCIEngine::go() {
 
     cout << command << endl;
     writeToEngine(command);
+    cout << "set thinking true" << endl;
     setThinking(true);
     stopping = false;
     boost::thread engine ( &UCIEngine::readEngine, this );
 }
 
 void UCIEngine::stop() {
+    cout << "UCIEngine::stop()" << endl;
     if(!stopping) {
         cout << "stopping engine " << endl;
         writeToEngine("stop");

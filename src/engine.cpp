@@ -30,6 +30,7 @@ bool Engine::isThinking() {
 
 void Engine::setThinking(bool state) {
     thinking = state;
+    cout << "state changed" << endl;
     if(state) emit stateChanged(1);
     else emit stateChanged(0);
 }
@@ -40,8 +41,8 @@ void Engine::readEngine() {
         char buf[8192];
         memset(buf, 0, sizeof buf);
 
-        b = engine->read(buf, sizeof(buf));
-        //b = engine->readLine(buf, sizeof(buf));
+        //b = engine->read(buf, sizeof(buf));
+        b = engine->readLine(buf, sizeof(buf));
         if(b == -1) { cout << "Engine crashed" << endl; return; }
         if(b > 0) {
             buffer.append(buf);
@@ -52,7 +53,7 @@ void Engine::readEngine() {
             //getValues(QString::fromStdString(line));
             emit newOutput(QString::fromStdString(line));
         }
-        cout << " (" << b << " Bytes read)" << endl;
+        //cout << " (" << b << " Bytes read)" << endl;
         if(b <= 0) usleep(10000);
     }
 }

@@ -11,7 +11,7 @@ public:
     void setPosition(string fen);
     vector<vector<string>> getOtherMoves();
 private:
-    string fen;
+
 signals:
 public slots:
     void go();

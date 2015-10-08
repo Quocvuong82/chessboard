@@ -19,7 +19,8 @@ void ChessEngine::go() {
     /* Create Command with Fen-String */
     string command;
 
-    //command = "setboard fen " + fen + "\n";
+    cout << "set fen: " << fen << endl;
+    command = "setboard " + fen + "\n";
 
     command += "go";
 
@@ -51,7 +52,7 @@ vector<vector<string>> ChessEngine::getOtherMoves() {
 }
 
 void ChessEngine::stop() {
-
+    writeToEngine("force");
 }
 
 void ChessEngine::getValues(QString line) {
@@ -61,14 +62,16 @@ void ChessEngine::getValues(QString line) {
         if (outstr.size() < 0) return;
 
         /* get bestmove */
-        string needle = "\nmove ";
+        string needle = "move ";
         int p = outstr.find(needle);
         int e = outstr.find('\n', p + needle.length());
         if(p != string::npos) {
-            bestmove = outstr.substr(p + needle.length(), 4);
-            cout << "Engine::getValues: bestmove " << bestmove << endl;
-            emit newBestmove();
-            setThinking(false);
+            if(outstr.substr(p + needle.length(), 4) != "eval") {
+                bestmove = outstr.substr(p + needle.length(), 4);
+                cout << "ChessEngine::getValues: bestmove " << bestmove << endl;
+                emit newBestmove();
+                setThinking(false);
+            }
         }
     //}
 }
