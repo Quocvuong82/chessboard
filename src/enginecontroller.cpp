@@ -8,20 +8,10 @@ EngineController::EngineController(QWidget *parent) :
     ui(new Ui::EngineController)
 {
     ui->setupUi(this);
-    engine = new UCIEngine();
-    goButtonPressed = false;
+    connect(ui->engineSelect, SIGNAL(activated(int)), this, SLOT(selectEngine(int)));
 
-    ui->verticalLayout->addWidget(engine->output);
     connect(ui->goButton, SIGNAL(pressed()), this, SLOT(toggleGoStop()));
-    //connect(ui->refreshButton, SIGNAL(pressed()), engine, SLOT(showOutput()));
-    connect(engine, SIGNAL(newBestmove()), this, SLOT(showBestmove()));
-    connect(engine, SIGNAL(newBestmove()), this, SLOT(showOtherMoves()));
-    connect(engine, SIGNAL(stateChanged(int)), this, SLOT(updateController(int)));
-
-    /* Connect Search Parameter Controllers to Engine */
-    connect(ui->searchdepth, SIGNAL(valueChanged(int)), engine, SLOT(setSearchDepth(int)));
-    connect(ui->movetime, SIGNAL(valueChanged(int)), engine, SLOT(setMovetime(int)));
-    connect(ui->nodes, SIGNAL(valueChanged(int)), engine, SLOT(setNodes(int)));
+    goButtonPressed = false;
 
     /* Link QDials and QSpinBoxes */
     connect(ui->spinBox_depth, SIGNAL(valueChanged(int)), ui->searchdepth, SLOT(setValue(int)));
@@ -32,8 +22,6 @@ EngineController::EngineController(QWidget *parent) :
     connect(ui->nodes, SIGNAL(valueChanged(int)), ui->spinBox_nodes, SLOT(setValue(int)));
 
     connect(ui->playButton, SIGNAL(pressed()), this, SLOT(play()));
-
-    connect(engine, SIGNAL(newDepth(int)), this, SLOT(showDepth(int)));
 
     connect(ui->radio_play, SIGNAL(pressed()), this, SLOT(turnOn()));
     connect(ui->radio_think, SIGNAL(pressed()), this, SLOT(turnOn()));
@@ -72,7 +60,7 @@ void EngineController::turnOff() {
     ui->progressBar->setEnabled(false);
     ui->bestmove->setEnabled(false);
     ui->listOtherMoves->setEnabled(false);
-    engine->output->setEnabled(false);
+    //engine->output->setEnabled(false);
 }
 
 void EngineController::turnOn() {
@@ -118,6 +106,7 @@ void EngineController::go() {
 }
 
 void EngineController::toggleGoStop() {
+    cout << "toggle go stop " << endl;
     if(isOn()) {
         if(engine->isThinking()) {
             engine->stop();
@@ -208,4 +197,22 @@ void EngineController::updateController(int state) {
 void EngineController::undock() {
     setParent(0);
     show();
+}
+
+void EngineController::selectEngine(int index) {
+    cout << "selecting Engine " << index << endl;
+    if(index == 0)     engine = new UCIEngine("/bin/stockfish");
+    else engine = new ChessEngine("/home/alex/cpp/giraffe/giraffe");
+
+    //ui->verticalLayout->addWidget(engine->output);
+
+    connect(engine, SIGNAL(newBestmove()), this, SLOT(showBestmove()));
+    connect(engine, SIGNAL(newBestmove()), this, SLOT(showOtherMoves()));
+    connect(engine, SIGNAL(stateChanged(int)), this, SLOT(updateController(int)));
+    connect(engine, SIGNAL(newDepth(int)), this, SLOT(showDepth(int)));
+
+    /* Connect Search Parameter Controllers to Engine */
+    connect(ui->searchdepth, SIGNAL(valueChanged(int)), engine, SLOT(setSearchDepth(int)));
+    connect(ui->movetime, SIGNAL(valueChanged(int)), engine, SLOT(setMovetime(int)));
+    connect(ui->nodes, SIGNAL(valueChanged(int)), engine, SLOT(setNodes(int)));
 }

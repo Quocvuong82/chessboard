@@ -3,7 +3,6 @@
 #include <QtGui>
 #include "fen.h"
 #include <QAction>
-#include"uciengine.h"
 #include "ui_playerwidget.h"
 
 MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow(parent, flags) {
@@ -569,11 +568,6 @@ void MainWindow::updateStatusBar() {
     statusMoveNr->setText(QString::fromStdString("Move " + boost::lexical_cast<string>(game[activeBoard]->getCurrentMoveNr())));
 }
 
-void MainWindow::showBestmoveMessage() {
-    if(engineB && game[activeBoard]->getActiveColor() == 'b') game[activeBoard]->move(engine.getBestmove());
-    else QMessageBox::information(this, "Bestmove", "Bestmove: " + QString::fromStdString(engine.getBestmove()), QMessageBox::Ok);
-}
-
 void MainWindow::closeEvent(QCloseEvent *event)
 {
     int ret = QMessageBox::warning(this, "Quitting Chessboard", "There are unsaved games. Do you want to save them?", QMessageBox::Close | QMessageBox::Cancel | QMessageBox::Save);
@@ -633,7 +627,8 @@ void MainWindow::createMenu() {
     saveToFile = new QAction(this);
     quitGameAction = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/icons/close.png")), tr("Quit Game"), this);
     quitAction = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Quit ChessBoard"), this);
-    fileMenu->addAction( QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("New Game"), this, SLOT(newGame()), QKeySequence(tr("Ctrl+N", "File|New Game")));
+    newGameAction = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/icons/newgame.png")), tr("New Game"), this);
+    fileMenu->addAction(newGameAction);
     fileMenu->addAction(openFileAction);
     fileMenu->addAction(saveToFile);
     //fileMenu->addAction(quitGameAction);
@@ -661,7 +656,6 @@ void MainWindow::createMenu() {
 
 
 void MainWindow::createToolBars() {
-    newGameAction = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/icons/newgame.png")), tr("New Game"), this);
     nextMoveAction = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/icons/next.png")), tr("Next Move"), this);
     prevMoveAction = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/icons/prev.png")), tr("Previous Move"), this);
     loadFromDBAction = new QAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/icons/searchdatabase.png")), tr("Load Game from Database"), this);

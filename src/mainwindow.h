@@ -143,7 +143,6 @@ private:
     void updateBoard();
     bool stockfish();
     string EngineOutput;
-    UCIEngine engine;
     EngineController* engineController;
     string bestmove;
     vector<string> scores;
@@ -193,7 +192,6 @@ public slots:
     void showPosition(QTreeWidgetItem*);
     void linkClicked(QUrl);
     void updateStatusBar();
-    void showBestmoveMessage();
     void setNextPosition(int);
     void unsetEngine(int i);
     void quitGame(int);

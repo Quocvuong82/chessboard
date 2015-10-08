@@ -18,7 +18,9 @@ SOURCES += \
     uciengine.cpp \
     qdialvalue.cpp \
     qboard.cpp \
-    qchessbase.cpp
+    qchessbase.cpp \
+    engine.cpp \
+    chessengine.cpp
 QT += core gui widgets
 QT += svg
 QT += webkitwidgets
@@ -43,7 +45,9 @@ HEADERS += \
     uciengine.h \
     qdialvalue.h \
     qboard.h \
-    qchessbase.h
+    qchessbase.h \
+    engine.h \
+    chessengine.h
 LIBS += -L/usr/lib/mysql -lmysqlclient
 LIBS += -L/usr/lib/mysql -lboost_regex
 LIBS += -L/usr/lib/mysql -lboost_thread

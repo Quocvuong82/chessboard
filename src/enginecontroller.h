@@ -4,6 +4,7 @@
 #include <QWidget>
 #include <QListWidgetItem>
 #include "uciengine.h"
+#include "chessengine.h"
 #include "board.h"
 #include "game.h"
 
@@ -30,6 +31,7 @@ public slots:
     void showMove(QListWidgetItem* item);
     void showDepth(int);
     void updateController(int state);
+    void selectEngine(int index);
     void undock();
     void play();
     void turnOff();
@@ -39,7 +41,7 @@ signals:
     void newBestmove(string);
 private:
     Ui::EngineController *ui;
-    UCIEngine* engine;
+    Engine* engine;
     Board* board;
     Game* game;
     bool goButtonPressed;

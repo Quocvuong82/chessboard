@@ -1,5 +1,5 @@
-#ifndef ENGINETHREAD
-#define ENGINETHREAD
+#ifndef UCIENGINE
+#define UCIENGINE
 #include <QThread>
 #include <QWidget>
 #include <QTextEdit>
@@ -9,30 +9,26 @@
 #include <string>
 #include <boost/thread.hpp>
 #include <iostream>
+#include "engine.h"
 
 using namespace std;
 
-class UCIEngine : public QObject {
+class UCIEngine : public Engine {
     Q_OBJECT
 public:
-    UCIEngine(QObject *parent = 0);
-    bool stockfish();
+    UCIEngine(QString pathToEngine);
     int writeToEngine(string message);
     string readFromEngine(int ReaderID);
-    string getBestmove();
     vector<vector<string>> getOtherMoves();
     vector<string> getMultiPV();
-    QTextEdit* output;
-    bool isThinking();
+    //QTextEdit* output;
+    //bool isThinking();
     void setPosition(string fen);
 private:
-    QProcess* engine2;
-    void readEngine();
-    bool thinking;
+    //QProcess* engine;
+    //void readEngine();
     string buffer; // A buffer to store the output of the engine
     vector<size_t> pos; // The last read byte in the buffer
-    string bestmove;
-    string fen;
 
     /* Search Parameters */
     int searchdepth;
@@ -49,16 +45,9 @@ private:
     vector<string> getUniqueMultiPV(int depth);
     static bool isBigger(vector<string> m,vector<string> n);
 
-    /* Pipes to and from engine */
-    int	writepipe[2] = {-1,-1},	/* parent -> child */
-        readpipe [2] = {-1,-1};	/* child -> parent */
-    void readPipe();
-    void setThinking(bool state);
-
 public slots:
-    void printBestmove();
     void showOutput();
-    void getValues();
+    void getValues(QString line);
     void go();
     void stop();
     void setSearchDepth(int value);
@@ -67,29 +56,9 @@ public slots:
     void setNodes(int value);
 
 signals:
-   void newOutput();
-   void newBestmove();
+   //void newOutput();
    void newDepth(int);
    void stateChanged(int);
 };
-
-/* EngineReader reads Output from the UCI-Engine and writes it to the buffer-String */
-class EngineReader : public QObject {
-    Q_OBJECT
-public:
-    EngineReader(UCIEngine* parent, QProcess* engine, string* buffer, vector<size_t>* pos);
-public slots:
-    void process();
-
-signals:
-    void finished();
-    void error(QString err);
-    void newOutput();
-private:
-    QProcess* engine;
-    string* buffer;
-    vector<size_t>* pos;
-    UCIEngine* parent;
-};
-#endif // ENGINETHREAD
+#endif // UCIENGINE
 
