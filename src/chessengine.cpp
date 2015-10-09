@@ -75,3 +75,7 @@ void ChessEngine::getValues(QString line) {
         }
     //}
 }
+
+void ChessEngine::setSearchDepth(int value) {}
+void ChessEngine::setMovetime(int value) {}
+void ChessEngine::setNodes(int value) {}

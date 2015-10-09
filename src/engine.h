@@ -32,11 +32,15 @@ signals:
     virtual void stateChanged(int);
     void newOutput(QString);
     virtual void newBestmove();
+    virtual void newDepth(int);
 public slots:
     void showOutput(QString);
     virtual void getValues(QString) = 0;
     virtual void go() = 0;
     virtual void stop() = 0;
+    virtual void setSearchDepth(int value) = 0;
+    virtual void setMovetime(int value) = 0;
+    virtual void setNodes(int value) = 0;
 };
 
 #endif // ENGINE_H

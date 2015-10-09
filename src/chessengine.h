@@ -17,6 +17,9 @@ public slots:
     void go();
     void stop();
     void getValues(QString);
+    void setSearchDepth(int value);
+    void setMovetime(int value);
+    void setNodes(int value);
 };
 
 #endif // CHESSENGINE_H

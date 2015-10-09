@@ -40,7 +40,7 @@ int UCIEngine::writeToEngine(string message) {
     while(n != string::npos) {
         if(message.substr(n + 1,2) == "go") {
             multipvs.clear();
-            cout << "multipvs cleared" << endl;
+            //qDebug() << "UCIEngine:" << "multipvs cleared" << endl;
         }
         n = message.find('\n', n + 1);
     }
@@ -76,8 +76,8 @@ vector<string> UCIEngine::getUniqueMultiPV(int depth) {
 }
 
 vector<vector<string>> UCIEngine::getOtherMoves() {
-    qDebug() << "get other moves";
-    qDebug() << "multivs.size " << multipvs.size();
+    qDebug() << "UCIEngine:" << "get other moves";
+    qDebug() << "UCIEngine:" << "multivs.size " << multipvs.size();
     vector<vector<string>> scoredMultiPVs;
     for(int i = 0; i < multipvs.size(); i++) {
         vector<string> scoredMultiPV;
@@ -85,7 +85,6 @@ vector<vector<string>> UCIEngine::getOtherMoves() {
         scoredMultiPV.push_back(boost::lexical_cast<string>(scores[i]));
         //multipvs[i] + " (" + boost::lexical_cast<string>(scores[i]) + ")"
         scoredMultiPVs.push_back(scoredMultiPV);
-        cout << i << endl;
     }
     sort(scoredMultiPVs.begin(), scoredMultiPVs.end(), isBigger);
     return scoredMultiPVs;
@@ -96,143 +95,113 @@ bool UCIEngine::isBigger (vector<string> m,vector<string> n) {
 }
 
 void UCIEngine::getValues(QString line) {
-    qDebug() << "UCIEngine::getValues";
-    string str = line.toStdString();
+    //qDebug() << "UCIEngine::getValues";
 
-    size_t oldline = 0;
-    size_t newline = str.find('\n');
-    string outstr; // = str.substr(oldline, newline - oldline);
+    if(line.size() == 0) return;
+    string outstr = line.toStdString(); // = str.substr(oldline, newline - oldline);
 
-    //Engine::getValues(line);
-
-    while(newline != string::npos) {
-        outstr = str.substr(oldline + 1, newline - oldline);
-        //qDebug() << QString::fromStdString(outstr) << endl;
-        /* get bestmove */
-        int p = outstr.find("bestmove ");
-        int e = outstr.find(" ", p + 9);
-        if(p != string::npos) {
-            bestmove = outstr.substr(p + 9, e- p - 9);
-            cout << "UCIEngine::getValues: bestmove " << bestmove << endl;
-            cout << "set thinking false" << endl;
-            setThinking(false);
-            emit newBestmove();
-            return;
-        }
-
-        //qDebug() << "Oldline: " << oldline << "Newline:" << newline << endl;
-        outstr = str.substr(oldline, newline - oldline);
-        //cout << outstr << endl;
-        //emit newOutput();
-        //showOutput();
-        if (outstr.size() < 0) return;
-        //cout << outstr.size() << " ";
-
-        /* get depth */
-        p = outstr.find("depth ");
-        e = outstr.find(" ", p + 6);
-        if(p != string::npos) {
-            int depth = boost::lexical_cast<int>(outstr.substr(p + 6, e- p - 6));
-            if(depth > this->depth) {
-                this->depth = depth;
-                multipvs.clear(); scores.clear(); // Clear Multi-PV Moves
-                emit newDepth(depth);
-            }
-        }
-
-        /* Collect MultiPV-Data (get possible moves) */
-        size_t pv = outstr.find(" pv ");
-        size_t multipv = outstr.find(" multipv ");
-        if(pv != string::npos && multipv != string::npos) {
-            size_t sp = outstr.find(" ", multipv + 10);
-            string multipvstr = outstr.substr(multipv + 9, sp - (multipv + 9));
-            bool toggle = false;
-            if(boost::lexical_cast<int>(multipvstr) > currnr) {
-                currnr++;
-
-                /* Get the score of the MulitPV-Move */
-                size_t sc = outstr.find(" score ");
-                size_t sp = outstr.find(" ", sc + 10);
-                string score_str = outstr.substr(sc + 10, sp - sc - 10);
-                //cout << outstr;
-                //cout << "multipv: " << m << "multipv-score: " << sc << " " << sp << " " << score_str << endl;
-                int score;
-                if(outstr.substr(sc + 7, 4) == "mate")
-                    score = numeric_limits<int>::max();
-                else
-                    score = boost::lexical_cast<int>(score_str);
-
-                /* Check if we have a multipv-move to update */
-                bool newMultiPv = true;
-                for(int i = 0; i < multipvs.size(); i++) {
-                    //cout << multipvs[i] << " == " << outstr.substr(pv + 4, multipvs[i].size()) << endl;
-                    if(multipvs[i] == outstr.substr(pv + 4, multipvs[i].size())) {
-                        multipvs[i] = outstr.substr(pv + 4, outstr.substr(pv + 4).size() - 1);
-                        scores[i] = score;
-                        newMultiPv = false;
-                    }
-                }
-
-                /* Create a new multipv-move */
-                if(newMultiPv) {
-                    qDebug() << "creating new multipv";
-                    size_t nl = outstr.find("\n");
-                    string str = outstr.substr(pv + 4, nl);
-                    if(nl != string::npos) {
-                        if(str.size() > 4)
-                            multipvs.push_back(outstr.substr(pv + 4, outstr.substr(pv + 4).size() - 1));
-                        else
-                            multipvs.push_back(outstr.substr(pv + 4, nl));
-                        scores.push_back(score);
-                    } else {
-                        qDebug() << "multipv: no newline";
-                    }
-                }
-                //cout << outstr;
-                string output = ""; string html = "";
-                for(int i = 0; i < multipvs.size(); i++) {
-                    output += multipvs[i];
-                    html += "<a href=\"" + multipvs[i] + "\">" + multipvs[i] + "</a><br/>";
-                    if(multipvs[i].length() > searchdepth * 4) {
-                        //cout << multipvs[i] << endl;
-                    }
-                }
-                //engineOutput->setText(QString::fromStdString(output));
-                //engineView->setHtml(QString::fromStdString(html));
-                //engineView->page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
-            } else {
-                currnr = 0;
-                if(toggle) { /*engineOutput->clear();*/ toggle = false; } else toggle = true;
-            }
-            //cout << currnr << endl;
-        }
-
-        /* get score of the best move */
-        /*size_t sc = 0;
-        sc = outstr.find("score ");
-        while(sc < outstr.length()) {
-            pv = outstr.find(" pv ", sc + 1);
-            int l = 1;
-            if(sc < outstr.length()) {
-                //cout << outstr.length() << " " << sc << " " << pv << endl;
-                if((sc + 9) < outstr.length()) {
-                    //string str = outstr.substr(sc + 10);
-                    l = outstr.substr(sc + 9).find(" ");
-                }
-                //cout << "score: ";
-                if((sc + 9 + l) < outstr.length()) {
-                    //cout << outstr.substr(sc + 9, l) << endl;
-                    scores.push_back(outstr.substr(sc + 9, l));
-                    if(pv != string::npos) moves.push_back(outstr.substr(pv + 4,outstr.substr(pv + 4).size() - 1));
-                }
-            }
-            sc = outstr.find("score ", sc + 1);
-        }*/
-        oldline = newline;
-        newline = str.find('\n', newline + 1);
-        qDebug() << "multipvs.size = " << multipvs.size();
+    /* get bestmove */
+    int p = outstr.find("bestmove ");
+    int e = outstr.find(" ", p + 9);
+    if(p != string::npos) {
+        bestmove = outstr.substr(p + 9, e- p - 9);
+        qDebug() << "UCIEngine: bestmove" << QString::fromStdString(bestmove);
+        qDebug() << "UCIEngine:" << "set thinking false";
+        setThinking(false);
+        emit newBestmove();
+        return;
     }
-    qDebug() << "getting values finished";
+
+    /* get depth */
+    p = outstr.find("depth ");
+    e = outstr.find(" ", p + 6);
+    if(p != string::npos) {
+        int depth = boost::lexical_cast<int>(outstr.substr(p + 6, e- p - 6));
+        if(depth > this->depth) {
+            this->depth = depth;
+            multipvs.clear(); scores.clear(); // Clear Multi-PV Moves
+            emit newDepth(depth);
+        }
+    }
+
+    /* Collect MultiPV-Data (get possible moves) */
+    size_t pv = outstr.find(" pv ");
+    size_t multipv = outstr.find(" multipv ");
+    if(pv != string::npos && multipv != string::npos) {
+        size_t sp = outstr.find(" ", multipv + 10);
+        string multipvstr = outstr.substr(multipv + 9, sp - (multipv + 9));
+        bool toggle = false;
+        if(boost::lexical_cast<int>(multipvstr) > currnr) {
+            currnr++;
+
+            /* Get the score of the MulitPV-Move */
+            size_t sc = outstr.find(" score ");
+            size_t sp = outstr.find(" ", sc + 10);
+            string score_str = outstr.substr(sc + 10, sp - sc - 10);
+            //cout << outstr;
+            //cout << "multipv: " << m << "multipv-score: " << sc << " " << sp << " " << score_str << endl;
+            int score;
+            if(outstr.substr(sc + 7, 4) == "mate")
+                score = numeric_limits<int>::max();
+            else
+                score = boost::lexical_cast<int>(score_str);
+
+            /* Check if we have a multipv-move to update */
+            bool newMultiPv = true;
+            for(int i = 0; i < multipvs.size(); i++) {
+                //cout << multipvs[i] << " == " << outstr.substr(pv + 4, multipvs[i].size()) << endl;
+                if(multipvs[i] == outstr.substr(pv + 4, multipvs[i].size())) {
+                    multipvs[i] = outstr.substr(pv + 4, outstr.substr(pv + 4).size() - 1);
+                    scores[i] = score;
+                    newMultiPv = false;
+                }
+            }
+            //qDebug() << QString::fromStdString(outstr);
+
+            /* Create a new multipv-move */
+            if(newMultiPv) {
+                //qDebug() << "UCIEngine:" << "creating new multipv";
+                size_t lineEnd = outstr.size();
+                string str = outstr.substr(pv + 4, lineEnd);
+                if(lineEnd != string::npos) {
+                    if(str.size() > 4)
+                        multipvs.push_back(outstr.substr(pv + 4, outstr.substr(pv + 4).size() - 1));
+                    else
+                        multipvs.push_back(outstr.substr(pv + 4, lineEnd));
+                    scores.push_back(score);
+                } else {
+                    //qDebug() << "UCIEngine:" << "multipv: no newline";
+                }
+            }
+        } else {
+            currnr = 0;
+            if(toggle) toggle = false; else toggle = true;
+        }
+    }
+
+    /* get score of the best move */
+    /*size_t sc = 0;
+    sc = outstr.find("score ");
+    while(sc < outstr.length()) {
+        pv = outstr.find(" pv ", sc + 1);
+        int l = 1;
+        if(sc < outstr.length()) {
+            //cout << outstr.length() << " " << sc << " " << pv << endl;
+            if((sc + 9) < outstr.length()) {
+                //string str = outstr.substr(sc + 10);
+                l = outstr.substr(sc + 9).find(" ");
+            }
+            //cout << "score: ";
+            if((sc + 9 + l) < outstr.length()) {
+                //cout << outstr.substr(sc + 9, l) << endl;
+                scores.push_back(outstr.substr(sc + 9, l));
+                if(pv != string::npos) moves.push_back(outstr.substr(pv + 4,outstr.substr(pv + 4).size() - 1));
+            }
+        }
+        sc = outstr.find("score ", sc + 1);
+    }*/
+    //qDebug() << "UCIEngine:" << "multipvs.size = " << multipvs.size();
+    //qDebug() << "UCIEngine:" << "getting values finished";
 }
 
 vector<string> UCIEngine::getMultiPV() {
@@ -279,20 +248,20 @@ void UCIEngine::go() {
         if(nodes > 0) command += " movetime " + boost::lexical_cast<string>(nodes);
     }
 
-    cout << command << endl;
+    //qDebug() << "UCIEngine:" << command << endl;
     writeToEngine(command);
-    cout << "set thinking true" << endl;
+    qDebug() << "UCIEngine:" << "set thinking true";
     setThinking(true);
     stopping = false;
     boost::thread engine ( &UCIEngine::readEngine, this );
 }
 
 void UCIEngine::stop() {
-    cout << "UCIEngine::stop()" << endl;
+    qDebug() << "UCIEngine::stop()" << endl;
     if(!stopping) {
-        cout << "stopping engine " << endl;
+        qDebug() << "UCIEngine:" << "stopping engine " << endl;
         writeToEngine("stop");
-        cout << "engine stopped" << endl;
+        qDebug() << "UCIEngine:" << "engine stopped" << endl;
     }
     stopping = true;
     setThinking(false);

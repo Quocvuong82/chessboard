@@ -89,16 +89,14 @@ void EngineController::setGame(Game* game) {
 }
 
 void EngineController::go() {
-    qDebug() << "go";
-    if(isOn()) qDebug() << "is on";
-    if(goButtonPressed) qDebug() << "Go-Button is pressed";
-    if(ui->radio_play->isChecked()) qDebug() << "Radio Play is checked";
-    if(ui->checkBox_black->isChecked()) qDebug() << "Black-Checkbox is checked";
-    if(ui->checkBox_black->isChecked() && !ui->checkBox_white->isChecked() && game->getActiveColor() == 'w') qCritical() << "go error";
-    if(engine->isThinking()) qDebug() << "is thinking";
-    /*engine->setPosition(game->board->getFenstring());
-    engine->go();
-    return;*/
+    /*qDebug() << "EngineController:" << "go";
+    if(isOn()) qDebug() << "EngineController:" << "is on";
+    if(goButtonPressed) qDebug() << "EngineController:" << "Go-Button is pressed";
+    if(ui->radio_play->isChecked()) qDebug() << "EngineController:" << "Radio Play is checked";
+    if(ui->checkBox_black->isChecked()) qDebug() << "EngineController:" << "Black-Checkbox is checked";
+    if(ui->checkBox_black->isChecked() && !ui->checkBox_white->isChecked() && game->getActiveColor() == 'w') qCritical() << "EngineController:" << "go error";
+    if(engine->isThinking()) qDebug() << "EngineController:" << "is thinking";*/
+
     if(isOn()) {
         if(!goButtonPressed) {
             if(ui->radio_play->isChecked()) {
@@ -118,7 +116,7 @@ void EngineController::go() {
 }
 
 void EngineController::toggleGoStop() {
-    cout << "toggle go stop " << endl;
+    //qDebug() << "toggle go stop";
     if(isOn()) {
         if(engine->isThinking()) {
             engine->stop();
@@ -185,7 +183,7 @@ void EngineController::showBestmove() {
     } else
     ui->playButton->setEnabled(true);
     string bestmove = engine->getBestmove();
-    cout << "bestmove " << bestmove << endl;
+    //qDebug() << "EngineController" << "bestmove " << bestmove << endl;
     if(bestmove != "(none)\n") {
         emit newBestmove(bestmove);
     }
@@ -199,7 +197,7 @@ void EngineController::showDepth(int depth) {
 }
 
 void EngineController::updateController(int state) {
-    cout << "update controller state " << state << endl;
+    qDebug() << "EngineController:" << "update controller state" << state;
     switch (state) {
     case 0:
         ui->goButton->setText("go");
@@ -216,11 +214,15 @@ void EngineController::undock() {
 }
 
 void EngineController::selectEngine(int index) {
-    cout << "selecting Engine " << index << endl;
+    qDebug() << "EngineController:" << "selecting Engine" << index;
+    ui->engineSelect->setCurrentIndex(index);
     if(index == 0)     engine = new UCIEngine("/bin/stockfish");
     else engine = new ChessEngine("/home/alex/cpp/giraffe/giraffe");
 
     //ui->verticalLayout->addWidget(engine->output);
+    engine->setSearchDepth(ui->searchdepth->value());
+    engine->setMovetime(ui->movetime->value());
+    engine->setNodes(ui->nodes->value());
 
     connect(engine, SIGNAL(newBestmove()), this, SLOT(showBestmove()));
     connect(engine, SIGNAL(newBestmove()), this, SLOT(showOtherMoves()));

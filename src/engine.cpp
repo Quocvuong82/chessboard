@@ -1,4 +1,5 @@
 #include <QScrollBar>
+#include <QDebug>
 #include "engine.h"
 #include "iostream"
 #include <unistd.h>
@@ -11,7 +12,7 @@ Engine::Engine(QString pathToEngine, QObject *parent) : QObject(parent)
     engine->start(pathToEngine);
     thinking = false;
 
-    connect(this, SIGNAL(newOutput(QString)), this, SLOT(showOutput(QString)));
+    //connect(this, SIGNAL(newOutput(QString)), this, SLOT(showOutput(QString)));
     //connect(this, SIGNAL(newOutput(QString)), this, SLOT(getValues(QString)));
 
     setThinking(false);
@@ -30,7 +31,7 @@ bool Engine::isThinking() {
 
 void Engine::setThinking(bool state) {
     thinking = state;
-    cout << "state changed" << endl;
+    qDebug() << "Engine:" << "state changed" << state;
     if(state) emit stateChanged(1);
     else emit stateChanged(0);
 }
@@ -47,7 +48,7 @@ void Engine::readEngine() {
         if(b > 0) {
             buffer.append(buf);
             usleep(100000);
-            cout << buf << " [end]" << endl;
+            //cout << buf << " [end]" << endl;
             string line; line.append(buf);
             //cout << line << endl;
             //getValues(QString::fromStdString(line));
