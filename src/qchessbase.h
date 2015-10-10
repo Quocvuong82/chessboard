@@ -31,6 +31,10 @@ public slots:
     void handleGameSelection(int ID);
 signals:
     void GameSelected(int ID);
+    void changeHost(QString host);
+    void changeUser(QString user);
+    void changePassword(QString password);
+    void changeDatabase(QString database);
 };
 
 #endif // QCHESSBASE_H

@@ -50,10 +50,7 @@ class Board {
 
     /* Database */
     bool DBwrite = false;
-    string host;
-    string user;
-    string password;
-    string database;
+
 	bool connectwithDB();
     ChessDatabase* DB; //ChessDatabase(host, user, password, database);
 
@@ -76,6 +73,12 @@ class Board {
     vector<string> movehistory;
     vector<string> getSplittedPGN(string pgn_raw);
 protected:
+    /* Database */
+    string host; // TODO should be handled in ChessDatabase Class
+    string user; // TODO should be handled in ChessDatabase Class
+    string password; // TODO should be handled in ChessDatabase Class
+    string database; // TODO should be handled in ChessDatabase Class
+
     string white = "Player White";
     string black = "Player Black";
     int NrofMoves = 0;

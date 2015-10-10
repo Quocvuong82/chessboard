@@ -12,6 +12,7 @@
 #include <QMessageBox>
 #include <QSlider>
 #include <QTimer>
+#include <QLineEdit>
 #include "fen.h"
 #include "board.h"
 #include "timelabel.h"
@@ -51,6 +52,7 @@ public:
     TimeLabel* timeLabelB;
     QLabel* playerPhotoW;
     QLabel* playerPhotoB;
+    QLineEdit* fenstring;
     static QString PATH;
     void nextPos();
     void nextPos(int index);
@@ -70,6 +72,7 @@ public slots:
     void squareClicked(int);
     void squareDropped(int, int);
     void hint(string); // Can be used to visualize move hints
+    void setBestmove(string);
     void playMoveSound();
     void setPlayerName(int playerID);
     void setPlayerWName();
@@ -78,6 +81,11 @@ public slots:
     void updateTime();
     void openFile();
     void saveGameToFile();
+    void setPosition();
+    void setHost(QString host);
+    void setUsername(QString name);
+    void setPassword(QString password);
+    void setDB(QString database);
 };
 
 #endif // QBOARD_H

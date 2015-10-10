@@ -59,19 +59,23 @@ QChessBase::QChessBase(QWidget *parent) :
 void QChessBase::setHost(QString host) {
     cout << "setting host to " << host.toStdString() << endl;
     this->host = host.toStdString();
+    changeHost(host);
 }
 
 void QChessBase::setUsername(QString name) {
     cout << "setting username to " << name.toStdString() << endl;
     this->user = name.toStdString();
+    changeUser(name);
 }
 void QChessBase::setPassword(QString password) {
     cout << "setting password to " << password.toStdString() << endl;
     this->password = password.toStdString();
+    changePassword(password);
 }
 void QChessBase::setDatabase(QString database) {
     cout << "setting database to " << database.toStdString() << endl;
     this->database = database.toStdString();
+    changeDatabase(database);
 }
 
 void QChessBase::showGameSelectDialog() {

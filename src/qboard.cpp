@@ -4,6 +4,7 @@
 #include <QInputDialog>
 #include <QFileDialog>
 #include <string>
+#include <fstream>
 #include <boost/lexical_cast.hpp>
 #include "qsquare.h"
 using namespace std;
@@ -83,6 +84,8 @@ QBoard::QBoard(QWidget *parent) : QWidget(parent), Board()
     castleBK = true;
     castleBQ = true;*/
     //currentPosition = new Position();
+    fenstring = new QLineEdit(); // for displaying fenstring of current position
+
     writePositionTosquares();
     playerW = new PlayerLabel("Player White");
     playerB = new PlayerLabel("Player Black");
@@ -288,6 +291,10 @@ void QBoard::setPosition(int id) {
 
 void QBoard::show() {
     writePositionTosquares();
+    fenstring->setText(QString::fromStdString(getFenstring()));
+    if(currentPosition->hasChildren())
+    setBestmove(currentPosition->getLastChild()->getMove()); // assume that the move played is the best move (we can find a better one later)
+    //fenstring->setText(QString::fromStdString(getFenstring()));
 }
 
 bool QBoard::setPosition(Fen pos) {
@@ -465,4 +472,71 @@ void QBoard::saveGameToFile() {
 
     cout << "Save to File " << fileName.toStdString() << endl;
     Board::saveGameToFile(fileName.toStdString());
+}
+
+void QBoard::setPosition() {
+    QInputDialog* input = new QInputDialog();
+    input->resize(500,200);
+    input->setModal(true);
+    input->exec();
+    QString text = input->textValue();
+    string fen = text.toStdString();
+    std::vector<string> fenstrings;
+    size_t delim = 0; size_t delim_old = -1;
+    for(int i = 0; i < 7; i++) {
+        delim = fen.find('/', delim + 1);
+        fenstrings.push_back(fen.substr(delim_old + 1, delim - delim_old - 1));
+        delim_old = delim;
+    }
+    for(int i = 7; i < 11; i++) {
+        delim = fen.find(' ', delim + 1);
+        fenstrings.push_back(fen.substr(delim_old + 1, delim - delim_old - 1));
+        delim_old = delim;
+    }
+    for(int i = 11; i < 13; i++) {
+        fenstrings.push_back("-");
+    }
+    Fen pos = Fen(fenstrings);
+    Board::setPosition(pos);
+    this->show();
+}
+
+void QBoard::setHost(QString host) {
+    this->host = host.toStdString();
+    cout << "set host " << this->host << endl;
+}
+
+void QBoard::setUsername(QString name) {
+    this->user = name.toStdString();
+    cout << "set username " << this->user << endl;
+}
+
+void QBoard::setPassword(QString password) {
+    this->password = password.toStdString();
+    cout << "set password " << this->password << endl;
+}
+
+void QBoard::setDB(QString database) {
+    this->database = database.toStdString();
+    cout << "set database " << this->database << endl;
+}
+
+void QBoard::setBestmove(string bestmove) {
+    string bmstr = " bm " + bestmove + ";";
+    string fens = fenstring->text().toStdString();
+    size_t bm = fens.find(" bm ");
+    if(bm != string::npos) fens = fens.substr(0, bm);
+    fens.append(bmstr);
+    fenstring->setText(QString::fromStdString(fens));
+
+    string file = "/home/alex/build-chessboard-Desktop_Qt_5_4_2_GCC_64bit-Debug/myChessDB.epd";
+    ofstream epdfile;
+    epdfile.open(file, ios_base::app);
+    if(!epdfile.is_open()) {
+        cerr << "EPD-File could not be created" << endl;
+        return;
+    }
+    cout << "write to EPD-file: " << fens;
+    epdfile << fens << endl;
+    epdfile.close();
 }
