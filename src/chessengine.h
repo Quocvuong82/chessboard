@@ -13,6 +13,8 @@ public:
 private:
 
 signals:
+    void newDepth(int);
+    void stateChanged(int);
 public slots:
     void go();
     void stop();

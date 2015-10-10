@@ -1,12 +1,14 @@
 #include "chessengine.h"
 #include <iostream>
 #include <boost/thread.hpp>
+#include <boost/lexical_cast.hpp>
 
 using namespace std;
 
 ChessEngine::ChessEngine(QString pathToEngine) : Engine(pathToEngine)
 {
     connect(this, SIGNAL(newOutput(QString)), this, SLOT(getValues(QString)));
+    writeToEngine("st 45");
 }
 
 void ChessEngine::go() {
@@ -22,16 +24,17 @@ void ChessEngine::go() {
     cout << "set fen: " << fen << endl;
     command = "setboard " + fen + "\n";
 
+    /* Add Search Parameters */
+    //if(searchdepth < 0 && movetime < 0) command += " infinite";
+    //else {
+        if (searchdepth > 0) command += " sd " + boost::lexical_cast<string>(searchdepth) + "\n";
+        if(movetime > 0) command += " st " + boost::lexical_cast<string>(movetime) + "\n";
+        //if(mate > 0) command += " movetime " + boost::lexical_cast<string>(mate);
+        //if(nodes > 0) command += " movetime " + boost::lexical_cast<string>(nodes);
+    //}
+
     command += "go";
 
-    /* Add Search Parameters */
-    /*if(searchdepth < 0 && movetime < 0) command += " infinite";
-    else {
-        if (searchdepth > 0) command += " depth " + boost::lexical_cast<string>(searchdepth);
-        if(movetime > 0) command += " movetime " + boost::lexical_cast<string>(movetime);
-        if(mate > 0) command += " movetime " + boost::lexical_cast<string>(mate);
-        if(nodes > 0) command += " movetime " + boost::lexical_cast<string>(nodes);
-    }*/
 
     /*command = "position fen " + game[activeBoard]->board->getFenstring();*/
     cout << command << endl;
@@ -73,9 +76,25 @@ void ChessEngine::getValues(QString line) {
                 setThinking(false);
             }
         }
+
+        /* get depth */
+        needle = " d: ";
+        p = outstr.find(needle);
+        e = outstr.find(' ', p + needle.length());
+        if(p != string::npos) {
+            cout << "depth: " << outstr.substr(p + needle.length(), e - p - needle.length()) << endl;
+            int depth = boost::lexical_cast<int>(outstr.substr(p + needle.length(), e - p - needle.length()));
+            if(depth > this->depth) {
+                this->depth = depth;
+                //multipvs.clear(); scores.clear(); // Clear Multi-PV Moves
+                emit newDepth(depth);
+            }
+        }
     //}
 }
 
-void ChessEngine::setSearchDepth(int value) {}
+void ChessEngine::setSearchDepth(int value) {
+    searchdepth = value;
+}
 void ChessEngine::setMovetime(int value) {}
 void ChessEngine::setNodes(int value) {}

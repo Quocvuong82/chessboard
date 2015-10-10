@@ -22,6 +22,9 @@ public:
     void setBoard(Board* board);
     void setGame(Game* game);
     bool isOn();
+private:
+    UCIEngine* uci;
+    ChessEngine* chess;
 public slots:
     void go();
     void toggleGoStop();

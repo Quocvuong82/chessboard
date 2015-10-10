@@ -12,7 +12,7 @@ Engine::Engine(QString pathToEngine, QObject *parent) : QObject(parent)
     engine->start(pathToEngine);
     thinking = false;
 
-    //connect(this, SIGNAL(newOutput(QString)), this, SLOT(showOutput(QString)));
+    connect(this, SIGNAL(newOutput(QString)), this, SLOT(showOutput(QString)));
     //connect(this, SIGNAL(newOutput(QString)), this, SLOT(getValues(QString)));
 
     setThinking(false);
@@ -75,4 +75,20 @@ void Engine::showOutput(QString outtext) {
 void Engine::setPosition(string fen) {
     cout << "setting position: " << fen << endl;
     this->fen = fen;
+}
+
+int Engine::getSearchDepth() {
+    return searchdepth;
+}
+
+int Engine::getMovetime() {
+    return movetime;
+}
+
+int Engine::getMate() {
+    return mate;
+}
+
+int Engine::getNodes() {
+    return nodes;
 }

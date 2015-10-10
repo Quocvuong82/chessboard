@@ -18,12 +18,23 @@ public:
     string getBestmove();
     void setPosition(string fen);
     virtual vector<vector<string>> getOtherMoves() = 0;
+    int getSearchDepth();
+    int getMovetime();
+    int getMate();
+    int getNodes();
 protected:
     string buffer;
     void setThinking(bool state);
     void readEngine();
     string bestmove;
     string fen;
+    int depth = 0; // current search depth
+
+    /* Search Parameters */
+    int searchdepth;
+    int movetime;
+    int mate;
+    int nodes;
 private:
     QProcess* engine;
     QString pathToEngine;

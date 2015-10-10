@@ -10,6 +10,11 @@ EngineController::EngineController(QWidget *parent) :
 {
     ui->setupUi(this);
     connect(ui->engineSelect, SIGNAL(activated(int)), this, SLOT(selectEngine(int)));
+
+    /* Create Engines */
+    uci = new UCIEngine("/bin/stockfish");
+    chess = new ChessEngine("/home/alex/cpp/giraffe/giraffe");
+    engine = NULL;
     selectEngine(0); // set default engine
 
     connect(ui->goButton, SIGNAL(pressed()), this, SLOT(toggleGoStop()));
@@ -39,6 +44,9 @@ EngineController::EngineController(QWidget *parent) :
     ui->spinBox_movetime->setMaximum(ui->movetime->maximum());
     ui->spinBox_nodes->setMaximum(ui->nodes->maximum());
     turnOff();
+
+    ui->verticalLayout->addWidget(uci->output);
+    ui->verticalLayout->addWidget(chess->output);
 }
 
 EngineController::~EngineController()
@@ -141,8 +149,8 @@ void EngineController::play() {
         /* Think on next move if radiobutton play and color checkbox are checked */
         cout << "Think on next move" << endl;
         if(ui->radio_play->isChecked() || ui->radio_think->isChecked()) {
-            if(game->getActiveColor() == 'b') selectEngine(1);
-            else selectEngine(0);
+            //if(game->getActiveColor() == 'b') selectEngine(1);
+            //else selectEngine(0);
             if((ui->checkBox_black->isChecked() && game->getActiveColor() == 'b')
                     || (ui->checkBox_white->isChecked() && game->getActiveColor() == 'w')) go();
         }
@@ -216,13 +224,30 @@ void EngineController::undock() {
 void EngineController::selectEngine(int index) {
     qDebug() << "EngineController:" << "selecting Engine" << index;
     ui->engineSelect->setCurrentIndex(index);
-    if(index == 0)     engine = new UCIEngine("/bin/stockfish");
-    else engine = new ChessEngine("/home/alex/cpp/giraffe/giraffe");
+
+    ui->searchdepth->disconnect(engine);
+    ui->movetime->disconnect(engine);
+    ui->nodes->disconnect(engine);
+
+    if(index == 0) {
+        engine = uci;
+        //ui->verticalLayout->replaceWidget(engine->output, uci->output);
+    } else {
+        engine = chess;
+        //ui->verticalLayout->replaceWidget(engine->output, chess->output);
+    }
 
     //ui->verticalLayout->addWidget(engine->output);
-    engine->setSearchDepth(ui->searchdepth->value());
+
+    /* Set controllers to engine values */
+    cout << "depth: " << engine->getSearchDepth() << ", movetime: " << engine->getMovetime() << ", nodes: " << engine->getNodes() << endl;
+    ui->searchdepth->setValue(engine->getSearchDepth());
+    ui->movetime->setValue(engine->getMovetime());
+    ui->nodes->setValue(engine->getNodes());
+
+    /*engine->setSearchDepth(ui->searchdepth->value());
     engine->setMovetime(ui->movetime->value());
-    engine->setNodes(ui->nodes->value());
+    engine->setNodes(ui->nodes->value());*/
 
     connect(engine, SIGNAL(newBestmove()), this, SLOT(showBestmove()));
     connect(engine, SIGNAL(newBestmove()), this, SLOT(showOtherMoves()));

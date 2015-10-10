@@ -30,15 +30,8 @@ private:
     string buffer; // A buffer to store the output of the engine
     vector<size_t> pos; // The last read byte in the buffer
 
-    /* Search Parameters */
-    int searchdepth;
-    int movetime;
-    int mate;
-    int nodes;
-
     bool stopping;
     int currnr = 0;
-    int depth = 0; // current search depth
     vector<string> multipvs;
     vector<int> scores;
     vector<int> uniqueScores;
