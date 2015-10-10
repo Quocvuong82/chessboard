@@ -21,6 +21,7 @@
 #include <QMessageBox>
 #include <QTreeWidget>
 #include <QWebView>
+#include <QLineEdit>
 #include <QObject>
 #include <fen.h>
 #include <board.h>
@@ -121,6 +122,7 @@ private:
     QComboBox* nextCombo;
     QPushButton* back;
     vector<QPushButton*> button;
+    QLineEdit* fenstring;
 
     QHBoxLayout *layout;
     QGridLayout *Grid;

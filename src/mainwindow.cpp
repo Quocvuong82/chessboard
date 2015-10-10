@@ -48,6 +48,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
         playerLayout.push_back(new QHBoxLayout);
         score.push_back(new QLabel);
     }
+    fenstring = new QLineEdit();
 
     QGroupBox* engineControllerGroup = new QGroupBox();
     centralWidget = new QWidget;
@@ -97,6 +98,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     playersLayout->addWidget(playerFrame[1]);
 
     GameInfoLayout->addLayout(playersLayout);
+    GameInfoLayout->addWidget(fenstring);
     GameInfoLayout->addLayout(ButtonBoxLayout);
 
     engineControllerGroup->setLayout(engineControllerLayout);
@@ -151,6 +153,7 @@ void MainWindow::setBoardActive(int index) {
     }
     game[activeBoard]->board->Slider->show();
     game[activeBoard]->movehistory->show();
+    fenstring = game[activeBoard]->board->fenstring;
 
     /* Update File Menu */
     fileMenu->removeAction(openFileAction);
@@ -167,6 +170,7 @@ void MainWindow::setBoardActive(int index) {
     fileMenu->addAction(saveToFile);
     fileMenu->insertAction(quitAction, openFileAction);
     fileMenu->insertAction(quitAction, saveToFile);
+    gameMenu->addAction(QIcon(QString("%1%2") .arg(QCoreApplication::applicationDirPath()) .arg("/images/page_white.png")), tr("Set Position"), game[activeBoard]->board, SLOT(setPosition()));
     mainToolBar->insertAction(prevMoveAction, openFileAction);
 
     connect(game[activeBoard]->board, SIGNAL(madeMove()), this, SLOT(updateStatusBar()));
@@ -452,12 +456,17 @@ void MainWindow::newGame() {
     game[game.size() - 1]->board->setDatabase(db);
     connect(game[game.size() - 1]->board, SIGNAL(madeMove()), engineController, SLOT(go()));
     connect(engineController, SIGNAL(newBestmove(string)), game[game.size() - 1]->board, SLOT(hint(string)));
+    connect(engineController, SIGNAL(newBestmove(string)), game[game.size() - 1]->board, SLOT(setBestmove(string)));
     connect(game[game.size() - 1]->board, SIGNAL(madeMove(string)), this, SLOT(sendToServer(string)));
     connect(&fics, SIGNAL(newGameID(int)), game[game.size() - 1], SLOT(setGameID(int)));
 
     connect(game[game.size() - 1]->board, SIGNAL(madeMove()), this, SLOT(updateStatusBar()));
     connect(game[game.size() - 1]->board, SIGNAL(madeMove(string)), this, SLOT(sendToServer(string)));
 
+    connect(myChessDB, SIGNAL(changeHost(QString)), game[game.size() - 1]->board, SLOT(setHost(QString)));
+    connect(myChessDB, SIGNAL(changeUser(QString)), game[game.size() - 1]->board, SLOT(setUsername(QString)));
+    connect(myChessDB, SIGNAL(changePassword(QString)), game[game.size() - 1]->board, SLOT(setPassword(QString)));
+    connect(myChessDB, SIGNAL(changeDatabase(QString)), game[game.size() - 1]->board, SLOT(setDB(QString)));
     //setBoardActive(game.size() - 1);
 }
 

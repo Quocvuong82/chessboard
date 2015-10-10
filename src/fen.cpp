@@ -170,6 +170,10 @@ string Fen::getRow(int i) {
 
 char Fen::getActiveColor() {
     //cout << fenstring[8] << endl;
+    if(getFen(8)[0] != 'w' && getFen(8)[0] != 'b') {
+        if(getParent()->getActiveColor() == 'w') return 'b';
+        else return 'w';
+    }
     return getFen(8)[0];
 }
 
