@@ -45,8 +45,8 @@ EngineController::EngineController(QWidget *parent) :
     ui->spinBox_nodes->setMaximum(ui->nodes->maximum());
     turnOff();
 
-    ui->verticalLayout->addWidget(uci->output);
-    ui->verticalLayout->addWidget(chess->output);
+    //ui->verticalLayout->addWidget(uci->output);
+    //ui->verticalLayout->addWidget(chess->output);
 }
 
 EngineController::~EngineController()
@@ -229,12 +229,13 @@ void EngineController::selectEngine(int index) {
     ui->movetime->disconnect(engine);
     ui->nodes->disconnect(engine);
 
+
     if(index == 0) {
         engine = uci;
-        //ui->verticalLayout->replaceWidget(engine->output, uci->output);
+        uci->output->show();
     } else {
         engine = chess;
-        //ui->verticalLayout->replaceWidget(engine->output, chess->output);
+        chess->output->show();
     }
 
     //ui->verticalLayout->addWidget(engine->output);
