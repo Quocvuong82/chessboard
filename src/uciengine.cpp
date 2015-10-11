@@ -130,52 +130,45 @@ void UCIEngine::getValues(QString line) {
     if(pv != string::npos && multipv != string::npos) {
         size_t sp = outstr.find(" ", multipv + 10);
         string multipvstr = outstr.substr(multipv + 9, sp - (multipv + 9));
-        bool toggle = false;
-        if(boost::lexical_cast<int>(multipvstr) > currnr) {
-            currnr++;
 
-            /* Get the score of the MulitPV-Move */
-            size_t sc = outstr.find(" score ");
-            size_t sp = outstr.find(" ", sc + 10);
-            string score_str = outstr.substr(sc + 10, sp - sc - 10);
-            //cout << outstr;
-            //cout << "multipv: " << m << "multipv-score: " << sc << " " << sp << " " << score_str << endl;
-            int score;
-            if(outstr.substr(sc + 7, 4) == "mate")
-                score = numeric_limits<int>::max();
-            else
-                score = boost::lexical_cast<int>(score_str);
+        /* Get the score of the MulitPV-Move */
+        size_t sc = outstr.find(" score ");
+        sp = outstr.find(" ", sc + 10);
+        string score_str = outstr.substr(sc + 10, sp - sc - 10);
+        //cout << outstr;
+        //cout << "multipv: " << m << "multipv-score: " << sc << " " << sp << " " << score_str << endl;
+        int score;
+        if(outstr.substr(sc + 7, 4) == "mate")
+            score = numeric_limits<int>::max();
+        else
+            score = boost::lexical_cast<int>(score_str);
 
-            /* Check if we have a multipv-move to update */
-            bool newMultiPv = true;
-            for(int i = 0; i < multipvs.size(); i++) {
-                //cout << multipvs[i] << " == " << outstr.substr(pv + 4, multipvs[i].size()) << endl;
-                if(multipvs[i] == outstr.substr(pv + 4, multipvs[i].size())) {
-                    multipvs[i] = outstr.substr(pv + 4, outstr.substr(pv + 4).size() - 1);
-                    scores[i] = score;
-                    newMultiPv = false;
-                }
+        /* Check if we have a multipv-move to update */
+        bool newMultiPv = true;
+        for(int i = 0; i < multipvs.size(); i++) {
+            //cout << multipvs[i] << " == " << outstr.substr(pv + 4, multipvs[i].size()) << endl;
+            if(multipvs[i] == outstr.substr(pv + 4, multipvs[i].size())) {
+                multipvs[i] = outstr.substr(pv + 4, outstr.substr(pv + 4).size() - 1);
+                scores[i] = score;
+                newMultiPv = false;
             }
-            //qDebug() << QString::fromStdString(outstr);
+        }
+        //qDebug() << QString::fromStdString(outstr);
 
-            /* Create a new multipv-move */
-            if(newMultiPv) {
-                //qDebug() << "UCIEngine:" << "creating new multipv";
-                size_t lineEnd = outstr.size();
-                string str = outstr.substr(pv + 4, lineEnd);
-                if(lineEnd != string::npos) {
-                    if(str.size() > 4)
-                        multipvs.push_back(outstr.substr(pv + 4, outstr.substr(pv + 4).size() - 1));
-                    else
-                        multipvs.push_back(outstr.substr(pv + 4, lineEnd));
-                    scores.push_back(score);
-                } else {
-                    //qDebug() << "UCIEngine:" << "multipv: no newline";
-                }
+        /* Create a new multipv-move */
+        if(newMultiPv) {
+            //qDebug() << "UCIEngine:" << "creating new multipv";
+            size_t lineEnd = outstr.size();
+            string str = outstr.substr(pv + 4, lineEnd);
+            if(lineEnd != string::npos) {
+                if(str.size() > 4)
+                    multipvs.push_back(outstr.substr(pv + 4, outstr.substr(pv + 4).size() - 1));
+                else
+                    multipvs.push_back(outstr.substr(pv + 4, lineEnd));
+                scores.push_back(score);
+            } else {
+                //qDebug() << "UCIEngine:" << "multipv: no newline";
             }
-        } else {
-            currnr = 0;
-            if(toggle) toggle = false; else toggle = true;
         }
     }
 

@@ -31,7 +31,6 @@ private:
     vector<size_t> pos; // The last read byte in the buffer
 
     bool stopping;
-    int currnr = 0;
     vector<string> multipvs;
     vector<int> scores;
     vector<int> uniqueScores;

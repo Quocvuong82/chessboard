@@ -128,7 +128,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
 
     this->setCentralWidget(centralWidget);
     this->setFocusPolicy(Qt::StrongFocus);
-    this->setWindowTitle("Chessboard 0.7.2");
+    this->setWindowTitle("Chessboard 0.7.3");
     this->resize(1200, 400);
     this->adjustSize();
 }  
