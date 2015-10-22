@@ -122,9 +122,11 @@ string Fen::getMove() {
         }
     }
 
-    string move;
-    move.append(source);
-    move.append(target);
+    string move = "";
+    if(source.size() > 0 && target.size() > 0) {
+        move.append(source);
+        move.append(target);
+    }
     return move;
 }
 

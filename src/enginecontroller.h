@@ -22,6 +22,7 @@ public:
     void setBoard(Board* board);
     void setGame(Game* game);
     bool isOn();
+    int getBestmoveScore();
 private:
     UCIEngine* uci;
     ChessEngine* chess;
@@ -42,12 +43,14 @@ public slots:
 signals:
     void madeMove();
     void newBestmove(string);
+    void newBestmoveScore(int);
 private:
     Ui::EngineController *ui;
     Engine* engine;
     Board* board;
     Game* game;
     bool goButtonPressed;
+    char activeColor;
 };
 
 #endif // ENGINECONTROLLER_H

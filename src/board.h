@@ -85,6 +85,7 @@ protected:
     int moveNr = 0;
     vector<Fen*> positions;
     Fen* currentPosition = NULL;
+    bool writeBestmoveToFile(string fens);
 public:
     void setupDatabaseConnection(string host, string user, string password, string database);
     void setDatabase(ChessDatabase* db);

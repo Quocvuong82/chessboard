@@ -114,6 +114,7 @@ void EngineController::go() {
         }
         if(!engine->isThinking()) {
             engine->setPosition(game->board->getFenstring());
+            activeColor = game->board->getActiveColor();
             engine->go();
             ui->goButton->setText("stop");
             ui->playButton->setEnabled(false);
@@ -137,6 +138,7 @@ void EngineController::toggleGoStop() {
 }
 
 void EngineController::play() {
+    qDebug() << "EngineController::play";
     /* make moves in long algebraic notation "d2d4" or "f7f8q" */
     if(engine->getBestmove().size() == 4 || engine->getBestmove().size() == 5) {
         game->move(engine->getBestmove());
@@ -149,8 +151,8 @@ void EngineController::play() {
         /* Think on next move if radiobutton play and color checkbox are checked */
         cout << "Think on next move" << endl;
         if(ui->radio_play->isChecked() || ui->radio_think->isChecked()) {
-            //if(game->getActiveColor() == 'b') selectEngine(1);
-            //else selectEngine(0);
+            if(game->getActiveColor() == 'b') selectEngine(1);
+            else selectEngine(0);
             if((ui->checkBox_black->isChecked() && game->getActiveColor() == 'b')
                     || (ui->checkBox_white->isChecked() && game->getActiveColor() == 'w')) go();
         }
@@ -159,6 +161,7 @@ void EngineController::play() {
 
 void EngineController::showOtherMoves() {
     vector<vector<string>> moves = engine->getOtherMoves();
+    if(moves.size() == 0) return;
     string txt;
     /* Add moves to listOtherMoves widget */
     ui->listOtherMoves->clear();
@@ -169,6 +172,8 @@ void EngineController::showOtherMoves() {
     }
     connect(ui->listOtherMoves, SIGNAL(itemClicked(QListWidgetItem*)), this, SLOT(showMove(QListWidgetItem*)));
     //ui->otherMoves->setText(QString::fromStdString(txt));
+    ui->bm_score->setText(QString::fromStdString(moves[0][1]));
+    emit newBestmoveScore(getBestmoveScore());
 }
 
 void EngineController::showMove(QListWidgetItem* item) {
@@ -186,6 +191,7 @@ void EngineController::showBestmove() {
 
     /* Make a move or activate play button */
     if(ui->radio_play->isChecked()) {
+        qDebug() << "play is checked";
         if(ui->checkBox_black->isChecked() && game->getActiveColor() == 'b') play();
         if(ui->checkBox_white->isChecked() && game->getActiveColor() == 'w') play();
     } else
@@ -259,4 +265,10 @@ void EngineController::selectEngine(int index) {
     connect(ui->searchdepth, SIGNAL(valueChanged(int)), engine, SLOT(setSearchDepth(int)));
     connect(ui->movetime, SIGNAL(valueChanged(int)), engine, SLOT(setMovetime(int)));
     connect(ui->nodes, SIGNAL(valueChanged(int)), engine, SLOT(setNodes(int)));
+}
+
+int EngineController::getBestmoveScore() {
+    int bmScore = ui->bm_score->text().toInt();
+    if(activeColor == 'w') bmScore *= -1;
+    return bmScore;
 }

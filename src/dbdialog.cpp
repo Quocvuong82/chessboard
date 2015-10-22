@@ -71,7 +71,7 @@ void DBdialog::setEvent(int value) {
         string games;
         for(int i = 0; i < ids.size(); i++) {
             gameIDs.push_back(ids[i][0]);
-            games = myChessDB.getPlayerByID(ids[i][1]) + "-" + myChessDB.getPlayerByID(ids[i][2]);
+            games = boost::lexical_cast<string>(ids[i][0]) + " " + myChessDB.getPlayerByID(ids[i][1]) + "-" + myChessDB.getPlayerByID(ids[i][2]);
             //comboGames->addItem(QString::fromStdString(games));
             item.push_back(new QListWidgetItem);
             item[i]->setText(QString::fromStdString(games));

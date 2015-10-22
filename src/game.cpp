@@ -1,5 +1,7 @@
 #include "game.h"
 #include <boost/lexical_cast.hpp>
+#include <QDebug>
+
 size_t Game::NrOfGames = 0;
 
 Game::Game()
@@ -71,7 +73,12 @@ void Game::showMoveHistory() {
     }
     //movehistory->show();
     //cout << floor(currmoveNr/2) << endl;
-    movehistory->topLevelItem(floor(currmoveNr/2))->setSelected(true);
+    qDebug() << "movehistory items: " << movehistory->topLevelItemCount();
+    qDebug() << "select movehistoryitem: " << floor(currmoveNr/2);
+    if(floor(currmoveNr/2) < movehistory->topLevelItemCount()) {
+        if(movehistory->topLevelItem(floor(currmoveNr/2)) != NULL)
+            movehistory->topLevelItem(floor(currmoveNr/2))->setSelected(true);
+    }
 }
 
 void Game::move(string movecmd) {

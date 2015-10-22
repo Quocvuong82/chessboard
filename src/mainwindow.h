@@ -141,6 +141,7 @@ private:
     vector<QHBoxLayout*> playerLayout;
 
     QSlider* slider;
+    QSlider* evalSlider;
 
     void updateBoard();
     bool stockfish();
@@ -196,6 +197,7 @@ public slots:
     void updateStatusBar();
     void setNextPosition(int);
     void unsetEngine(int i);
+    void showEvaluation(int);
     void quitGame(int);
 };
 

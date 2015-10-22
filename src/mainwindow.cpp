@@ -49,6 +49,9 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
         score.push_back(new QLabel);
     }
     fenstring = new QLineEdit();
+    evalSlider = new QSlider(Qt::Vertical);
+    evalSlider->setMinimum(-3000);
+    evalSlider->setMaximum(3000);
 
     QGroupBox* engineControllerGroup = new QGroupBox();
     centralWidget = new QWidget;
@@ -71,6 +74,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
     statusBar()->addPermanentWidget(statusActiveColor);
 
     layout->addLayout(boardSliderBox);
+    layout->addWidget(evalSlider);
     layout->addWidget(GameInfoBox);
 
     /* Create Games and Boards */
@@ -128,7 +132,7 @@ MainWindow::MainWindow(QMainWindow *parent, Qt::WindowFlags flags) : QMainWindow
 
     this->setCentralWidget(centralWidget);
     this->setFocusPolicy(Qt::StrongFocus);
-    this->setWindowTitle("Chessboard 0.7.3");
+    this->setWindowTitle("Chessboard 0.7.4");
     this->resize(1200, 400);
     this->adjustSize();
 }  
@@ -165,6 +169,7 @@ void MainWindow::setBoardActive(int index) {
 
     connect(openFileAction, SIGNAL(triggered()), game[activeBoard]->board, SLOT(openFile()));
     connect(saveToFile, SIGNAL(triggered()), game[activeBoard]->board, SLOT(saveGameToFile()));
+    //connect(engineController, SIGNAL(newBestmoveScore(int)), this, SLOT(nextPos())); // TODO remove this line
 
     fileMenu->addAction(openFileAction);
     fileMenu->addAction(saveToFile);
@@ -457,6 +462,7 @@ void MainWindow::newGame() {
     connect(game[game.size() - 1]->board, SIGNAL(madeMove()), engineController, SLOT(go()));
     connect(engineController, SIGNAL(newBestmove(string)), game[game.size() - 1]->board, SLOT(hint(string)));
     connect(engineController, SIGNAL(newBestmove(string)), game[game.size() - 1]->board, SLOT(setBestmove(string)));
+    connect(engineController, SIGNAL(newBestmoveScore(int)), this, SLOT(showEvaluation(int)));
     connect(game[game.size() - 1]->board, SIGNAL(madeMove(string)), this, SLOT(sendToServer(string)));
     connect(&fics, SIGNAL(newGameID(int)), game[game.size() - 1], SLOT(setGameID(int)));
 
@@ -599,6 +605,11 @@ void MainWindow::setNextPosition(int i) {
 void MainWindow::unsetEngine(int i) {
     if(i % 2 == 0) engineW = false;
     else engineB = false;
+}
+
+void MainWindow::showEvaluation(int value) {
+    cout << "set evalSlider value" << value << endl;
+    evalSlider->setValue(value);
 }
 
 void MainWindow::quitGame(int index) {

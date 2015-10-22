@@ -517,35 +517,56 @@ bool Board::saveGameToFile(string file) {
 
 
 vector<string> Board::getSplittedPGN(string pgn_raw) {
-    if(pgn_raw.size() == 0) {
-        return vector<string>();
-    }
     regex expr("[0-9]+[.]"); // z.B. "13. ", "14. ",...
     regex newline("[\r][\n]");
     smatch m; smatch n;
 
-    vector<string> pgn(100);
-    vector<string> pgn2(100);
+    vector<string> pgn(500);
+    vector<string> pgn2;
 
     int i = 1; int length;
     regex_search(pgn_raw, m, expr);
     pgn[i] = pgn_raw.substr(m.position() + m.length());
+
     while(regex_search(pgn[i], m, expr)) {
         length = m.position();
-        pgn2[i] = pgn[i].substr(0, length);
-        if(pgn2[i][0] == ' ') pgn2[i].erase(0,1); // Remove space-character at the beginning
-
+        pgn2.push_back(pgn[i].substr(0, length));
+        int current = pgn2.size()-1;
+        if(pgn2[current][0] == ' ') pgn2[current].erase(0,1); // Remove space-character at the beginning
+        //cout << pgn[i].substr(0, 70) << endl << endl;
         /* Suche nach Whitespace-Characters */
-        if(regex_search(pgn2[i], n, newline)) {
-            pgn2[i].replace(n.position(), n.length(), " ");
+        if(regex_search(pgn2[current], n, newline)) {
+            //pgn_raw.erase(m.position(), m.length());
+            pgn2[current].replace(n.position(), n.length(), " ");
+            //cout << pgn2[i] << endl;
+            //cout << m.position() << " " << m.length() << endl;
         }
+        //cout << pgn2[i] << endl;
         i++;
+        //cout << i << endl;
         pgn[i] = pgn[i - 1].substr(m.position() + m.length());
-        while(pgn[i][0] == ' ' || pgn[i][0] == '\n' || pgn[i][0] == '\r') pgn[i].erase(pgn[i].begin());
     }
-    pgn2[i] = pgn[i];
 
-    pgn2.resize(i + 1);
+    /* Last move */
+    //cout << pgn.size() << " " << i << endl;
+    size_t e = pgn[i].find("#");
+
+    /* Find result */
+    if(e == string::npos) {
+        e = pgn[i].find("1/2-1/2");
+    }
+    if(e == string::npos) {
+        e = pgn[i].find("1-0");
+    }
+    if(e == string::npos) {
+        e = pgn[i].find("0-1");
+    }
+    cout << "pgn " << i << ": \"" << pgn[i] << "\"" << endl;
+
+    if(e == string::npos) e = pgn[i].find("\n");
+    pgn2.push_back(pgn[i].substr(0, e));
+
+    //pgn2.resize(i + 1);
 
     return pgn2;
 }
@@ -978,4 +999,20 @@ void Board::setupDatabaseConnection(string host, string user, string password, s
 
 void Board::setDatabase(ChessDatabase *db) {
     DB = db;
+}
+
+
+bool Board::writeBestmoveToFile(string fens) {
+    cout << "writing bestmove to file" << endl;
+    string file = "/home/alex/build-chessboard-Desktop_Qt_5_4_2_GCC_64bit-Debug/myChessDB.epd";
+    ofstream epdfile;
+    epdfile.open(file, ios_base::app);
+    if(!epdfile.is_open()) {
+        cerr << "EPD-File could not be created" << endl;
+        return false;
+    }
+    cout << "write to EPD-file: " << fens;
+    epdfile << fens << endl;
+    epdfile.close();
+    return true;
 }

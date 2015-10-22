@@ -254,6 +254,7 @@ void QBoard::writePositionTosquares() {
 }
 
 void QBoard::nextPos() {
+    //writeBestmoveToFile(fenstring->text().toStdString());
     Board::nextPos();
     writePositionTosquares();
     Slider->setValue(moveNr);
@@ -261,9 +262,10 @@ void QBoard::nextPos() {
 }
 
 void QBoard::nextPos(int index) {
+    //writeBestmoveToFile(fenstring->text().toStdString());
     Board::nextPos(index);
     Slider->setValue(moveNr);
-    emit madeMove();
+    //emit madeMove();
     highlightSquares();
 }
 
@@ -292,9 +294,9 @@ void QBoard::setPosition(int id) {
 void QBoard::show() {
     writePositionTosquares();
     fenstring->setText(QString::fromStdString(getFenstring()));
-    if(currentPosition->hasChildren())
+    /*if(currentPosition->hasChildren())
     setBestmove(currentPosition->getLastChild()->getMove()); // assume that the move played is the best move (we can find a better one later)
-    //fenstring->setText(QString::fromStdString(getFenstring()));
+    */
 }
 
 bool QBoard::setPosition(Fen pos) {
@@ -356,7 +358,7 @@ void QBoard::squareClicked(int id) {
 /* Highlight Squares of the last move */
 void QBoard::highlightSquares() {
     string movecmd = currentPosition->getMove();
-    cout << "Move: " << movecmd << endl;
+    //cout << "Move: " << movecmd << endl;
     if(movecmd.length() > 0) {
         for(int i = 0; i < squares.size(); i++) {
             squares[i]->highlight(false);
@@ -528,15 +530,4 @@ void QBoard::setBestmove(string bestmove) {
     if(bm != string::npos) fens = fens.substr(0, bm);
     fens.append(bmstr);
     fenstring->setText(QString::fromStdString(fens));
-
-    string file = "/home/alex/build-chessboard-Desktop_Qt_5_4_2_GCC_64bit-Debug/myChessDB.epd";
-    ofstream epdfile;
-    epdfile.open(file, ios_base::app);
-    if(!epdfile.is_open()) {
-        cerr << "EPD-File could not be created" << endl;
-        return;
-    }
-    cout << "write to EPD-file: " << fens;
-    epdfile << fens << endl;
-    epdfile.close();
 }
